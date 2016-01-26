@@ -1,0 +1,722 @@
+<?php
+
+if(file_exists("/var/lib/asterisk/agi-bin/LoadLicenseIfExists.php")) {
+    include_once("/var/lib/asterisk/agi-bin/LoadLicenseIfExists.php");
+}
+if (file_exists(dirname(__FILE__).'/../../Owa.class.php')) {
+	include_once(dirname(__FILE__).'/../../Owa.class.php');
+}
+if (file_exists(dirname(__FILE__).'/../../functions.inc.php')) {
+	include_once(dirname(__FILE__).'/../../functions.inc.php');
+}
+
+
+/**
+ * @file
+ * Functions for the interface to the help page
+ */
+
+/**
+	* Class for help
+	*
+	*/
+class contactdir{
+
+	/*
+	* rank (for prioritizing modules)
+	*/
+	function rank(){
+		$rank = 3;
+		return $rank;
+	}
+
+	/*
+	* init
+	*/
+	function init(){}
+
+	function action($args){
+		$args['extension'] = $_SESSION['ari_user']['extension'];
+		$this->logit('$args',print_r($args,1));
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		if (!$args['server_id']){$args['server_id']='';}//make sure server_id isnt null to prevent sql error
+		// Find out what kind of account type it is
+		$sql = 'select * from contactdir_servers where id = ?';
+		$sth = $db->prepare($sql);
+		$res = $db->execute($sth, $args['server_id']);
+
+		$server_info = $res->fetchRow(DB_FETCHMODE_ASSOC);
+				
+		//set global options
+		$args['display_name']=$server_info['display_name'];
+		$args['server_host']=$server_info['host'];
+		$args['server_type']=$server_info['server_type'];
+		$args['server_port']=$server_info['port'];
+		$args['server_usessl']=$server_info['usessl'];
+				
+		//$this->logit('$server_info',print_r($server_info,1));
+		//$this->logit('action($args)',print_r($args,1));
+		
+		if(isset($args['import'])){
+			$ret = $this->import_contacts($args);
+		}elseif (isset($args['clean'])){
+			$ret = $this->cleanContacts($args);
+		}elseif (isset($args['save2Phonebook'])){
+			$ret = $this->save2Phonebook($args);
+		}elseif (isset($args['editcontact'])){
+			$ret = $this->editContact($args);
+		}elseif (isset($args['updateContact'])){
+			$ret = $this->updateContact($args);
+		}elseif (isset($args['show'])){
+			$args['server_id']='';
+			$ret = $this->display($args);
+		}elseif (isset($args['settings'])){
+			$this->settings($args,'save');
+			$ret .= $this->display($args);
+		}
+		
+		//$ret .= $this->display($args);
+		return $ret;
+	}
+
+	/*
+	* Adds menu item to nav menu
+	*
+	* @param $args
+	*   Common arguments
+	*/
+	function navMenu($args){
+		$ret = "<small><small><a href='" . $_SESSION['ARI_ROOT'] . "?m=contactdir&f=display'>" . _("Contact Directory") . "</a></small></small>";
+		return $ret;
+	}
+
+	/*
+	* Displays stats page
+	*
+	* @param $args
+	*   Common arguments
+	*/
+	function display($args){
+		$args['extension'] = $_SESSION['ari_user']['extension'];
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		$servers = contactdir_get_all_servers();
+		$display = new Display();
+		$args = $this->settings($args,'get');//get user contactdir settings
+		
+		$this->logit('display($args)',print_r($args,1));
+		// build page contents
+		$ret .= checkErrorMessage();
+		//js to control show/hode of settings/import
+		$ret .= "<script>
+		 $(document).ready(function(){
+			 $('#settingstoggle').toggle(
+			 		function(){
+			 			$(this).text('-');
+			 			$('#settings').slideDown();
+					 },
+			 		function(){
+			 			$(this).text('+');
+			 			$('#settings').slideUp();
+			 		}
+			 	);
+
+			$('#importtoggle').toggle(
+			 		function(){
+			 			$(this).text('-');
+			 			$('#import').slideDown();
+					 },
+			 		function(){
+			 			$(this).text('+');
+			 			$('#import').slideUp();
+			 		}
+			 	);
+
+
+			$('select[name=server_id]').change(function(){
+			//	console.log($(this).val());
+				if ($(this).val() == '1'){
+					$('#email').hide();
+					$('#password').hide();
+					$(\"input[name='import']\").val('Show Contacts');
+				} else if ($(this).val() > '1'){
+					$('#email').show();
+					$('#password').show();
+					$(\"input[name='import']\").val('Import Contacts');
+				}
+			});
+			$(\"input[name='import']\").click(function(){
+				if ($('select[name=server_id]').val() > '1'){
+					if ($(\"input[name='username']\").val() == ''){
+						alert('Please enter your email address.');
+						return false;
+					}
+				}
+			});
+			$(\"input[name='import']\").click(function(){
+				if ($('select[name=server_id]').val() > '1'){
+					if ($(\"input[name='password']\").val() == ''){
+						alert('Please enter your password.');
+						return false;
+					}
+				}
+			});
+			
+	 });
+
+		</script>";
+		
+		$ret .= $display->displayHeaderText("Contact Directory for ".$_SESSION['ari_user']['displayname'].' ('.$_SESSION['ari_user']['extension'].')');
+		
+		$ret .= '<span id=settingstoggle style="cursor:pointer">'.((isset($args['settings']))?'-':'+') .'</span> <strong>Contact Directory Settings</strong>';
+		$ret .= '<span id=settings '.((isset($args['settings']))?'':'style="display: none;"') .'><br>';
+		//$ret .= $display->displayHeaderText("Contact Directory Settings");	
+		$ret .= $display->displayLine();
+		
+		$ret .= '<form name="contactdir" action="index.php" method="post">';	
+		$ret .= '<table>';
+		$ret .= '<tr>';
+		$ret .= '<td>Inlcude Local Extensions?</td>';
+		$ret .= '<td><input type=radio name=includelocal '.(($args['includelocal'] == '1')?"checked":"").' value=1>Yes</td>';
+		$ret .= '<td><input type=radio name=includelocal '.(($args['includelocal'] == '0')?"checked":"").' value=0>No</td>';
+		$ret .= '</tr>';
+		
+		$ret .= '<tr>';
+		$ret .= '<td>Default search method:</td>';
+		$ret .= '<td><input type=radio name=searchmethod '.(($args['searchmethod'] == 'onetouch')?"checked":"").' value=onetouch>OneTouch</td>';
+		$ret .= '<td><input type=radio name=searchmethod '.(($args['searchmethod'] == 't9')?"checked":"").' value=t9>T9</td>';
+		$ret .= '</tr>';
+		$ret .= '</table>';
+		
+		$ret .= '<input type="hidden" name="m" value="contactdir">';
+		$ret .= '<input type="hidden" name="f" value="action">';
+		$ret .= '<br><input type=submit name=settings value="Save">';
+		$ret .= '</form>';
+		$ret .= '</span><br />';
+		
+		$ret .= '<span id=importtoggle style="cursor:pointer">'.((isset($args['import']))?'-':'+') .'</span> <strong>Import Contacts</strong>';
+		$ret .= '<span id=import '.((isset($args['import']))?'':'style="display: none;"') .'><br>';
+		//$ret .= $display->displayHeaderText("Contact Directory Settings");	
+		$ret .= $display->displayLine();
+		
+		$ret .= '<form name="contactdir" action="index.php" method="post">';
+		$ret .= '<input type="hidden" name="m" value="contactdir">';
+		$ret .= '<input type="hidden" name="f" value="action">';
+
+		$ret .= 'Server: ';
+		$ret .= '<select name=server_id>';
+		
+		foreach ($servers as $server){
+			$ret .= '<option value=' . $server['id'] . '>' . $server['display_name'] . '</option>';
+		}
+		$ret .= '</select><br />';
+
+		$ret .= '<span id=email style="display:none">E-Mail Address: ';
+		$ret .= '<input type=text name=username value='.$args['username'].'>';
+		$ret .= '<br /></span>';
+	
+		$ret .= '<span id=password style="display:none">Password: ';
+		$ret .= '<input type=password name=password>';
+		$ret .= '<br /></span>';
+		
+		$ret .= '<br><br>';
+		$ret .= '<input type=submit name=import value="Show Contacts">';
+		$ret .= '<input type=submit name=show value="Show All Contacts">';
+		$ret .= '</form></span>';
+		$ret .= '<br/><br/>';
+
+		
+	//	$ret .= '<br><br><br><br>';
+		$ret .= $display->displayHeaderText("Manage Contacts");
+		$ret .= $display->displayLine();
+		$ret .= $this->displayContacts($args);
+	//$this->logit('display($args)',print_r($args,1));
+		return $ret;
+	}
+	
+	function settings($args,$action){
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		switch ($action){
+			case 'save':
+				//delete old settings and replace with new values
+				$sql = 'DELETE FROM contactdir_details WHERE extension = ? and type = \'searchmethod\' or type = \'includelocal\'';
+				$res = $db->query($sql, array($args['extension']));
+				$sql = 'INSERT INTO contactdir_details (extension, type, val) VALUES (?, ?, ?)';
+				$res = $db->query($sql, array($args['extension'], 'searchmethod', $args['searchmethod']));
+				$sql = 'INSERT INTO contactdir_details (extension, type, val) VALUES (?, ?, ?)';
+				$res = $db->query($sql, array($args['extension'], 'includelocal', $args['includelocal']));
+			break;
+			case 'get':
+				$sql = 'SELECT type, val FROM contactdir_details WHERE extension = ?';
+				$results = $db->getAssoc($sql, true, array($args['extension']), DB_FETCHMODE_ASSOC);
+				//$this->logit('$results', print_r($results,1));
+				$args['includelocal']=$results['includelocal']['val'];
+				$args['searchmethod']=$results['searchmethod']['val'];
+			break;
+		}
+		return $args;
+	}
+	
+	function import_exchange_contacts($args){
+		$this->logit('import_exchange_contacts($args)',print_r($args,1));
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+			if(!$args['username'] && !$args['password']){return false;}
+			$owa = new Owa($args['server_host'], $args['username'], $args['password']);
+			$owa_contacts = $owa->get('contacts');
+			$this->logit('$owa_contacts',print_r($owa_contacts, 1));
+			if($owa_contacts){
+				//select some setting for preservation as the are about to be overwriten
+				$sql = 'SELECT id, tel_spdial, home_spdial, mobile_spdial, mgcbtn, grammer from contactdir_list';
+				$sth1 = $db->prepare($sql);
+				$include = $db->getAssoc($sql, true,  array(), DB_FETCHMODE_ASSOC);
+				
+				$sql = 'REPLACE INTO contactdir_list (extension, user_name, server_id, id, first_name, last_name, email, tel, tel_spdial, home, home_spdial, mobile, mobile_spdial, lastupdate, mgcbtn, grammer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+				$sth2 = $db->prepare($sql);
+				foreach ($owa_contacts as $owa_contact)
+				{
+					$owa_contact['id']=crc32($args['extension'].$args['username'].$args['server_id'].$owa_contact['first_name'].$owa_contact['last_name']);//build uniqueid
+					if ($owa_contact['email'] == '<?'){ $owa_contact['email']=null;}//clear some garbage out of the way
+					$owa_contact['mgcbtn'] = $include[$owa_contact['id']]['mgcbtn']; //preserve include to magic button. this would otherwise be deleted on REPLACE
+					$owa_contact['grammer'] = $include[$owa_contact['id']]['grammer']; //'' ''
+					$owa_contact['tel_spdial'] = $include[$owa_contact['id']]['tel_spdial']; //""
+					$owa_contact['home_spdial'] = $include[$owa_contact['id']]['home_spdial']; //""
+					$owa_contact['mobile_spdial'] = $include[$owa_contact['id']]['mobile_spdial']; //""
+					//add default grammer if none exists
+					if (!$owa_contact['grammer']){
+						$owa_contact['grammer']=$owa_contact['first_name'].' '.$owa_contact['last_name'];
+					}	
+					// Insert or update the contact to the db
+					$res = $db->execute($sth2, array($args['extension'], $args['username'], $args['server_id'], $owa_contact['id'], $owa_contact['first_name'],  $owa_contact['last_name'], $owa_contact['email'], $owa_contact['phone'], $owa_contact['tel_spdial'], $owa_contact['home_phone'], $owa_contact['home_spdial'], $owa_contact['mobile_phone'], $owa_contact['mobile_spdial'], $args['now'], $owa_contact['mgcbtn'], $owa_contact['grammer']));
+					//$this->logit('$owa_contact',print_r($owa_contact,1));
+					//$this->logit('$owa_contact$res',print_r($res, 1));
+					}
+				return true;		
+			}else{ //we dont have a username/password or its incorect or some other connection issue
+			return false;			
+		}
+	}
+	
+	
+	function import_contacts($args){
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		$args['now']=time();
+		if ($args['server_type'] == '1'){ //use local server
+			$args['now']=null;
+			$auth=true;//keep authentication check happy (used for exchange timeout)
+		}elseif(($args['server_type'] == '2') ||($args['server_type'] == '3')){ //us an exchange server
+			$auth=$this->import_exchange_contacts($args);		
+		}
+		//if authentication failed, show message and dont check for stale contacts
+		if(!$auth){$ret .= '<style>.red{color:red}</style><span class=red>Could not connect to server, please check your username and password!</span>';$args['now']=null;}
+		//show page
+		$ret .= $this->display($args);
+		return $ret;		
+	}
+	
+	function displayContacts($args){
+		//$this->logit('displayContacts($args)',print_r($args, 1));
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		//if no server is selected, display ALL contacts
+		if ($args['server_id'] == ''){
+			$sql='SELECT id, server_id, first_name, last_name, email, tel, tel_spdial, home, home_spdial, mobile, mobile_spdial, lastupdate, mgcbtn FROM contactdir_list WHERE extension = ? ORDER BY last_name';	
+			$contacts = $db->getAll($sql, array($args['extension']), DB_FETCHMODE_ASSOC);
+		} else { //otherwise, filter to just that server
+			$sql='SELECT id, server_id, first_name, last_name, email, tel, tel_spdial, home, home_spdial, mobile, mobile_spdial, lastupdate, mgcbtn FROM contactdir_list WHERE server_id = ? and extension = ? ORDER BY last_name';
+			$contacts = $db->getAll($sql, array($args['server_id'],$args['extension']), DB_FETCHMODE_ASSOC);
+		}
+		//add link for new contact
+		$ret .= '<a href=index.php?m=contactdir&f=action&editcontact=&id=&server_id=1>New</a><br/>';
+
+		if (!count($contacts)){//return if we have no contacts to show
+			$ret .= 'No contacts found';
+			return $ret;
+		} else { //otherwise, check for stale contacts
+		if ($args['now']){ //if we have a time set, check for stale contacts
+			foreach ($contacts as $contact){
+				if ($contact['lastupdate'] != $args['now']){//if contact is 'stale' (older than time), mark for deletion
+				$stale=true;
+				}
+			}
+		}
+		
+		if ($stale){//if we have stale contacts, prompt the user to move/delete them
+		//set radio butons
+			function button($id){
+				$ret = '<input type="radio" checked="checked" name="contact|'.$id.'" value="del">Delete<br><input type="radio" name="contact|'.$id.'" value="move">Move';
+				return $ret;
+			}
+			$ret .= '<style>.del{color:red}</style>';
+			$ret .= '<span class=del>You have saved contacts that were deleted from the remote server.</span>';
+			$ret .= '<br>';
+			$ret .= '<span class=del>Please <strong>delete</strong> these contacts or <strong>move</strong> them to your Personal Address Book.</span>';
+			$ret .= '<br>';
+			$ret .= '<table>';
+			$ret .= '<th>Action</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Phone</th><th>Home Phone</th><th>Mobile Phone</th>';
+			$ret .= '<form name="contactdir" action="index.php" method=post>';
+			$ret .= '<input type="hidden" name="m" value="contactdir">';
+			$ret .= '<input type="hidden" name="f" value="action">';
+			$ret .= '<input type="hidden" name="server_id" value="'.$args['server_id'].'">';
+			$ret .= '<input type="hidden" name="username" value="'.$args['username'].'">';
+			$ret .= '<input type="hidden" name="password" value="'.$args['password'].'">';
+			foreach ($contacts as $contact){
+				if ($contact['lastupdate'] != $args['now']){
+					$ret .= '<tr><td>'.button($contact['id']).'</td><td>'.$contact['first_name'].'</td><td>'.$contact['last_name'].'</td><td>'.$contact['email'].'</td><td>'.$contact['tel'].'</td><td>'.$contact['home'].'</td><td>'.$contact['mobile'].'</td></tr>';
+				}
+			}
+			$ret .= '<input type=submit name=clean value=Prosess>';
+			$ret .= '</form>';
+			$ret .= '</table>';
+			return $ret;
+		} else {//otherwise, just show contacts
+
+			$ret .= '<table>';
+			$ret .= '<th>Magic Button</th><th>First Name</th><th>Last Name</th><th>Phone</th><th>Home Phone</th><th>Mobile Phone</th>';
+			if (!$args['server_id']){//if we are showing all contacts, build server/type list, and show which were dealing with
+				$ret .= '<th>Server</th>';
+				$sql = 'SELECT contactdir_servers.id,contactdir_servers.server_type, contactdir_servers.display_name, contactdir_server_types.server_type FROM `contactdir_servers`,`contactdir_server_types` WHERE contactdir_servers.server_type = contactdir_server_types.id';
+				$servers = $db->getAssoc($sql, true,  array(), DB_FETCHMODE_ASSOC);
+			}
+/*			$ret .= '<form name="contactdir" action="index.php" method=post>';
+			$ret .= '<input type="hidden" name="m" value="contactdir">';
+			$ret .= '<input type="hidden" name="f" value="action">';
+			$ret .= '<input type="hidden" name="server_id" value="'.$args['server_id'].'">';
+			$ret .= '<input type="hidden" name="username" value="'.$args['username'].'">';
+			$ret .= '<input type="hidden" name="password" value="'.$args['password'].'">';
+*/		//$this->logit('displayContacts($args)',print_r($args, 1));
+			foreach ($contacts as $contact)
+			{
+				//$this->logit('displayContacts($contact)',print_r($contact, 1));
+				if (!$server_id){$server_id=$args['server_id'];}
+				$link = 'index.php?m=contactdir&f=action&editcontact='.$contact['id'].'&id='.$contact['id'].'&server_id='.$server_id.'&username='.$args['username'].'&password='.$args['password'];
+				$ret .= '<tr><td>'.($contact['mgcbtn']?'yes':'').'</td><td><a href='.$link.'>'.$contact['first_name'].'</a></td><td><a href='.$link.'>'.$contact['last_name'].'</a></td><td>'.$contact['tel'].'</td><td>'.$contact['home'].'</td><td>'.$contact['mobile'].'</td>';
+				if ($args['server_id'] == '')//if we are showing all contacts, show server/type
+				{
+					$ret .= '<td>'.$servers[$contact['server_id']]['display_name'].' ('.$servers[$contact['server_id']]['server_type'].')</td>';
+				}
+				$ret .= '</tr>';
+			}
+/*			$ret .= '<input type=submit name=save2Phonebook value=Save>';
+			$ret .= '</form>';
+*/			$ret .= '</table>';
+			return $ret;
+			}
+		}
+		$this->logit('displayContacts($args)',print_r($args, 1));
+	}
+	
+	function cleanContacts($args){
+		global $db;
+		
+		foreach($args as $key => $value){	
+			$this->logit($key,$value);
+			$contact = explode('|',$key);
+			//$this->logit('$contact',print_r($contact,1));
+			//contact|foo=do
+			if($contact[0] == 'contact'){
+				switch ($value){
+					case del:
+						$sql = 'DELETE FROM contactdir_list WHERE extension = ? and server_id = ? and id = ?';
+					break;
+					case move:
+						$sql = 'UPDATE contactdir_list SET server_id = "1" WHERE extension = ? and server_id = ? and id = ?';
+					break;			
+				}
+				$sth = $db->prepare($sql);
+				$res = $db->execute($sth, array($args['extension'],$args['server_id'],$args['id']));
+				$this->logit('move or delete res',print_r($res,1));
+				//$value($args,$contact[1]);
+				$this->logit('do clean',print_r($value.'|'.$args['username'].'|'.$args['server_id'].'|'.$contact[1].'|'.$args['extension'],1));
+				break;
+			}
+		}
+		$args['now']=null;		
+		$ret .= $this->display($args);
+		//$ret .= $this->displayContacts($args);
+		//$this->logit('contacts',print_r($this->displayContacts($username,$password,$server_id,$now),1));
+		return $ret;
+	}
+	
+	function save2Phonebook($args){
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+
+		$sql = 'UPDATE contactdir_list SET grammer = 0 WHERE server_id = ? and user_name = ?';
+		$sth = $db->prepare($sql);
+		$res = $db->execute($sth, array($args['server_id'],$args['username']));
+		foreach ($args['save'] as $contact){ //loop+save contacts
+			$sql = 'UPDATE contactdir_list SET grammer = 1 WHERE server_id = ? and user_name = ? and id = ?';
+			$sth = $db->prepare($sql);
+			$res = $db->execute($sth, array($args['server_id'],$args['username'],$contact));
+		}
+		//$this->logit('2save',print_r($args,1));
+		//now redraw all contacts from the local server, filtered by remote server_id
+		$args['now']=null;
+		$ret .= $this->display($args);
+		$ret .= $this->displayContacts($args);
+		return $ret;
+	}
+	
+	function editContact($args){
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		$this->logit('editContact($args)',print_r($args, 1));
+		$sql = 'SELECT id, user_name, server_id, first_name, last_name, email, tel, tel_spdial, home, home_spdial, mobile, mobile_spdial, grammer, mgcbtn FROM contactdir_list WHERE extension = ? and id = ?';
+		//$res = $db->query($sql, array($args['editcontact'], $args['extension']));
+		$contact = $db->getRow($sql, DB_FETCHMODE_ASSOC, array($args['extension'], $args['id']));
+		if (!$args['server_id']){
+			$args['server_id']=$contact['server_id'];
+		}elseif(!$contact['server_id']){
+			$contact['server_id']=$args['server_id'];
+		}
+		
+		//if MB is currently disabled: get total number of speed enabled contacts, and dissable adding more if total >= 100
+		if(!$contact['mgcbtn']){
+			$sql='SELECT sum(mgcbtn) FROM contactdir_list';
+			$total=$db->getRow($sql);
+			//$this->logit('$total',print_r($total,1));
+			if($total['0'] >= '100'){
+				$overlimit = 'onClick="alert(\'You already have the maximum amount of contacts (100) included in the Magic Button.'; 
+				$overlimit.= ' If you would like to include this contact, please remove a different contact first.\');checked = false"';
+			}
+		}
+		//$this->logit('editContact($contact)',print_r($contact, 1));
+		$display = new Display();
+		$ret .= $display->displayHeaderText("Edit Contact Details");
+		$ret .= $display->displayLine();
+		//js to disable speed dials if phone number is blank
+		$ret .= "	<script>
+		 $(document).ready(function() {
+			$(\"input[name='tel']\").keyup(function(){
+				if ($(this).val() == ''){
+					$('select[name=tel_spdial]').val('none');
+					$('select[name=tel_spdial]').attr('disabled', 'ture');
+				} else {
+					$('select[name=tel_spdial]').removeAttr('disabled');
+				}
+			});
+			$(\"input[name='home']\").keyup(function(){
+				if ($(this).val() == ''){
+					$('select[name=home_spdial]').val('none');
+					$('select[name=home_spdial]').attr('disabled', 'ture');
+				} else {
+					$('select[name=home_spdial]').removeAttr('disabled');
+				}
+			});	
+			$(\"input[name='mobile']\").keyup(function(){
+				if ($(this).val() == ''){
+					$('select[name=mobile_spdial]').val('none');
+					$('select[name=mobile_spdial]').attr('disabled', 'ture');
+				} else {
+					$('select[name=mobile_spdial]').removeAttr('disabled');
+				}
+			});	
+	 });
+		</script>";
+		//actual GUI. NOTE: speed dials are functional, they just need to be un-commented!
+		$ret .= '<form><table>';
+		$ret .= '<INPUT type=hidden name=id value='.$contact['id'].'>';
+		$ret .= '<INPUT type=hidden name=extension value='.$args['extension'].'>';
+		$ret .= '<INPUT type=hidden name=contact|'.$contact['id'].' value=del>';
+
+
+		$ret .= '<tr><td><strong>First Name </strong></td>';
+		$ret .= '<td><strong>Last Name </strong></td></tr>';
+		$ret .= '<tr><td><INPUT type=text name=first_name value="'.$contact['first_name'].'" '.(($args['server_id'] > '1')?"disabled":"").'></td>';
+		$ret .= '<td><INPUT type=text name=last_name value="'.$contact['last_name'].'" '.(($args['server_id'] > '1')?"disabled":"").'></td>';
+//		$ret .= '<strong>Email Address </strong><br/>';
+//		$ret .= '<INPUT type=text name=email value="'.$contact['email'].'"  '.(($args['server_id'] > '1')?"disabled":"").'><br/>';
+		$ret .= '<tr>';
+		$ret .=	'<td><strong>Speech</strong></td>';
+		$ret .= '<td><strong>Include in Magic Button</strong></td>';
+		$ret .= '</tr>';
+		$ret .= '<tr>';
+		$ret .= '<td><INPUT type=text name=grammer value="'.$contact['grammer'].'"></td>';
+		$ret .= '<td><INPUT type=checkbox name=mgcbtn '.(($contact['mgcbtn'] == '1')?"checked=yes":"").' value=1 '.$overlimit.'></td>';
+		$ret .= '</tr>';
+		
+		$ret .= '<tr><td><strong>Phone</strong></td>';
+		//$ret .= '<td>Speed Dial</td>';
+		$ret .= '</tr>';
+		$ret .= '<tr><td><INPUT type=text name=tel value="'.$contact['tel'].'"  '.(($args['server_id'] > '1')?"disabled":"").'></td> ';
+/*		$ret .= '<td><SELECT name=tel_spdial '.($contact['tel']? '':'disabled') .'>';
+		$ret .= '<option value=none selected>none</option>';
+		for ($i=0; $i < 10; $i++){
+			if (($contact['tel_spdial'] != '' ) && ($i == $contact['tel_spdial'])){
+				$ret .= '<option value='.$i.' selected>'.$i.'</option>';
+			}else {
+				$ret .= '<option value='.$i.'>'.$i.'</option>';
+			
+			}
+		}
+		$ret .= '</select></td>';
+*/		$ret .= '</tr>';
+		
+		$ret .= '<tr><td><strong>Home Phone</strong></td>';
+		//$ret .= '<td><strong>Speed Dial</strong></td>';
+		$ret .= '</tr>';
+		$ret .= '<tr><td><INPUT type=text name=home value="'.$contact['home'].'"  '.(($args['server_id'] > '1')?"disabled":"").'> </td>';
+/*		$ret .= '<td><SELECT name=home_spdial '.($contact['home']? '':'disabled') .'>';
+		$ret .= '<option value=none selected>none</option>';
+		for ($i=0; $i < 10; $i++){
+			if (($contact['home_spdial'] != '' ) && ($i == $contact['home_spdial'])){
+				$ret .= '<option value='.$i.' selected>'.$i.'</option>';
+			}else {
+				$ret .= '<option value='.$i.'>'.$i.'</option>';
+			
+			}
+		}
+		$ret .= '</select></td>';
+*/		$ret .= '</tr>';
+		
+		
+		$ret .= '<tr><td><strong>Mobile Number</strong></td>';
+		//$ret .= '<td><strong>Speed Dail</strong></td>';
+		$ret .= '</tr>';
+		$ret .= '<tr><td><INPUT type=text name=mobile value="'.$contact['mobile'].'"  '.(($args['server_id'] > '1')?"disabled":"").'> </td>';
+/*		$ret .= '<td><SELECT name=mobile_spdial '.($contact['mobile']? '':'disabled') .'>';
+		$ret .= '<option value=none selected>none</option>';
+		for ($i=0; $i < 10; $i++){
+			if (($contact['mobile_spdial'] != '' ) && ($i == $contact['mobile_spdial'])){
+				$ret .= '<option value='.$i.' selected>'.$i.'</option>';
+			}else {
+				$ret .= '<option value='.$i.'>'.$i.'</option>';
+			
+			}
+		}
+		$ret .= '</select></td>';
+*/		$ret .= '</tr>';
+		
+		$ret .= '<form name="contactdir" action="index.php" method=post>';
+		$ret .= '<INPUT type="hidden" name="m" value="contactdir">';
+		$ret .= '<INPUT type="hidden" name="f" value="action">';
+		$ret .= '<input type="hidden" name="server_id" value="'.$contact['server_id'].'">';
+		$ret .= '<input type="hidden" name="user_name" value="'.$contact['user_name'].'">';
+		$ret .= '<input type="hidden" name="password" value="'.$args['password'].'">';
+		$ret .= '<tr><td><INPUT TYPE=SUBMIT name=updateContact VALUE="Save" onclick=$("*").removeAttr("disabled");></td>';
+		$ret .= '<td><INPUT TYPE=SUBMIT name=clean VALUE="Delete Contact"></td>';
+		$ret .= '</tr>';
+		$ret .= '</form></table>';
+		return $ret;
+	}
+	
+	function updateContact($args){
+		global $db;
+		$db = $_SESSION['dbh_asterisk'];
+		//delete 'old' version of this contact
+		$this->logit('updateContact($args)',print_r($args, 1));
+		$sql = 'DELETE FROM contactdir_list WHERE id = ?';
+		$sth = $db->prepare($sql);
+		$res = $db->execute($sth, array($args['id']));
+		//clear tel speed dial number if set to none
+		if ($args['tel_spdial'] == 'none'){
+			$args['tel_spdial'] = '';
+		}else{ //and clear other speed dial if they conflict with this one
+			$sql = 'UPDATE contactdir_list SET tel_spdial = null WHERE tel_spdial = ? or tel_spdial = ? or tel_spdial = ?';
+			$sth = $db->prepare($sql);
+			$res = $db->execute($sth, array($args['tel_spdial'], $args['home_spdial'], $args['mobile_spdial']));
+		}
+		//clear home speed dial number if set to none
+		if ($args['home_spdial'] == 'none'){
+			$args['home_spdial'] = '';
+		}else{ //and clear other speed dial if they conflict with this one
+			$sql = 'UPDATE contactdir_list SET home_spdial = null WHERE tel_spdial = ? or tel_spdial = ? or tel_spdial = ?';
+			$sth = $db->prepare($sql);
+			$res = $db->execute($sth, array($args['tel_spdial'], $args['home_spdial'], $args['mobile_spdial']));
+		}
+		//clear mobile speed dial number if set to none
+		if($args['mobile_spdial'] == 'none'){
+			$args['mobile_spdial'] = '';
+		}else{ //and clear other speed dial if they conflict with this one
+			$sql = 'UPDATE contactdir_list SET mobile_spdial = null WHERE tel_spdial = ? or tel_spdial = ? or tel_spdial = ?';
+			$sth = $db->prepare($sql);
+			$res = $db->execute($sth, array($args['tel_spdial'], $args['home_spdial'], $args['mobile_spdial']));
+		}
+		//update DB with edited info
+		$args['id']=crc32($args['extension'].$args['user_name'].$args['server_id'].$args['first_name'].$args['last_name']);//set uniqueid
+		$sql = 'INSERT INTO contactdir_list (extension, user_name, server_id, id, first_name, last_name, email, tel, tel_spdial, home, home_spdial, mobile, mobile_spdial, mgcbtn, grammer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+		$sth = $db->prepare($sql);
+		$data = array($args['extension'], $args['user_name'], $args['server_id'], $args['id'], $args['first_name'], $args['last_name'], $args['email'], $args['tel'], $args['tel_spdial'], $args['home'], $args['home_spdial'], $args['mobile'], $args['mobile_spdial'], $args['mgcbtn'], $args['grammer']);
+		$res = $db->execute($sth, $data);
+		$this->write_grammar();
+		//$this->logit('updateContact($res)',print_r($res, 1));
+		$ret .= $this->display($args);
+		//$ret .= $this->displayContacts($args);
+		return $ret;
+	}
+	
+	function write_grammar(){
+	global $db;
+	
+	$file = '/etc/asterisk/grammars/contactdir'.$_SESSION['ari_user']['extension'].'.gram';
+	$sql='SELECT grammer, tel, home, mobile from contactdir_list WHERE mgcbtn = 1 and extension = ?';
+	$contacts = $db->getAll($sql, array($_SESSION['ari_user']['extension']), DB_FETCHMODE_ASSOC);
+	if(is_array($contacts)){
+		foreach($contacts as $contact) {
+			if($contact['tel'] || $contact['mobile'] || $contact['home'])  { // minimum reqd. to be a valid contact
+				if($contact['tel']){
+					$grams['call'][] = array('vocab' => $contact['grammer'], 'out' => 'call_'.ereg_replace('[^0-9]','',$contact['tel']));
+				}
+				if($contact['mobile']){
+					$grams['call'][] = array('vocab' => $contact['grammer'].' (mobile|cell|cellular) [phone]', 'out' => 'call_'.ereg_replace('[^0-9]','',$contact['mobile']));
+				}
+				if($contact['home']){
+					$grams['call'][] = array('vocab' => $contact['grammer'].' home [phone]', 'out' => 'call_'.ereg_replace('[^0-9]','',$contact['home']));
+				}
+			}
+		}
+	}
+	if($grams){//only run this part if we actualy have contacts in the $grams!!
+	$this->logit('grams',print_r($grams,1));
+  $grammar_header = <<<END
+#ABNF 1.0;
+mode voice;
+language en-US;
+tag-format <semantics/1.0.2006>;
+END;
+    
+		list($gram_name) = explode(".",basename($file));
+    $file_data = $grammar_header."\n\n";
+    $file_data .= "root \$$gram_name;\n\n";
+    $file_data .= "\$$gram_name = (";
+    while(list($key,$val) = each($grams)){
+      $file_data .= "\n\t$key (\n\t\t";
+      foreach($val as $gram)  {
+        $data[] = $gram['vocab']." {out=\"".$gram['out']."\"}";
+      }
+      $file_data .= implode("\n\t\t| ",$data);
+      $file_data .= "\n\t)";
+    }
+    $file_data .= "\n);";
+
+    touch($file);
+    $fd = fopen($file, "r+");
+    rewind($fd);
+    fwrite($fd,$file_data);
+    fflush($fd);
+    ftruncate($fd, ftell($fd));  // truncate the file to the end of what we just wrote in case this file already existed on the file system
+    fclose($fd);
+  }
+}
+
+	function logit($disc,$msg){
+		$debug=false;
+		if ($debug){
+			$fh = fopen("/tmp/freepbx_debug.log", 'a') or die("can't open file");
+			if($disc){$disc=' \''.$disc.'\':';}
+			fwrite($fh,date("Y-M-d H:i:s").$disc."\n"); //add timestamp
+			if (is_array($msg)) {
+				fwrite($fh,print_r($msg,true)."\n");
+			} else {
+				fwrite($fh,$msg."\n");
+			}
+				fclose($fh);
+		}
+	}
+}
+
+?>
