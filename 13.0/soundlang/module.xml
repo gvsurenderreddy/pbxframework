@@ -1,0 +1,37 @@
+<module>
+	<rawname>soundlang</rawname>
+	<repo>standard</repo>
+	<name>Sound Languages</name>
+	<version>13.0.6</version>
+	<publisher>Ringfree</publisher>
+	<license>GPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<changelog>
+		*13.0.6* FREEPBX-10131
+		*13.0.5* FREEPBX-10521 Wrong update of language in Soung Language module
+		*13.0.4* FREEPBX-10147 save placement and location in cookie
+		*13.0.2* Describe console commands for the normal person
+		*13.0.1* Proper language replacement usage
+		*13.0.0beta6* Standardize look and feel
+		*13.0.0beta5* Start supporting locations (e.g. en_GB) and add a few languages/locations
+		*13.0.0beta3* Fix missing language names when language not already installed
+		*13.0.0beta2* Fix error when no languages installed
+		*13.0.0beta1* Add custom languages
+		*13.0.0alpha1* First release
+	</changelog>
+	<category>Admin</category>
+	<description>
+		Management of sound prompt languages.
+	</description>
+	<depends>
+		<version>13.0.0</version>
+	</depends>
+	<menuitems>
+		<soundlang>Sound Languages</soundlang>
+	</menuitems>
+	<supported>
+		<version>13.0</version>
+	</supported>
+	<location>release/13.0/soundlang-13.0.6.tgz</location>
+	<md5sum>dbf8f8bec2d5a0dd9b405116063d99c4</md5sum>
+</module>
