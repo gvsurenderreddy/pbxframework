@@ -1,0 +1,27 @@
+<module>
+	<rawname>javassh</rawname>
+	<repo>extended</repo>
+	<name>Java SSH</name>
+	<version>2.11.2</version>
+	<publisher>Ringfree</publisher>
+	<license>AGPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
+	<category>Admin</category>
+	<description>Provides a Java applet to access the system shell using SSH.</description>
+	<menuitems>
+		<javassh>Java SSH</javassh>
+	</menuitems>
+	<changelog>
+		*2.11.2* Publisher and licensing
+		*2.11.1* Replace Java SSH Client with one that works, and is signed.
+		*2.11.0.0* bump version
+		*2.10.0.1* #5478
+		*2.10.0.0* new version changes
+		*2.9.0.0* 2.9 Update
+	</changelog>
+  <location>release/13.0/javassh-2.11.2.tgz</location>
+  <md5sum>eb077256db0c5126246e20f530c83afe</md5sum>
+  <supported>
+    <version>2.10</version>
+  </supported>
+</module>
