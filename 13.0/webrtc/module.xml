@@ -1,0 +1,84 @@
+<module>
+	<rawname>webrtc</rawname>
+	<name>WebRTC Phone</name>
+	<version>13.0.12</version>
+	<publisher>Ringfree</publisher>
+	<license>GPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<repo>standard</repo>
+	<description>
+		The WebRTC Module allows an Administrator to enable a "WebRTC phone" that can be attached to a user's
+		extension which they can connect to through FreePBX User Control Panel, this WebRTC phone will then
+		receive phone calls at the same time as the users extension using user and device mode behind the scenes.
+		If you have User and Device Mode enabled any extension you enable the WebRTC Phone a duplicate extension of 99XXXX
+		will be created (where XXXX is the original extension number), when the user then views the web interface of the WebRTC
+		phone they will be connected to device 99XXXX which will receive calls from the original extension
+	</description>
+	<changelog>
+		*13.0.12* Support TLS
+		*13.0.11* Remove STUN server notice
+		*13.0.10* FREEPBX-11041
+		*13.0.9* Resolves whoops error
+		*13.0.8* Call the right command from Core not from self
+		*13.0.7* Fixing issue with invalid devices
+		*13.0.6* FREEPBX-10376 Dashboard hook
+		*13.0.5* FREEPBX-8919 Delete WebRTC extension when user or group is deleted
+		*13.0.4* FREEPBX-9563 Use context of original extension during creation
+		*13.0.3* FREEPBX-9540 stop returning false in check statement
+		*13.0.2* Version bump Beta
+		*13.0.1alpha3* FREEPBX-9436 webrtc warning obfuscates UCP menu on iPhone, update jssip lib to 0.6.30
+		*13.0.1alpha2* Usermanager Groups
+		*13.0.1alpha1* Visual Changes
+		*12.0.0beta11* Remove debug
+		*12.0.0beta10* New functionality for FREEPBX-8434
+		*12.0.0beta9* Updates in Contact Manager
+		*12.0.0beta8* On originate push default extension to the begining
+		*12.0.0beta7* Allow lookup in originate through contact manager means
+		*12.0.0beta6* Hide phone in UCP if unsupported in browser
+		*12.0.0beta5* Fix ability to disable WebRTC.
+		*12.0.0beta4* Uninstall should delete created extensions
+		*12.0.0beta3* Fix logout process so it doesnt stop the page
+		*12.0.0beta2* Bug fix
+		*12.0.0beta1* Experimental Hold Support Now works in chrome and firefox
+		*12.0.0alpha11* Styling tweaks
+		*12.0.0alpha10* FREEPBX-7974 Allow calls to be originated in UCP
+		*12.0.0alpha9* Tweaks for UCP
+		*12.0.0alpha8* Give more messages to users in User Manager/UCP
+		*12.0.0alpha7* Support for Asterisk 13
+		*12.0.0alpha6* Work for terribly slow wireless networks
+		*12.0.0alpha5* Add Experimental hold support
+		*12.0.0alpha4* Remove ability to use webrtc in browsers that don't support it
+		*12.0.0alpha1* Redub for UCP and make it work in ARI (for testing really)
+		*2.11.0.0beta7* FREEI-199 (WebRTC and Bria Extensions Shouldn't be Included in Extension Count)
+		*2.11.0.0beta6* Add Licenses
+		*2.11.0.0beta5* Fix licensing and add copyright and release
+	</changelog>
+	<info/>
+	<category>Connectivity</category>
+	<depends>
+		<engine>asterisk 11.5</engine>
+		<module>certman ge 12.0.0alpha1</module>
+		<module>core ge 13.0.33</module>
+		<module>ucp ge 12.0.0beta7</module>
+		<version>12.0.1beta34</version>
+	</depends>
+	<hooks>
+		<ucp class="Ucp">
+			<method callingMethod="constructModuleConfigPages" class="Webrtc" namespace="FreePBX\modules">ucpConfigPage</method>
+			<method callingMethod="addUser" class="Webrtc" namespace="FreePBX\modules">ucpAddUser</method>
+			<method callingMethod="updateUser" class="Webrtc" namespace="FreePBX\modules">ucpUpdateUser</method>
+			<method callingMethod="delUser" class="Webrtc" namespace="FreePBX\modules">ucpDelUser</method>
+			<method callingMethod="addGroup" class="Webrtc" namespace="FreePBX\modules">ucpAddGroup</method>
+			<method callingMethod="updateGroup" class="Webrtc" namespace="FreePBX\modules">ucpUpdateGroup</method>
+			<method callingMethod="delGroup" class="Webrtc" namespace="FreePBX\modules">ucpDelGroup</method>
+		</ucp>
+		<dashboard namespace="" class="Dashboard">
+			<method namespace="FreePBX\Modules" class="Webrtc" callingMethod="extIgnoreList">dashboardIgnoreExt</method>
+		</dashboard>
+	</hooks>
+	<supported>
+		<version>13.0</version>
+	</supported>
+	<location>release/13.0/webrtc-13.0.12.tgz</location>
+	<md5sum>c8e7bc07cdfe6125d5a0c4efd74b3ea5</md5sum>
+</module>
