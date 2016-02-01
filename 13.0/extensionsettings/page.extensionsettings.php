@@ -17,7 +17,7 @@ global $active_modules;
 $html_txt = '<div class="content">';
 
 if (!$extdisplay) {
-        $html_txt .= '<br><h2>'._("FreePBX Extension Settings").'</h2>';
+        $html_txt .= '<br><h2>'._("PBX Extension Settings").'</h2>';
 }
 $full_list = framework_check_extension_usage(true);
 $full_list = is_array($full_list)?$full_list:array();
