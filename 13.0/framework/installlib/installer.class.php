@@ -293,7 +293,7 @@ class Installer {
 	);
 
 	$settings[$category]['PHP_ERROR_HANDLER_OUTPUT'] = array(
-	'value' => 'freepbxlog',
+	'value' => 'dbug',
 	'options' => array('dbug','freepbxlog','off'),
 	'name' => 'PHP Error Log Output',
 	'description' => "Where to send PHP errors, warnings and notices by the FreePBX PHP error handler. Set to 'dbug', they will go to the Debug File regardless of whether dbug Loggin is disabled or not. Set to 'freepbxlog' will send them to the FreePBX Log. Set to 'off' and they will be ignored.",
@@ -468,7 +468,7 @@ class Installer {
 	);
 
 	$settings[$category]['BROWSER_STATS'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Browser Stats',
 	'description' => 'Setting this to true will allow the development team to use google analytics to anonymously analyze browser information to help make better development decisions.',
@@ -484,7 +484,7 @@ class Installer {
 	);
 
 	$settings[$category]['CRONMAN_UPDATES_CHECK'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'readonly' => 1,
 	'name' => 'Update Notifications',
@@ -493,7 +493,7 @@ class Installer {
 	);
 
 	$settings[$category]['SIGNATURECHECK'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Enable Module Signature Checking',
 	'description' => 'Checks to make sure modules and their files are validly signed. Will display a notice on any module page that is not correctly verified.',
@@ -501,7 +501,7 @@ class Installer {
 	);
 
 	$settings[$category]['SEND_UNSIGNED_EMAILS_NOTIFICATIONS'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Send unsigned module email notifications',
 	'description' => 'Whether or not to send unsigned module email notifications. If disabled unsigned module emails will never be sent',
@@ -537,7 +537,7 @@ class Installer {
 	);
 
 	$settings[$category]['FREEPBX_SYSTEM_IDENT'] = array(
-	'value' => 'VoIP Server',
+	'value' => 'Ringfree Phone Cloud',
 	'options' => '',
 	'readonly' => 0,
 	'hidden' => 0,
@@ -917,7 +917,7 @@ class Installer {
 	$category = 'GUI Behavior';
 
 	$settings[$category]['CHECKREFERER'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Check Server Referrer',
 	'description' => 'When set to the default value of true, all requests into FreePBX that might possibly add/edit/delete settings will be validated to assure the request is coming from the server. This will protect the system from CSRF (cross site request forgery) attacks. It will have the effect of preventing legitimately entering URLs that could modify settings which can be allowed by changing this field to false.',
@@ -1067,7 +1067,7 @@ class Installer {
 	);
 
 	$settings[$category]['FPBXDBUGDISABLE'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Disable FreePBX dbug Logging',
 	'description' => 'Set to true to stop all dbug() calls from writing to the Debug File (FPBXDBUGFILE)',
@@ -1085,7 +1085,7 @@ class Installer {
 	);
 
 	$settings[$category]['DIE_FREEPBX_VERBOSE'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Provide Verbose Tracebacks',
 	'description' => 'Provides a very verbose traceback when die_freepbx() is called including extensive object details if present in the traceback.',
@@ -1094,7 +1094,7 @@ class Installer {
 	);
 
 	$settings[$category]['DEVEL'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Developer Mode',
 	'description' => 'This enables several debug features geared towards developers, including some page load timing information, some debug information in Module Admin, use of original CSS files and other future capabilities will be enabled.',
@@ -1172,7 +1172,7 @@ class Installer {
 	);
 
 	$settings[$category]['DISABLE_CSS_AUTOGEN'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Disable Mainstyle CSS Compression',
 	'description' => 'Stops the automatic generation of a stripped CSS file that replaces the primary sheet, usually mainstyle.css.',
