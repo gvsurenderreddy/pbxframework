@@ -60,5 +60,5 @@
 		<version>13.0.5</version>
 	</depends>
 	<location>release/13.0/callrecording-13.0.11.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 </module>

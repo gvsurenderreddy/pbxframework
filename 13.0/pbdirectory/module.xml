@@ -28,7 +28,7 @@
     <module>phonebook</module>
     <module>speeddial</module>
   </depends>
-  <md5sum></md5sum>
+  <md5sum>old</md5sum>
   <supported>
     <version>2.10</version>
   </supported>

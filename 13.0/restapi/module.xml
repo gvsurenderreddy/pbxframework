@@ -13,7 +13,7 @@
 		<restapi_logs category="Reports">REST API Report</restapi_logs>
 	</menuitems>
 	<location>release/13.0/restapi-13.0.19.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<changelog>
 		*13.0.19.1* Ringfree branch
 		*13.0.19* Open Source Module: https://www.freepbx.org/sangomas-commitment-to-open-source/

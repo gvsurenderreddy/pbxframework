@@ -23,7 +23,7 @@
 	</description>
 	<category>Admin</category>
 	<location>release/13.0/fw_langpacks-12.0.7.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<supported>
 		<version>12.0</version>
 	</supported>

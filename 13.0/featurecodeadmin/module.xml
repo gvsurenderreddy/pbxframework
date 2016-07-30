@@ -41,6 +41,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<location>release/13.0/featurecodeadmin-13.0.6.1.tgz</location>
 </module>

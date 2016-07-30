@@ -31,5 +31,5 @@
 		<weakpasswords>Weak Password Detection</weakpasswords>
 	</menuitems>
 	<location>release/13.0/weakpasswords-13.0.2.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 </module>

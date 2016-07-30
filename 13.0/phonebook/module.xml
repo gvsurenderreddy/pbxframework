@@ -12,7 +12,7 @@
 		<phonebook needsenginedb="yes">Asterisk Phonebook</phonebook>
 	</menuitems>
 	<location>release/13.0/phonebook-13.0.5.4.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<changelog>
 		*13.0.5.4.1* Ringfree branch
 		*13.0.5.4* FREEPBX-12366 default name if not provided

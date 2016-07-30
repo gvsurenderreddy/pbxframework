@@ -10,7 +10,7 @@
 		The user control panel is a way for users to control call handling and personal settings from a web browser.
 	</description>
 	<location>release/13.0/ucp-13.0.38.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<changelog>
 		*13.0.38.1* Ringfree branch
 		*13.0.38* FREEPBX-12606 Change url

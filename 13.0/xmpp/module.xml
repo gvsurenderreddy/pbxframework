@@ -107,5 +107,5 @@
 		</framework>
 	</hooks>
 	<location>release/13.0/xmpp-13.0.14.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 </module>

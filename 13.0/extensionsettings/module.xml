@@ -26,7 +26,7 @@
 		*2.10.0.0* new version changes
 		*2.9.0.0* First release, display all settings
 	</changelog>
-  <md5sum></md5sum>
+  <md5sum>old</md5sum>
   <location>release/13.0/extensionsettings-13.0.4.1.tgz</location>
   <supported>
     <version>13.0</version>

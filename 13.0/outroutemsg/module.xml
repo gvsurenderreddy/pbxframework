@@ -27,7 +27,7 @@
     <module>recordings ge 3.3.8</module>
   </depends>
   <location>release/13.0/outroutemsg-13.0.7.1.tgz</location>
-  <md5sum></md5sum>
+  <md5sum>old</md5sum>
   <supported>
     <version>13.0</version>
   </supported>

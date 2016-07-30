@@ -109,5 +109,5 @@
 		</ucp>
 	</hooks>
 	<location>release/13.0/voicemail-13.0.51.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 </module>

@@ -1,0 +1,35 @@
+<module>
+	<rawname>contactdir</rawname>
+	<name>Contact Directory</name>
+	<version>2.11.0.2.1</version>
+	<publisher>Ringfree</publisher>
+	<license>GPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<repo>unsupported</repo>
+	<category>Settings</category>
+	<description>Add servers users can import contacts from</description>
+	<changelog>
+		*2.11.0.2.1* Ringfree branch
+		*2.11.0.2* Update license file
+		*2.11.0.1* Use new abstraction layer
+		*2.11.0.0* bump version
+		*2.10.0.9* fix errant div closure
+		*2.10.0.8* moved to settings from admin
+		*2.10.0.7* ari bug fixes
+		*2.10.0.6* re #1245 - quote first and last name in user panel
+		*2.10.0.5* Security update; downstream changes
+		*2.10.0.4* Security update; downstream changes
+		*2.10.0.3* Security update; downstream changes
+	</changelog>
+	<depends>
+		<version>2.5.0</version>
+	</depends>
+	<menuitems>
+		<contactdir>Contact Directory Servers</contactdir>
+	</menuitems>
+	<supported>
+		<version>2.11</version>
+	</supported>
+	<location>release/13.0/contactdir-2.11.0.2.1.tgz</location>
+	<md5sum></md5sum>
+</module>

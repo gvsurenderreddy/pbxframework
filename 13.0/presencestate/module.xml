@@ -9,7 +9,7 @@
 	<category>Admin</category>
 	<description>Manage list of presence states.</description>
 	<location>release/13.0/presencestate-13.0.7.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<menuitems>
 		<presencestate needsenginedb="yes">Presence State</presencestate>
 	</menuitems>

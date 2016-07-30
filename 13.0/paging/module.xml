@@ -68,7 +68,7 @@
 		</paging>
 	</popovers>
 	<location>release/13.0/paging-13.0.21.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<supported>
 		<version>13.0</version>
 	</supported>

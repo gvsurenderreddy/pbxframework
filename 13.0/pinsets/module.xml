@@ -46,5 +46,5 @@
 	<methods>
 		<get_config pri="481">pinsets_get_config</get_config>
 	</methods>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 </module>

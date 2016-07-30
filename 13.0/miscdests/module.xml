@@ -26,7 +26,7 @@
 		</miscdests>
 	</popovers>
 	<location>release/13.0/miscdests-13.0.3.1.tgz</location>
-	<md5sum></md5sum>
+	<md5sum>old</md5sum>
 	<supported>
 		<version>13.0</version>
 	</supported>
