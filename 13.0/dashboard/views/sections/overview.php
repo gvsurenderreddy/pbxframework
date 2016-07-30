@@ -3,7 +3,7 @@
 		<div class='col-sm-12'>
 			<div class='text-center h4'>
 				<strong>
-					<?php echo sprintf(_('Welcome to %s'),$brand)?>
+					<?php echo sprintf(_('Ringfree PBX %s'),$version)?>
 				</strong>
 			</div>
 		</div>
@@ -11,7 +11,7 @@
 	<div class='row'>
 		<div class='col-sm-12'>
 			<p class='text-center'>
-				<?php echo $brand . " " . $version?>
+				<?php // echo $brand . " " . $version?>
 				<?php echo $idline; ?>
 			</p>
 		</div>
