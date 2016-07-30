@@ -1156,7 +1156,9 @@ else
 }
 
 if(!FreePBX::Config()->get('SIGNATURECHECK')) {
-	$nt->add_notice('freepbx', 'SIGNATURE_CHECK', _('Signature checking is disabled'), _('FreePBX Module Signature checking has been disabled. Your system could be exposed to security vulnerabilities from compromised or tampered code'));
+// RINGFREE - DISABLE SYSTEM OVERVIEW WARNING ABOUT SIGNATURECHECK BEING DISABLED ON RELOAD (OPEN)
+//	$nt->add_notice('freepbx', 'SIGNATURE_CHECK', _('Signature checking is disabled'), _('FreePBX Module Signature checking has been disabled. Your system could be exposed to security vulnerabilities from compromised or tampered code'));
+// RINGFREE - DISABLE SYSTEM OVERVIEW WARNING ABOUT SIGNATURECHECK BEING DISABLED ON RELOAD (CLOSE)
 } else {
 	$nt->delete('freepbx', 'SIGNATURE_CHECK');
 	$bmo->Performance->Start("Signature Checks");

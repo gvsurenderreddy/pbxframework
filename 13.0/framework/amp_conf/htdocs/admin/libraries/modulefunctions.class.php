@@ -711,7 +711,10 @@ class module_functions {
 					}
 					$modules[ $row['modulename'] ]['dbversion'] = $row['version'];
 					$modules[ $row['modulename'] ]['track'] = $this->get_track($row['modulename']);
-										$modules[ $row['modulename'] ]['signature'] = !empty($row['signature']) ? json_decode($row['signature'],true) : array();
+// RINGFREE - SIGNATURE CHECK BYPASS (OPEN)
+//					$modules[ $row['modulename'] ]['signature'] = !empty($row['signature']) ? json_decode($row['signature'],true) : array();
+					$modules[ $row['modulename'] ]['signature'] = '{"status":129,"details":[]}';					
+// RINGFREE - SIGNATURE CHECK BYPASS (CLOSE)					
 				}
 			}
 
@@ -1986,7 +1989,13 @@ class module_functions {
 		}
 		$this->upgrade_notifications($new_modules, 'PASSIVE');
 		needreload();
-		FreePBX::Config()->update("SIGNATURECHECK", true);
+		
+// RINGFREE - SIGNATURE CHECK BYPASS (OPEN)		
+//		FreePBX::Config()->update("SIGNATURECHECK", true);
+// note: This disable module signature checking on a 
+//       moduleadmin reload.
+// RINGFREE - SIGNATURE CHECK BYPASS (CLOSE)
+
 		$db->query("DELETE FROM admin WHERE variable = 'unsigned' LIMIT 1");
 
 		//Generate LESS on install

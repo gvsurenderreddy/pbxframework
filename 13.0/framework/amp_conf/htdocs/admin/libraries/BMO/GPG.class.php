@@ -164,6 +164,11 @@ class GPG {
 		$retarr['status'] = GPG::STATE_GOOD | GPG::STATE_TRUSTED;
 		$retarr['details'] = array();
 
+// RINGFREE - SIGNATURE CHECK BYPASS (OPEN)
+if (1==2)
+        {
+// RINGFREE - SIGNATURE CHECK BYPASS (CLOSE)
+
 		foreach ($module['hashes'] as $file => $hash) {
 			$dest = \FreePBX::Installer()->getDestination($modulename, $file, true);
 			if ($dest === false) {
@@ -184,6 +189,14 @@ class GPG {
 				$retarr['status'] &= ~GPG::STATE_GOOD;
 			}
 		}
+		
+// RINGFREE - SIGNATURE CHECK BYPASS (OPEN)
+        } else {
+                $set['SIGNATURECHECK'] = false;
+                //    here's the slower BASH equivalent using PHP
+                //                exec("/var/lib/asterisk/bin/freepbx_setting SIGNATURECHECK 0");
+        }
+// RINGFREE - SIGNATURE CHECK BYPASS (CLOSE)		
 
 		return $retarr;
 		// Reminder for people doing i18n.
