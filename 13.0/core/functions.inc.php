@@ -8,6 +8,7 @@ if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
 class core_conf {
 	var $_sip_general    = array();
 	var $_sip_additional = array();
+	var $_sip_additionalsection = array();
 	var $_sip_notify     = array();
 	var $_iax_general    = array();
 	var $_iax_additional = array();
@@ -191,16 +192,30 @@ class core_conf {
 		$output .= "bindaddr=".$freepbx_conf->get_conf_setting('HTTPBINDADDRESS')."\n";
 		$output .= "bindport=".$freepbx_conf->get_conf_setting('HTTPBINDPORT')."\n";
 		$output .= "prefix=".$freepbx_conf->get_conf_setting('HTTPPREFIX')."\n";
-		$output .= "tlsenable=".($freepbx_conf->get_conf_setting('HTTPTLSENABLE') ? 'yes' : 'no')."\n";
-		$output .= "tlsbindport=".$freepbx_conf->get_conf_setting('HTTPTLSBINDPORT')."\n";
-		$output .= "tlsbindaddr=".$freepbx_conf->get_conf_setting('HTTPTLSBINDADDRESS')."\n";
-		$output .= "tlscertfile=".$freepbx_conf->get_conf_setting('HTTPTLSCERTFILE')."\n";
-		$output .= "tlsprivatekey=".$freepbx_conf->get_conf_setting('HTTPTLSPRIVATEKEY')."\n";
+		$output .= "sessionlimit=".$freepbx_conf->get_conf_setting('HTTPSESSIONLIMIT')."\n";
+		$output .= "session_inactivity=".$freepbx_conf->get_conf_setting('HTTPSESSIONINACTIVITY')."\n";
+		$output .= "session_keep_alive=".$freepbx_conf->get_conf_setting('HTTPSESSIONKEEPALIVE')."\n";
+		$tls = $freepbx_conf->get_conf_setting('HTTPTLSENABLE');
+		if ($tls) {
+			$output .= "tlsenable=yes\n";
+			// Is this an IPv6 address? If so, it needs brackets around it.
+			$bindaddr = $freepbx_conf->get_conf_setting('HTTPTLSBINDADDRESS');
+			if (filter_var($bindaddr, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)) {
+				$bindaddr = "[$bindaddr]";
+			}
+			$output .= "tlsbindaddr=$bindaddr:".$freepbx_conf->get_conf_setting('HTTPTLSBINDPORT')."\n";
+			$output .= "tlscertfile=".$freepbx_conf->get_conf_setting('HTTPTLSCERTFILE')."\n";
+			$output .= "tlsprivatekey=".$freepbx_conf->get_conf_setting('HTTPTLSPRIVATEKEY')."\n";
+		}
 		return $output;
 	}
 
 	function addSipAdditional($section, $key, $value) {
 		$this->_sip_additional[$section][] = array('key' => $key, 'value' => $value);
+	}
+
+	function addSipAdditionalSection($section) {
+		$this->_sip_additionalsection[] = $section;
 	}
 
 	function addSipGeneral($key, $value) {
@@ -383,9 +398,11 @@ class core_conf {
 			die($results->getMessage());
 		}
 
+		$usedAccounts = array();
 		foreach ($results as $result) {
 			$output = "";
 			$account = $result['data'];
+			$usedAccounts[] = $account;
 			$id = $result['id'];
 
 			$sql = "SELECT keyword,data from $table_name where id='$id' and keyword <> 'account' and flags <> 1 order by flags, keyword DESC";
@@ -433,6 +450,14 @@ class core_conf {
 					}
 				} else {
 					switch (strtolower($result2['keyword'])) {
+						case 'sessiontimers':
+							$output .= "session-timers=".$result2['data']."\n";
+						break;
+						case 'videosupport':
+							if($result2['data'] != 'inherit') {
+								$output .= "videosupport=".$result2['data']."\n";
+							}
+						break;
 						case 'insecure':
 						if ($option == 'very')
 						$output .= "insecure=port,invite\n";
@@ -557,6 +582,17 @@ class core_conf {
 			}
 			$output .= $additional."\n";
 			$finaloutput .= $output;
+		}
+		foreach($this->_sip_additionalsection as $section) {
+			if(!in_array($section,$usedAccounts) && !empty($this->_sip_additional[$section])) {
+				$output = "[".$section."]\n";
+				foreach ($this->_sip_additional[$section] as $asetting) {
+					$output .= $asetting['key'] . "=" . $asetting['value'] . "\n";
+				}
+				$finaloutput .= $output;
+			} elseif(in_array($section,$usedAccounts)) {
+				throw new \Exception(sprintf(_("%s is already in use sip.conf. Can not continue"),$section));
+			}
 		}
 		return $finaloutput;
 	}
@@ -860,6 +896,7 @@ function core_destinations() {
 	//get the list of meetmes
 	$results = core_users_list();
 
+	$vmboxes = array();
 	if (isset($results) && function_exists('voicemail_getVoicemail')) {
 		//get voicemail
 		$uservm = voicemail_getVoicemail();
@@ -885,10 +922,10 @@ function core_destinations() {
 		foreach($results as $result) {
 			$extens[] = array('destination' => 'from-did-direct,'.$result['0'].',1', 'description' => ' '.$result['0'].' '.$result['1'], 'category' => $cat, 'id' => $cat_id);
 			if(isset($vmboxes[$result['0']])) {
-				$extens[] = array('destination' => 'ext-local,vmb'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (busy)', 'category' => 'Voicemail', 'id' => 'voicemail');
-				$extens[] = array('destination' => 'ext-local,vmu'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (unavail)', 'category' => 'Voicemail', 'id' => 'voicemail');
-				$extens[] = array('destination' => 'ext-local,vms'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (no-msg)', 'category' => 'Voicemail', 'id' => 'voicemail');
-				$extens[] = array('destination' => 'ext-local,vmi'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (instructions-only)', 'category' => 'Voicemail', 'id' => 'voicemail');
+				$extens[] = array('destination' => 'ext-local,vmb'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (Busy Message)', 'category' => 'Voicemail', 'id' => 'voicemail');
+				$extens[] = array('destination' => 'ext-local,vmu'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (Unavailable Message)', 'category' => 'Voicemail', 'id' => 'voicemail');
+				$extens[] = array('destination' => 'ext-local,vms'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (No Message)', 'category' => 'Voicemail', 'id' => 'voicemail');
+				$extens[] = array('destination' => 'ext-local,vmi'.$result['0'].',1', 'description' => $result[0].' '.$result[1].' (Instructions Only)', 'category' => 'Voicemail', 'id' => 'voicemail');
 			}
 		}
 	}
@@ -938,8 +975,9 @@ function core_getdestinfo($dest) {
 		if (!isset($users[$exten])) {
 			return array();
 		} else {
+			$name = isset($users[$exten]['name'])?$users[$exten]['name']:'';
 			$display = ($amp_conf['AMPEXTENSIONS'] == "deviceanduser")?'users':'extensions';
-			return array('description' => sprintf(_("User Extension %s: %s"),$exten,$key['name']),
+			return array('description' => sprintf(_("User Extension %s: %s"),$exten,$name),
 			'edit_url' => "config.php?type=setup&display=$display&extdisplay=".urlencode($exten)."&skip=0");
 		}
 	} else if (substr(trim($dest),0,10) == 'ext-trunk,') {
@@ -963,16 +1001,16 @@ function core_getdestinfo($dest) {
 		if (!function_exists('voicemail_mailbox_get')) {
 			return array();
 		}
-		$key = array_search($exten, array_column($users, 'extension'));
-		if ($key === false || empty($users[$key])) {
+		if (!isset($users[$exten])) {
 			return array();
 		}
 		$box = voicemail_mailbox_get($exten);
 		if ($box == null) {
 			return array();
 		}
+		$description = sprintf(_("User Extension %s: %s"),$exten, $box['name']);
 		$display = ($amp_conf['AMPEXTENSIONS'] == "deviceanduser")?'users':'extensions';
-		return array('description' => 'User Extension '.$exten.': '.$key['name'],
+		return array('description' => $description,
 		'edit_url' => "config.php?type=setup&display=$display&extdisplay=".urlencode($exten)."&skip=0");
 
 	// Check for blackhole Termination Destinations
@@ -1101,10 +1139,8 @@ function core_do_get_config($engine) {
 			$fcc = new featurecode($modulename, 'automon');
 			$code = $fcc->getCodeActive();
 			unset($fcc);
-			// $automon = $amp_conf['AUTOMIXMON'] && !$ast_lt_16 ? 'automixmon' : 'automon';
 			if ($code != '') {
-				// was this for automixmon
-				// $core_conf->addFeatureMap($automon,$code);
+				$core_conf->addFeatureMap('automon',$code); //references app record
 				$core_conf->addApplicationMap('apprecord', $code . ',caller,Macro,one-touch-record', true);
 
 				/* At this point we are not using hints since we have not found a good way to be always
@@ -1205,8 +1241,9 @@ function core_do_get_config($engine) {
 		$ext->addInclude('from-internal-additional', $context); // Add the include from from-internal
 		$exten = '_LC-.';
 		$ext->add($context, $exten, '', new ext_noop_trace('IN '.$context.' with - RT: ${RT}, RG_IDX: ${RG_IDX}'));
-		$ext->add($context, $exten, '', new ext_execif('$["${ALERT_INFO}"!=""]', 'SIPAddHeader','Alert-Info: ${ALERT_INFO}'));
-		$ext->add($context, $exten, '', new ext_dial('${DB(DEVICE/${EXTEN:3}/dial)}', '${RT},${DIAL_OPTIONS}M(auto-confirm^${RG_IDX})'));
+		//dont allow inbound callers to transfer around inside the system
+		$ext->add($context, $exten, '', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'DIAL_OPTIONS=${STRREPLACE(DIAL_OPTIONS,T)}I'));
+		$ext->add($context, $exten, '', new ext_dial('${DB(DEVICE/${EXTEN:3}/dial)}', '${RT},${DIAL_OPTIONS}M(auto-confirm^${RG_IDX})b(func-apply-sipheaders^s^1)'));
 
 		/* This needs to be before outbound-routes since they can have a wild-card in them
 		*
@@ -1266,12 +1303,12 @@ function core_do_get_config($engine) {
 		// Call pickup using app_pickup - Note that '**xtn' is hard-coded into the GXPs and SNOMs as a number to dial
 		// when a user pushes a flashing BLF.
 		//
-		// We need to add ringgoups to this so that if an extension is part of a ringgroup, we can try to pickup that
+		// We need to add ringgroups to this so that if an extension is part of a ringgroup, we can try to pickup that
 		// extension by trying the ringgoup which is what the pickup application is going to respond to.
 		//
 		// NOTICE: this may be confusing, we check if this is a BRI build of Asterisk and use dpickup instead of pickup
-		//         if it is. So we simply assign the varaible $ext_pickup which one it is, and use that variable when
-		//         creating all the extnesions below. So those are "$ext_pickup" on purpose!
+		//         if it is. So we simply assign the variable $ext_pickup which one it is, and use that variable when
+		//         creating all the extensions below. So those are "$ext_pickup" on purpose!
 		//
 		if ($fc_pickup != '' && $ast_ge_14) {
 			$ext->addInclude('from-internal-additional', 'app-pickup');
@@ -1485,7 +1522,7 @@ function core_do_get_config($engine) {
 
 				$exten = (($exten == "")?"s":$exten);
 				$exten = $exten.(($cidnum == "")?"":"/".$cidnum); //if a CID num is defined, add it
-
+				$ext->add($context, $exten, '', new ext_setvar('__DIRECTION',($amp_conf['INBOUND_NOTRANS'] ? 'INBOUND' : '')));
 				if ($cidroute) {
 					$ext->add($context, $exten, '', new ext_setvar('__FROM_DID','${EXTEN}'));
 					$ext->add($context, $exten, '', new ext_goto('1','s'));
@@ -1512,12 +1549,17 @@ function core_do_get_config($engine) {
 					// Should never happen
 					$item['mohclass'] = "default";
 				}
-				$ext->add($context, $exten, '', new ext_setmusiconhold($item['mohclass']));
-				$ext->add($context, $exten, '', new ext_setvar('__MOHCLASS',$item['mohclass']));
+				if($item['mohclass'] != "default") {
+					$ext->add($context, $exten, '', new ext_setmusiconhold($item['mohclass']));
+					$ext->add($context, $exten, '', new ext_setvar('__MOHCLASS',$item['mohclass']));
+				} else {
+					$ext->add($context, $exten, '', new ext_setvar('__MOHCLASS',""));
+				}
 
 				// If we require RINGING, signal it as soon as we enter.
 				if ($item['ringing'] === "CHECKED") {
 					$ext->add($context, $exten, '', new ext_ringing(''));
+					$ext->add($context, $exten, '', new ext_setvar('__RINGINGSENT','TRUE'));
 				}
 
 				//Block collect Calls
@@ -1699,32 +1741,44 @@ function core_do_get_config($engine) {
 					$dnd_string = ($amp_conf['USEDEVSTATE'] && function_exists('donotdisturb_get_config')) ? "&Custom:DND".$exten['extension'] : '';
 					$presence_string = $amp_conf['AST_FUNC_PRESENCE_STATE'] ? ",CustomPresence:".$exten['extension'] : '';
 					$hint_string = (!empty($hint) ? $hint : '') . $dnd_string . $presence_string;
+					$astman->database_put("AMPUSER/".$exten['extension'],"hint",$hint_string);
 					if ($hint_string) {
+						//TODO: Lots of hints here. Can this be dynamic? No I dont think so
 						$ext->addHint('ext-local', $exten['extension'], $hint_string);
-						if ($intercom_code != '') {
-							$ext->addHint('ext-local', $intercom_code.$exten['extension'], $hint_string);
-						}
 					}
 				}
 
 				if ($exten['sipname']) {
 					$ext->add('ext-local', $exten['sipname'], '', new ext_goto('1',$item[0],'from-internal'));
 				}
-				// Now make a special context for the IVR inclusions of local extension dialing so that
-				// when people use the Queues breakout ability, and break out to someone's extensions, voicemail
-				// works.
-				//
-				$ivr_context = 'from-did-direct-ivr';
-				$ext->add($ivr_context, $exten['extension'],'', new ext_macro('blkvm-clr'));
-				$ext->add($ivr_context, $exten['extension'],'', new ext_setvar('__NODEST', ''));
-				$ext->add($ivr_context, $exten['extension'],'', new ext_goto('1',$exten['extension'],'from-did-direct'));
 			}
+
+			// Now make a special context for the IVR inclusions of local extension dialing so that
+			// when people use the Queues breakout ability, and break out to someone's extensions, voicemail
+			// works.
+			//
+			$ivr_context = 'from-did-direct-ivr';
+			$sql = "SELECT LENGTH(extension) as len FROM users GROUP BY len";
+			$sth = FreePBX::Database()->prepare($sql);
+			$sth->execute();
+			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+			foreach($rows as $row) {
+				$ext->add($ivr_context, '_'.str_repeat('X',$row['len']),'', new ext_macro('blkvm-clr'));
+				$ext->add($ivr_context, '_'.str_repeat('X',$row['len']),'', new ext_setvar('__NODEST', ''));
+				$ext->add($ivr_context, '_'.str_repeat('X',$row['len']),'', new ext_goto('1','${EXTEN}','from-did-direct'));
+			}
+
 			$ext->add('ext-local', 'vmret', '', new ext_gotoif('$["${IVR_RETVM}" = "RETURN" & "${IVR_CONTEXT}" != ""]','playret'));
 			$ext->add('ext-local', 'vmret', '', new ext_hangup(''));
 			$ext->add('ext-local', 'vmret', 'playret', new ext_playback('exited-vm-will-be-transfered&silence/1'));
 			$ext->add('ext-local', 'vmret', '', new ext_goto('1','return','${IVR_CONTEXT}'));
 
 			$ext->add('ext-local', 'h', '', new ext_macro('hangupcall'));
+		}
+
+		//$ext->addHint('ext-local', "_X.", $hint_string);
+		if ($intercom_code != '') {
+			$ext->addHint('ext-local', "_".$intercom_code."X.", '${DB(AMPUSER/${EXTEN:'.strlen($intercom_code).'}/hint)}');
 		}
 
 		/* Create the from-trunk-tech-chanelid context that can be used for inbound group counting
@@ -2233,14 +2287,13 @@ function core_do_get_config($engine) {
 	$ext->add('app-blackhole', 'no-service', '', new ext_playback('ss-noservice'));
 	$ext->add('app-blackhole', 'no-service', '', new ext_hangup());
 
-	if ($amp_conf['AMPBADNUMBER'] !== false) {
+	if ($amp_conf['AMPBADNUMBER']) {
 		$context = 'bad-number';
 		$exten = '_X.';
 		$ext->add($context, $exten, '', new extension('ResetCDR()'));
 		$ext->add($context, $exten, '', new extension('NoCDR()'));
 		$ext->add($context, $exten, '', new ext_progress());
 		$ext->add($context, $exten, '', new ext_wait('1'));
-		$ext->add($context, $exten, '', new ext_progress());
 		$ext->add($context, $exten, '', new ext_playback('silence/1&cannot-complete-as-dialed&check-number-dial-again,noanswer'));
 		$ext->add($context, $exten, '', new ext_wait('1'));
 		$ext->add($context, $exten, '', new ext_congestion('20'));
@@ -2866,7 +2919,7 @@ function core_do_get_config($engine) {
 	$ext->add($context, 'h', '', new ext_macro('hangupcall'));
 
 	$lang = 'en'; //English
-	$ext->add($context, $lang, 'hook_0', new ext_playback('im-sorry&an-error-has-occured&with&call-forwarding'));
+	$ext->add($context, $lang, 'hook_0', new ext_playback('im-sorry&an-error-has-occurred&with&call-forwarding'));
 	$ext->add($context, $lang, '', new ext_return());
 	$ext->add($context, $lang, 'hook_1', new ext_playback('beep&im-sorry&your&simul-call-limit-reached&goodbye'));
 	$ext->add($context, $lang, '', new ext_return());
@@ -3627,7 +3680,7 @@ function core_do_get_config($engine) {
 	$ext->add('macro-vm','adef','',new ext_gotoif('$["${RETVM}" = "RETURN"]','exit-RETURN,1'));
 	$ext->add('macro-vm','adef','',new ext_hangup(''));
 
-	$ext->add('macro-vm','exit-FAILED','',new ext_playback('im-sorry&an-error-has-occured'));
+	$ext->add('macro-vm','exit-FAILED','',new ext_playback('im-sorry&an-error-has-occurred'));
 	$ext->add('macro-vm','exit-FAILED','',new ext_gotoif('$["${RETVM}" = "RETURN"]','exit-RETURN,1'));
 	$ext->add('macro-vm','exit-FAILED','',new ext_hangup(''));
 
@@ -3671,18 +3724,18 @@ function core_do_get_config($engine) {
 	$macrodial = 'macrodial';
 	if ($intercom_code != '') {
 		if ($amp_conf['AST_FUNC_EXTENSION_STATE']) {
-			$ext->add($mcontext,$exten,'', new ext_noop_trace('AMPUSER: ${AMPUSER}, FROM_DID: ${FROM_DID}, answermode: ${DB(AMPUSER/${EXTTOCALL}/answermode)}, BLINDTXF: ${BLINDTRANSFER}, EXT_STATE: ${EXTENSION_STATE(${EXTTOCALL})}, CC_RECALL: ${CC_RECALL}'));
+			$ext->add($mcontext,$exten,'', new ext_noop_trace('AMPUSER: ${AMPUSER}, FROM_DID: ${FROM_DID}, FROM_QUEUE: $["${CUT(CHANNEL,@,2):5:5}"="queue"], answermode: ${DB(AMPUSER/${EXTTOCALL}/answermode)}, BLINDTXF: ${BLINDTRANSFER}, ATTTXF: ${ATTENDEDTRANSFER}, EXT_STATE: ${EXTENSION_STATE(${EXTTOCALL})}, CC_RECALL: ${CC_RECALL}'));
 			if ($amp_conf['FORCE_INTERNAL_AUTO_ANSWER_ALL']) {
-				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${AMPUSER}"=""|${LEN(${FROM_DID})}|${LEN(${BLINDTRANSFER})}|"${EXTENSION_STATE(${EXTTOCALL})}"!="NOT_INUSE"|"${CC_RECALL}"!=""]','macrodial'));
+				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${CUT(CHANNEL,@,2):5:5}"="queue"|"${AMPUSER}"=""|${LEN(${FROM_DID})}|${LEN(${BLINDTRANSFER})}|"${EXTENSION_STATE(${EXTTOCALL})}"!="NOT_INUSE"|"${CC_RECALL}"!=""]','macrodial'));
 			} else {
-				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${AMPUSER}"=""|${LEN(${FROM_DID})}|"${DB(AMPUSER/${EXTTOCALL}/answermode)}"!="intercom"|${LEN(${BLINDTRANSFER})}|"${EXTENSION_STATE(${EXTTOCALL})}"!="NOT_INUSE"|"${CC_RECALL}"!=""]','macrodial'));
+				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${CUT(CHANNEL,@,2):5:5}"="queue"|"${AMPUSER}"=""|${LEN(${FROM_DID})}|"${DB(AMPUSER/${EXTTOCALL}/answermode)}"!="intercom"|${LEN(${BLINDTRANSFER})}|"${EXTENSION_STATE(${EXTTOCALL})}"!="NOT_INUSE"|"${CC_RECALL}"!=""]','macrodial'));
 			}
 		} else {
-			$ext->add($mcontext,$exten,'', new ext_noop_trace('AMPUSER: ${AMPUSER}, FROM_DID: ${FROM_DID}, answermode: ${DB(AMPUSER/${EXTTOCALL}/answermode)}, BLINDTXF: ${BLINDTRANSFER}, CC_RECALL: ${CC_RECALL}'));
+			$ext->add($mcontext,$exten,'', new ext_noop_trace('AMPUSER: ${AMPUSER}, FROM_DID: ${FROM_DID}, FROM_QUEUE: $["${CUT(CHANNEL,@,2):5:5}"="queue"], answermode: ${DB(AMPUSER/${EXTTOCALL}/answermode)}, BLINDTXF: ${BLINDTRANSFER}, , ATTTXF: ${ATTENDEDTRANSFER}, CC_RECALL: ${CC_RECALL}'));
 			if ($amp_conf['FORCE_INTERNAL_AUTO_ANSWER_ALL']) {
-				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${AMPUSER}"=""|${LEN(${FROM_DID})}|${LEN(${BLINDTRANSFER})}]','macrodial'));
+				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${CUT(CHANNEL,@,2):5:5}"="queue"|"${AMPUSER}"=""|${LEN(${FROM_DID})}|${LEN(${BLINDTRANSFER})}]','macrodial'));
 			} else {
-				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${AMPUSER}"=""|${LEN(${FROM_DID})}|"${DB(AMPUSER/${EXTTOCALL}/answermode)}"!="intercom"|${LEN(${BLINDTRANSFER})}]','macrodial'));
+				$ext->add($mcontext,$exten,'',new ext_gotoif('$["${CUT(CHANNEL,@,2):5:5}"="queue"|"${AMPUSER}"=""|${LEN(${FROM_DID})}|"${DB(AMPUSER/${EXTTOCALL}/answermode)}"!="intercom"|${LEN(${BLINDTRANSFER})}]','macrodial'));
 			}
 		}
 		$ext->add($mcontext,$exten,'', new ext_set("INTERCOM_EXT_DOPTIONS", '${DIAL_OPTIONS}'));
@@ -3721,6 +3774,7 @@ function core_do_get_config($engine) {
 	$ext->add($mcontext,$exten,'docfu', new ext_execif('$["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="-1"|("${ARG1}"="novm"&"${ARG3}"="1")]', 'StackPop'));
 	$ext->add($mcontext,$exten,'', new ext_gotoif('$["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="-1"|("${ARG1}"="novm"&"${ARG3}"="1")]', 'from-internal,${DB(CFU/${EXTTOCALL})},1'));
 	$ext->add($mcontext,$exten,'', new ext_set("RTCF", '${IF($["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="0"]?${RT}:${DB(AMPUSER/${EXTTOCALL}/cfringtimer)})}'));
+	$ext->add($mcontext,$exten,'', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'DIAL_OPTIONS=${STRREPLACE(DIAL_OPTIONS,T)}I'));
 	$ext->add($mcontext,$exten,'', new ext_dial('Local/${DB(CFU/${EXTTOCALL})}@from-internal/n', '${RTCF},${DIAL_OPTIONS}'));
 	if ($amp_conf['DIVERSIONHEADER']) $ext->add($mcontext,$exten,'', new ext_set('__DIVERSION_REASON', ''));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
@@ -3730,6 +3784,7 @@ function core_do_get_config($engine) {
 	$ext->add($mcontext,$exten,'docfu', new ext_execif('$["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="-1"|("${ARG1}"="novm"&"${ARG4}"="1")]', 'StackPop'));
 	$ext->add($mcontext,$exten,'', new ext_gotoif('$["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="-1"|("${ARG1}"="novm"&"${ARG4}"="1")]', 'from-internal,${DB(CFB/${EXTTOCALL})},1'));
 	$ext->add($mcontext,$exten,'', new ext_set("RTCF", '${IF($["${DB(AMPUSER/${EXTTOCALL}/cfringtimer)}"="0"]?${RT}:${DB(AMPUSER/${EXTTOCALL}/cfringtimer)})}'));
+	$ext->add($mcontext,$exten,'', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'DIAL_OPTIONS=${STRREPLACE(DIAL_OPTIONS,T)}I'));
 	$ext->add($mcontext,$exten,'', new ext_dial('Local/${DB(CFB/${EXTTOCALL})}@from-internal/n', '${RTCF},${DIAL_OPTIONS}'));
 	if ($amp_conf['DIVERSIONHEADER']) $ext->add($mcontext,$exten,'', new ext_set('__DIVERSION_REASON', ''));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
@@ -3829,14 +3884,16 @@ function core_do_get_config($engine) {
 	$ext->add($mcontext,$exten,'', new ext_gotoif('$["${DB(AMPUSER/${CFUEXT}/device)}" = "" ]','chlocal'));
 	$ext->add($mcontext,$exten,'', new ext_dial('Local/${CFUEXT}@ext-local', '${RT},${DIAL_OPTIONS}'));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
-	$ext->add($mcontext,$exten,'chlocal', new ext_dial('Local/${CFUEXT}@from-internal/n', '${RT},${DIAL_OPTIONS}'));
+	$ext->add($mcontext,$exten,'chlocal', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'DIAL_OPTIONS=${STRREPLACE(DIAL_OPTIONS,T)}I'));
+	$ext->add($mcontext,$exten,'', new ext_dial('Local/${CFUEXT}@from-internal/n', '${RT},${DIAL_OPTIONS}'));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
 
 	$exten = 'docfb';
 	$ext->add($mcontext,$exten,'', new ext_gotoif('$["${DB(AMPUSER/${CFBEXT}/device)}" = "" ]','chlocal'));
 	$ext->add($mcontext,$exten,'', new ext_dial('Local/${CFBEXT}@ext-local', '${RT},${DIAL_OPTIONS}'));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
-	$ext->add($mcontext,$exten,'chlocal', new ext_dial('Local/${CFBEXT}@from-internal/n', '${RT},${DIAL_OPTIONS}'));
+	$ext->add($mcontext,$exten,'chlocal', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'DIAL_OPTIONS=${STRREPLACE(DIAL_OPTIONS,T)}I'));
+	$ext->add($mcontext,$exten,'', new ext_dial('Local/${CFBEXT}@from-internal/n', '${RT},${DIAL_OPTIONS}'));
 	$ext->add($mcontext,$exten,'', new ext_return(''));
 
 	/*
@@ -4018,36 +4075,14 @@ function core_do_get_config($engine) {
 	include 'functions.inc/macro-dial-one.php';
 	include 'functions.inc/func-sipheaders.php';
 	break;
-}
+	}
 }
 
 /* begin page.ampusers.php functions */
 
 function core_ampusers_add($username, $password, $extension_low, $extension_high, $deptname, $sections) {
-	global $db;
-
-	$username = $db->escapeSimple($username);
-	$password = $db->escapeSimple($password);
-	$extension_low = $db->escapeSimple($extension_low);
-	$extension_high = $db->escapeSimple($extension_high);
-	$deptname = $db->escapeSimple($deptname);
-	$sections = $db->escapeSimple(implode(";",$sections));
-
-	$sql = "INSERT INTO ampusers (username, password_sha1, extension_low, extension_high, deptname, sections) VALUES (";
-	$sql .= "'".$username."',";
-	if (strlen($password) == 40) {
-		// It's already a hash
-		$sql .= "'".$password."',";
-	} else {
-		// Hash it.
-		$sql .= "'".sha1($password)."',";
-	}
-	$sql .= "'".$extension_low."',";
-	$sql .= "'".$extension_high."',";
-	$sql .= "'".$deptname."',";
-	$sql .= "'".$sections."');";
-
-	sql($sql,"query");
+	_core_backtrace();
+	return \FreePBX::Core()->addAMPUser($username, $password, $extension_low, $extension_high, $deptname, $sections);
 }
 
 function core_ampusers_del($username) {
@@ -4153,15 +4188,15 @@ function core_devices_list($tech="all",$detail=false,$get_all=false) {
 	}
 	switch (strtoupper($tech)) {
 		case "IAX":
-		$sql .= " WHERE tech = 'iax2'";
-		break;
+			$sql .= " WHERE tech = 'iax2'";
+			break;
 		case "IAX2":
 		case "SIP":
 		case "ZAP":
 		case "DAHDI":
 		case 'CUSTOM':
-		$sql .= " WHERE tech = '".strtolower($tech)."'";
-		break;
+			$sql .= " WHERE tech = '".strtolower($tech)."'";
+			break;
 		case "ALL":
 		default:
 	}
@@ -4169,8 +4204,8 @@ function core_devices_list($tech="all",$detail=false,$get_all=false) {
 	$results = sql($sql,"getAll",DB_FETCHMODE_ASSOC);
 
 	$extens = null;
-	foreach($results as $result){
-		if ($get_all || checkRange($result['id'])){
+	foreach ($results as $result) {
+		if ($get_all || checkRange($result['id'])) {
 
 			$record = array();
 			$record[0] = $result['id'];  // for backwards compatibility
@@ -4181,15 +4216,15 @@ function core_devices_list($tech="all",$detail=false,$get_all=false) {
 			$extens[] = $record;
 			/*
 			$extens[] = array(
-			0=>$result[0],  // for backwards compatibility
-			1=>$result[1],
-			'id'=>$result[0], // FETCHMODE_ASSOC emulation
-			'description'=>$result[1],
-		);
-		*/
+				0=>$result[0],  // for backwards compatibility
+				1=>$result[1],
+				'id'=>$result[0], // FETCHMODE_ASSOC emulation
+				'description'=>$result[1],
+			);
+			*/
+		}
 	}
-}
-return $extens;
+	return $extens;
 }
 
 // get a mapping of the devices to user description and vmcontext
@@ -4202,10 +4237,14 @@ function core_devices_get_user_mappings() {
 	if (isset($devices)) {
 		return $devices;
 	}
-	foreach (core_devices_list("all",'full', true) as $device) {
+	$device_list = core_devices_list("all",'full', true);
+	$device_list = is_array($device_list)?$device_list:array();
+	foreach ($device_list as $device) {
 		$devices[$device['id']] = $device;
 	}
-	foreach (core_users_list(true) as $user) {
+	$user_list = core_users_list(true);
+	$user_list = is_array($user_list)?$user_list:array();
+	foreach ($user_list as $user) {
 		$users[$user[0]]['description'] = $user[1];
 		$users[$user[0]]['vmcontext'] = $user[2];
 	}
@@ -4543,7 +4582,7 @@ function core_check_destinations($dest=true) {
 		$destlist[] = array(
 			'dest' => $thisdest,
 			'description' => sprintf(_("Inbound Route: %s (%s)"),$result['description'],$thisid),
-			'edit_url' => 'config.php?display=did&extdisplay='.urlencode($thisid),
+			'edit_url' => 'config.php?display=did&view=form&extdisplay='.urlencode($thisid),
 		);
 	}
 
@@ -5891,12 +5930,6 @@ function core_users_configpageinit($dispnum) {
 		$currentcomponent->addoptlistitem('callwaiting', 'disabled', _("Disable"));
 		$currentcomponent->setoptlistopts('callwaiting', 'sort', false);
 
-		if (function_exists('paging_get_config')) {
-			$currentcomponent->addoptlistitem('answermode', 'disabled', _("Disable"));
-			$currentcomponent->addoptlistitem('answermode', 'intercom', _("Intercom"));
-			$currentcomponent->setoptlistopts('answermode', 'sort', false);
-		}
-
 		$currentcomponent->addoptlistitem('pinless', 'disabled', _("Disable"));
 		$currentcomponent->addoptlistitem('pinless', 'enabled', _("Enable"));
 		$currentcomponent->setoptlistopts('pinless', 'sort', false);
@@ -5958,7 +5991,9 @@ function core_users_configpageload() {
 	$action = isset($_REQUEST['action'])?$_REQUEST['action']:null;
 	$extdisplay = isset($_REQUEST['extdisplay'])?$_REQUEST['extdisplay']:null;
 	$tech_hardware = isset($_REQUEST['tech_hardware'])?$_REQUEST['tech_hardware']:null;
-
+	if(!checkRange($extdisplay)){
+		return;
+	}
 	if ( $action == 'del' ) { // Deleted
 
 		$currentcomponent->addguielem('_top', new gui_subheading('del', $extdisplay.' '._("deleted"), false));
@@ -6028,7 +6063,7 @@ function core_users_configpageload() {
 		$msgInvalidCIDNum = _("Please enter a valid CallerID Number or leave it blank for your Assigned DID/CID pair");
 
 		// This is the actual gui stuff
-		$currentcomponent->addguielem('_top', new gui_hidden('action', ($extdisplay ? 'edit' : 'add')));
+		$currentcomponent->addguielem('_top', new gui_hidden('action', ((isset($extdisplay) && trim($extdisplay) !== '') ? 'edit' : 'add')));
 		$currentcomponent->addguielem('_top', new gui_hidden('extdisplay', $extdisplay));
 
 		if ( $display == 'extensions' ) {
@@ -6086,7 +6121,7 @@ function core_users_configpageload() {
 		if ($display == 'users' && trim($extdisplay != '')) {
 			$section = _("User Devices");
 			$device_list = core_devices_list('all','full');
-
+			$device_list = is_array($device_list)?$device_list:array();
 			usort($device_list,'dev_grp');
 
 			$link_count = 0;
@@ -6139,10 +6174,6 @@ function core_users_configpageload() {
 		$currentcomponent->addguielem($section, new gui_selectbox('concurrency_limit', $currentcomponent->getoptlist('concurrency_limit'), $concurrency_limit, _("Outbound Concurrency Limit"), _("Maximum number of outbound simultaneous calls that an extension can make. This is also very useful as a Security Protection against a system that has been compromised. It will limit the number of simultaneous calls that can be made on the compromised extension."), false), $category);
 
 		$currentcomponent->addguielem($section, new gui_radio('callwaiting', $currentcomponent->getoptlist('callwaiting'), $callwaiting, _("Call Waiting"), _("Set the initial/current Call Waiting state for this user's extension"), false,'','',false),$category);
-		if (function_exists('paging_get_config')) {
-			$answermode = isset($answermode) ? $answermode : $amp_conf['DEFAULT_INTERNAL_AUTO_ANSWER'];
-			$currentcomponent->addguielem($section, new gui_radio('answermode', $currentcomponent->getoptlist('answermode'), $answermode, _("Internal Auto Answer"), _("When set to Intercom, calls to this extension/user from other internal users act as if they were intercom calls meaning they will be auto-answered if the endpoint supports this feature and the system is configured to operate in this mode. All the normal white list and black list settings will be honored if they are set. External calls will still ring as normal, as will certain other circumstances such as blind transfers and when a Follow Me is configured and enabled. If Disabled, the phone rings as a normal phone."), false, '','',false), $category);
-		}
 		$currentcomponent->addguielem($section, new gui_selectbox('call_screen', $currentcomponent->getoptlist('call_screen'), $call_screen, _("Call Screening"),_("Call Screening requires external callers to say their name, which will be played back to the user and allow the user to accept or reject the call.  Screening with memory only verifies a caller for their CallerID once. Screening without memory always requires a caller to say their name. Either mode will always announce the caller based on the last introduction saved with that CallerID. If any user on the system uses the memory option, when that user is called, the caller will be required to re-introduce themselves and all users on the system will have that new introduction associated with the caller's CallerID."), false), $category);
 		$pinless = isset($pinless) ? $pinless : "disabled";
 		$currentcomponent->addguielem($section, new gui_radio('pinless', $currentcomponent->getoptlist('pinless'), $pinless, _("Pinless Dialing"), _("Enabling Pinless Dialing will allow this extension to bypass any pin codes normally required on outbound calls"), false, '','',false), $category);
@@ -6161,7 +6192,7 @@ function core_users_configpageload() {
 
 				$did_title = ($did['description'] != '') ? $did['description'] : _("DID / CID");
 
-				$addURL = '?display=did&&extdisplay='.$did['extension'].'/'.$did['cidnum'];
+				$addURL = '?display=did&view=form&extdisplay='.urlencode($did['extension'].'/'.$did['cidnum']);
 				$did_icon = 'images/email_edit.png';
 				$did_label = trim($did['extension']) == '' ? ' '._("Any DID") : ' '.$did['extension'];
 				if (trim($did['cidnum']) != '') {
@@ -6289,7 +6320,6 @@ function core_users_configprocess() {
 
 function core_devices_configpageinit($dispnum) {
 	global $currentcomponent, $amp_conf;
-
 	if ( $dispnum == 'devices' || $dispnum == 'extensions' ) {
 		// Option lists used by the gui
 		$currentcomponent->addoptlistitem('devicetypelist', 'fixed', _("Fixed"));
@@ -6297,7 +6327,6 @@ function core_devices_configpageinit($dispnum) {
 		$currentcomponent->setoptlistopts('devicetypelist', 'sort', false);
 
 		$currentcomponent->addoptlistitem('deviceuserlist', 'none', _("none"));
-		$currentcomponent->addoptlistitem('deviceuserlist', 'new', _("New User"));
 		$users = core_users_list();
 		if (isset($users)) {
 			foreach ($users as $auser) {
@@ -6350,7 +6379,7 @@ function core_devices_configpageload() {
 				$currentcomponent->addguielem('_top', new gui_link('del', $label, $delURL, true, false), 0);
 
 				if ($deviceInfo['device_user'] != 'none') {
-					$editURL = '?display=users&skip=0&extdisplay='.$deviceInfo['user'];
+					$editURL = '?display=users&skip=0&extdisplay='.urlencode($deviceInfo['user']);
 					$tlabel =  $deviceInfo['devicetype'] == 'adhoc' ? sprintf(_("Edit Default User: %s"),$deviceInfo['user']) : sprintf(_("Edit Fixed User: %s"),$deviceInfo['user']);
 					$label = '<span><img width="16" height="16" border="0" title="'.$tlabel.'" alt="" src="images/user_edit.png"/>&nbsp;'.$tlabel.'</span>';
 					$currentcomponent->addguielem('_top', new gui_link('edit_user', $label, $editURL, true, false), 0);
@@ -6389,20 +6418,20 @@ function core_devices_configpageload() {
 		$msgInvalidExtNum = _("Please enter a valid extension number.");
 
 		// Actual gui
-		$currentcomponent->addguielem('_top', new gui_hidden('action', ($extdisplay ? 'edit' : 'add')));
+		$currentcomponent->addguielem('_top', new gui_hidden('action', ((isset($extdisplay) && trim($extdisplay) !== '') ? 'edit' : 'add')));
 		$currentcomponent->addguielem('_top', new gui_hidden('extdisplay', $extdisplay));
 
 		if ( $display != 'extensions' ) {
-			$section = _("Device Info");
+			$section = ($extdisplay ? _("Edit User") : _("Add User"));
 			if ( $extdisplay ) { // Editing
-				$currentcomponent->addguielem($section, new gui_hidden('deviceid', $extdisplay));
+				$currentcomponent->addguielem($section, new gui_hidden('deviceid', $extdisplay),"general");
 			} else { // Adding
-				$currentcomponent->addguielem($section, new gui_textbox('deviceid', $extdisplay, _("Device ID"), _("Give your device a unique integer ID.  The device will use this ID to authenticate to the system."), '!isInteger()', $msgInvalidDevID, false));
+				$currentcomponent->addguielem($section, new gui_textbox('deviceid', $extdisplay, _("Device ID"), _("Give your device a unique integer ID.  The device will use this ID to authenticate to the system."), '!isInteger()', $msgInvalidDevID, false),"general");
 			}
-			$currentcomponent->addguielem($section, new gui_textbox('description', $devinfo_description, _("Description"), _("The CallerID name for this device will be set to this description until it is logged into."), '!isUnicodeLetter() || isWhitespace()', $msgInvalidDevDesc, false));
-			$currentcomponent->addguielem($section, new gui_textbox('emergency_cid', $devinfo_emergency_cid, _("Emergency CID"), _("This CallerID will always be set when dialing out an Outbound Route flagged as Emergency.  The Emergency CID overrides all other CallerID settings."), '!isCallerID()', $msgInvalidEmergCID));
-			$currentcomponent->addguielem($section, new gui_selectbox('devicetype', $currentcomponent->getoptlist('devicetypelist'), $devinfo_devicetype, _("Device Type"), _("Devices can be fixed or adhoc. Fixed devices are always associated to the same extension/user. Adhoc devices can be logged into and logged out of by users.").' '.$fc_logon.' '._("logs into a device.").' '.$fc_logoff.' '._("logs out of a device."), false));
-			$currentcomponent->addguielem($section, new gui_selectbox('deviceuser', $currentcomponent->getoptlist('deviceuserlist'), $devinfo_user, _("Default User"), _("Fixed devices will always mapped to this user.  Adhoc devices will be mapped to this user by default.<br><br>If selecting 'New User', a new User Extension of the same Device ID will be set as the Default User."), false));
+			$currentcomponent->addguielem($section, new gui_textbox('description', $devinfo_description, _("Description"), _("The CallerID name for this device will be set to this description until it is logged into."), '!isUnicodeLetter() || isWhitespace()', $msgInvalidDevDesc, false),"general");
+			$currentcomponent->addguielem($section, new gui_selectbox('devicetype', $currentcomponent->getoptlist('devicetypelist'), $devinfo_devicetype, _("Device Type"), _("Devices can be fixed or adhoc. Fixed devices are always associated to the same extension/user. Adhoc devices can be logged into and logged out of by users.").' '.$fc_logon.' '._("logs into a device.").' '.$fc_logoff.' '._("logs out of a device."), false),"general");
+			$currentcomponent->addguielem($section, new gui_selectbox('deviceuser', $currentcomponent->getoptlist('deviceuserlist'), $devinfo_user, _("Default User"), _("Fixed devices will always mapped to this user.  Adhoc devices will be mapped to this user by default.<br><br>If selecting 'New User', a new User Extension of the same Device ID will be set as the Default User."), false),"general");
+			$currentcomponent->addguielem($section, new gui_textbox('emergency_cid', $devinfo_emergency_cid, _("Emergency CID"), _("This CallerID will always be set when dialing out an Outbound Route flagged as Emergency.  The Emergency CID overrides all other CallerID settings."), '!isCallerID()', $msgInvalidEmergCID),"advanced");
 		} else {
 			$section = _("Extension Options");
 			$currentcomponent->addguielem($section, new gui_textbox('emergency_cid', $devinfo_emergency_cid, _("Emergency CID"), _("This CallerID will always be set when dialing out an Outbound Route flagged as Emergency.  The Emergency CID overrides all other CallerID settings."), '!isCallerID()', $msgInvalidEmergCID),"advanced");
@@ -6517,7 +6546,7 @@ function core_devices_configprocess() {
 		if (!isset($GLOBALS['abort']) || $GLOBALS['abort'] !== true || !$_SESSION["AMP_user"]->checkSection('999')) {
 			if (core_devices_add($deviceid,$tech,$devinfo_dial,$devicetype,$deviceuser,$description,$emergency_cid)) {
 				needreload();
-				if ($deviceuser != 'new') {
+				if ($deviceuser == 'new') {
 					//redirect_standard_continue();
 				}
 			}

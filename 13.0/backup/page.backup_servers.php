@@ -24,7 +24,8 @@ $get_vars = array(
 				'bucket'		=> '',
 				'awsaccesskey'		=> '',
 				'awssecret'		=> '',
-				'type'			=> ''
+				'type'			=> '',
+				'fstype' => ''
 				);
 isset($_REQUEST['bucket'])?$_REQUEST['name'] = $_REQUEST['bucket']:'';
 foreach ($get_vars as $k => $v) {
@@ -93,3 +94,5 @@ $heading = _("Servers");
 		</div>
 	</div>
 </div>
+</br>
+</br>

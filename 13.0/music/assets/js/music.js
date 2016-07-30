@@ -27,31 +27,40 @@ $("#moheditform").submit(function(e) {
 	data.application = $("#application").val();
 	data.erand = $("input[name=erand]:checked").val();
 	data.codecs = [];
-	$(".codec:checked").each(function() {
-		data.codecs.push($(this).val());
-	});
-
-	if($("#type").val() == "custom" || confirm(_("If you are doing media conversions this can take a very long time, is that ok?"))) {
-		$("#action-buttons input").prop("disabled",true);
-		$.ajax({
-			type: 'POST',
-			url: "ajax.php",
-			data: data,
-			dataType: 'json',
-			timeout: 240000
-		}).done(function(data) {
-			if(data.status) {
-				window.location = "?display=music";
-			} else {
-				alert(data.message);
-				console.log(data.errors);
-			}
-		}).fail(function() {
-			alert(_("An Error occurred trying to submit this document"));
-		}).always(function() {
-			$("#action-buttons input").prop("disabled", false);
+	if($("input[type=checkbox].codec").length > 0) {
+		$("input[type=checkbox].codec:checked").each(function() {
+			data.codecs.push($(this).val());
+		});
+	} else {
+		$("input[type=hidden].codec").each(function() {
+			data.codecs.push($(this).val());
 		});
 	}
+
+
+	if(display_mode == "advanced" && $("#type").val() != "custom" && !confirm(_("If you are doing media conversions this can take a very long time, is that ok?"))) {
+		return false;
+	}
+
+	$("#action-buttons input").prop("disabled",true);
+	$.ajax({
+		type: 'POST',
+		url: "ajax.php",
+		data: data,
+		dataType: 'json',
+		timeout: 240000
+	}).done(function(data) {
+		if(data.status) {
+			window.location = "?display=music";
+		} else {
+			alert(data.message);
+			console.log(data.errors);
+		}
+	}).fail(function() {
+		alert(_("An Error occurred trying to submit this document"));
+	}).always(function() {
+		$("#action-buttons input").prop("disabled", false);
+	});
 });
 
 $(document).on("keyup paste", ".name-check", function(e) {
@@ -93,7 +102,7 @@ function playFormatter(val,row){
 			'<div class="jp-gui jp-interface">'+
 				'<div class="jp-controls">'+
 					'<i class="fa fa-play jp-play"></i>'+
-					'<i class="fa fa-repeat jp-repeat"></i>'+
+					'<i class="fa fa-undo jp-restart"></i>'+
 				'</div>'+
 				'<div class="jp-progress">'+
 					'<div class="jp-seek-bar progress">'+
@@ -170,6 +179,7 @@ $('#fileupload').fileupload({
 			}
 		});
 		if(submit) {
+			$("#upload-progress .progress-bar").addClass("progress-bar-striped active");
 			data.submit();
 		}
 	},
@@ -181,6 +191,8 @@ $('#fileupload').fileupload({
 	change: function (e, data) {
 	},
 	done: function (e, data) {
+		$("#upload-progress .progress-bar").removeClass("progress-bar-striped active");
+		$("#upload-progress .progress-bar").css("width", "0%");
 		if(data.result.status) {
 			$('#musicgrid').bootstrapTable('refresh',{
 				silent: true
@@ -225,7 +237,7 @@ function bindPlayers() {
 								if(data.status) {
 									player.on($.jPlayer.event.error, function(event) {
 										$(container).removeClass("jp-state-loading");
-										console.log(event);
+										console.warn(event);
 									});
 									player.one($.jPlayer.event.canplay, function(event) {
 										$(container).removeClass("jp-state-loading");
@@ -238,6 +250,14 @@ function bindPlayers() {
 								}
 							}
 						});
+					}
+				});
+				var $this = this;
+				$(container).find(".jp-restart").click(function() {
+					if($($this).data("jPlayer").status.paused) {
+						$($this).jPlayer("pause",0);
+					} else {
+						$($this).jPlayer("play",0);
 					}
 				});
 			},
@@ -320,4 +340,8 @@ $(document).on("click", ".delMusic", function() {
 			alert(data.message);
 		}
 	});
+});
+
+$("table").on("post-body.bs.table", function () {
+	positionActionBar();
 });

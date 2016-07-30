@@ -49,4 +49,44 @@ class Callwaiting implements BMO {
 		}
 		return $ret;
 	}
+	public function bulkhandlerGetHeaders($type) {
+		switch ($type) {
+			case 'extensions':
+				$headers = array(
+					'callwaiting_enable' => array(
+						'identifier' => _('Call Waiting Enabled'),
+						'description' => _('Call Waiting Enabled: ENABLED to enable, blank to disable'),
+					),
+				);
+				return $headers;
+			break;
+		}
+	}
+	public function bulkhandlerExport($type) {
+		$data = NULL;
+		switch ($type) {
+			case 'extensions':
+			$data = array();
+			$extens = $this->getAllStatuses();
+			foreach ($extens as $key => $value) {
+				$ext = substr($key,4);
+				$data[$ext] = array('callwaiting_enable' => $value);
+			}
+			break;
+		}
+		return $data;
+	}
+	public function bulkhandlerImport($type,$rawData, $replaceExisting = true){
+		switch ($type) {
+			case 'extensions':
+				foreach ($rawData as $data) {
+					if(isset($data['callwaiting_enable'])) {
+						$curVal = trim($data['callwaiting_enable']);
+						$curVal = empty($curVal)?'':'ENABLED';
+						$this->setStatusByExtension($data['extension'], $curVal);
+					}
+				}
+			break;
+		}
+	}
 }

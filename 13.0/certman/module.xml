@@ -2,7 +2,7 @@
 	<rawname>certman</rawname>
 	<name>Certificate Manager</name>
 	<repo>standard</repo>
-	<version>13.0.12</version>
+	<version>13.0.28.1</version>
 	<publisher>Ringfree</publisher>
 	<license>AGPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
@@ -13,6 +13,23 @@
 		Certificate Manager for Asterisk. Used for TLS, DTLS connection (think WebRTC and secure traffic)
 	</description>
 	<changelog>
+		*13.0.28.1* Ringfree branch
+		*13.0.28* Better support of certificates with chains
+		*13.0.27* Fix user errors
+		*13.0.26* Prevent blank hostnames
+		*13.0.25* FREEPBX-12627 a valid hostname is required
+		*13.0.24* Fix error with automatic updating, FREEPBX-12543
+		*13.0.23* FREEPBX-12407 require newer version of framework for sha256
+		*13.0.22* FREEPBX-12446 make sure certificates are readable before parsing
+		*13.0.21* FREEPBX-12355 firewall integration
+		*13.0.20* Reload asterisk when a Lets Encrypt cert updates
+		*13.0.19* FREEPBX-12236 Woops error in update certificate manager
+		*13.0.18* Dont delete CSR after successful import
+		*13.0.17* Dont abort out when the certificate is invalid
+		*13.0.16* Write out certificates for DTLS even if they dont have a CA
+		*13.0.15* Get old cert data when updating for comparision sakes
+		*13.0.14* Significantly change how this module works
+		*13.0.13* Remove en_US Translations
 		*13.0.12* FREEPBX-10468 invalid mapping col
 		*13.0.11* Floating menu
 		*13.0.10* FREEPBX-10562 Poorly written hooks
@@ -40,8 +57,8 @@
 	<depends>
 		<phpversion>5.3.3</phpversion>
 		<module>core ge 12.0.1beta6</module>
-		<version>13.0.1beta3.46</version>
+		<version>13.0.130</version>
 	</depends>
-	<location>release/13.0/certman-13.0.12.tgz</location>
-	<md5sum>1adabb3e99d35d9324f5681fb633f682</md5sum>
+	<location>release/13.0/certman-13.0.28.1.tgz</location>
+	<md5sum></md5sum>
 </module>

@@ -15,74 +15,87 @@
 #
 # Copyright (C) 2009 Séverine GUTIERREZ, severine@medialsace.fr
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-01 15:09-0700\n"
-"PO-Revision-Date: 2009-04-15 22:43+0100\n"
-"Last-Translator: Séverine GUTIERREZ <severine@medialsace.fr>\n"
-"Language-Team: Français <LL@li.org>\n"
+"POT-Creation-Date: 2016-03-01 12:11-0800\n"
+"PO-Revision-Date: 2016-02-04 23:04+0200\n"
+"Last-Translator: Nicolas Riendeau <freepbx@riendeau.org>\n"
+"Language-Team: French <http://weblate.freepbx.org/projects/freepbx/phonebook/"
+"fr_FR/>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 2.2-dev\n"
 
 #: page.phonebook.php:32
 msgid "Actions"
-msgstr ""
+msgstr "Actions"
 
 #: page.phonebook.php:21
 msgid "Add Phonebook Entry"
-msgstr ""
+msgstr "Ajouter une entrée d'annuaire"
 
 #: page.phonebook.php:42
 msgid "Add or replace entry"
 msgstr "Ajouter ou remplacer une entrée"
 
-#: page.phonebook.php:180
-msgid "Browse"
+#: phonebook.i18n.php:6 phonebook.i18n.php:12
+msgid "Admin"
 msgstr ""
 
-#: Phonebook.class.php:89
+#: phonebook.i18n.php:10
+msgid "Asterisk Phonebook"
+msgstr "Annuaire Asterisk"
+
+#: page.phonebook.php:181
+msgid "Browse"
+msgstr "Parcourir"
+
+#: Phonebook.class.php:90
 msgid "Delete"
 msgstr "Supprimer"
 
 #: page.phonebook.php:22
 msgid "Empty Phonebook"
-msgstr "Vider l'Annuaire"
+msgstr "Vider l'annuaire"
 
-#: page.phonebook.php:116
+#: page.phonebook.php:117
 msgid ""
 "Enter a speed dial code<br/>Speeddial module is required to use speeddial "
 "codes"
 msgstr ""
 "Entrez un code de numérotation abrégée<br/>Le module de numérotation abrégée "
-"(Speddial) est requis pour utiliser les codes de numérotation abrégée."
+"(Speeddial) est requis pour utiliser les codes de numérotation abrégée"
 
-#: page.phonebook.php:68
+#: page.phonebook.php:69
 msgid "Enter the name"
 msgstr "Entrez le nom"
 
-#: page.phonebook.php:92
+#: page.phonebook.php:93
 msgid ""
 "Enter the number (For CallerID lookup to work it should match the CallerID "
 "received from network)"
 msgstr ""
+"Entrez le numéro (pour que la recherche soit fructueuse, l'ID appelant doit "
+"être le même que celui reçu du réseau)"
 
 #: page.phonebook.php:23
 msgid "Export Phonebook"
-msgstr ""
+msgstr "Exporter annuaire"
 
-#: page.phonebook.php:175
+#: page.phonebook.php:176
 msgid "File"
-msgstr ""
+msgstr "Fichier"
 
 #: page.phonebook.php:24
 msgid "Import Phonebook"
-msgstr ""
+msgstr "Importer annuaire"
 
-#: page.phonebook.php:190
+#: page.phonebook.php:191
 msgid ""
 "Import a CSV File formatted as follows:<br/>\"Name\";Number;Speeddial<br /> "
 "Names should be enclosed by '\"' and fields separated by ';' <br /><br /> "
@@ -92,67 +105,77 @@ msgstr ""
 "Numérotation abrégée<br /> Les noms doivent être encadrés de '\"' et les "
 "champs séparés par ';' <br /><br/> Exemple :<br/>\"John Doe\";12345678;123"
 
-#: page.phonebook.php:161
+#: page.phonebook.php:162
 msgid "Import from CSV"
 msgstr "Importer d'un fichier CSV"
 
-#: page.phonebook.php:30 page.phonebook.php:56
+#: page.phonebook.php:30 page.phonebook.php:57
 msgid "Name"
 msgstr "Nom"
 
-#: page.phonebook.php:135
+#: page.phonebook.php:136
 msgid "No"
-msgstr ""
+msgstr "Non"
 
-#: page.phonebook.php:29 page.phonebook.php:80
+#: page.phonebook.php:29 page.phonebook.php:81
 msgid "Number"
 msgstr "Numéro"
 
-#: page.phonebook.php:11
+#: page.phonebook.php:11 phonebook.i18n.php:4
 msgid "Phonebook"
 msgstr "Annuaire"
 
-#: page.phonebook.php:216
+#: page.phonebook.php:217
 msgid "Please enter a valid Name"
 msgstr "Entrez un nom valide"
 
-#: page.phonebook.php:215
+#: page.phonebook.php:216
 msgid "Please enter a valid Number"
 msgstr "Entrez un numéro valide"
 
-#: page.phonebook.php:217
+#: page.phonebook.php:218
 msgid "Please enter a valid Speeddial code or leave it empty when generatingß"
 msgstr ""
+"S'il vous plaît entrez un code de numérotation abrégée valide lors de la "
+"génération"
 
-#: Phonebook.class.php:94
-msgid "Reset"
+#: phonebook.i18n.php:8
+msgid ""
+"Provides a phonebook which can be used as base for Caller ID Lookup and "
+"Speed Dial"
 msgstr ""
 
-#: page.phonebook.php:143
+#: Phonebook.class.php:95
+msgid "Reset"
+msgstr "Réinitialiser"
+
+#: page.phonebook.php:144
 msgid "Select Yes to have a speed dial created automatically for this number"
 msgstr ""
+"Choisissez Oui pour avoir un code de numérotation abrégée créé "
+"automatiquement pour ce numéro"
 
-#: page.phonebook.php:128
+#: page.phonebook.php:129
 msgid "Set Speed Dial"
-msgstr ""
+msgstr "Assigner une numérotation abrégée"
 
-#: page.phonebook.php:104
+#: page.phonebook.php:105
 msgid "Speed Dial Code"
-msgstr ""
+msgstr "Code de numérotation abrégée"
 
 #: page.phonebook.php:31
 msgid "Speeddial"
-msgstr ""
+msgstr "Numérotation abrégée"
 
-#: Phonebook.class.php:99
+#: Phonebook.class.php:100
 msgid "Submit"
-msgstr ""
+msgstr "Soumettre"
 
-#: page.phonebook.php:148
+#: page.phonebook.php:149
 msgid "Submit Changes"
-msgstr "Appliquer les modifications"
+msgstr "Soumettre les changements"
 
-#: page.phonebook.php:196
+#: page.phonebook.php:197
 msgid "Upload"
 msgstr "Upload"
 
@@ -161,10 +184,12 @@ msgid ""
 "Use this module to create system wide speed dial numbers that can be dialed "
 "from any phone."
 msgstr ""
+"Utilisez ce module pour créer des codes de numérotation abrégée qui peuvent "
+"être appelés de n'importe quel téléphone du système."
 
-#: page.phonebook.php:133
+#: page.phonebook.php:134
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 #~ msgid "Please enter a valid Speeddial code or leave it empty"
 #~ msgstr "Entrez un code de numérotation abrégée valide ou laissez vide"
@@ -174,9 +199,6 @@ msgstr ""
 
 #~ msgid "Are you sure you want to empty your phonebook ?"
 #~ msgstr "Êtes-vous sûr de vouloir vider votre annuaire ?"
-
-#~ msgid "Asterisk Phonebook"
-#~ msgstr "Annuaire Asterisk"
 
 #~ msgid "Check to have a speed dial created automatically for this number"
 #~ msgstr ""

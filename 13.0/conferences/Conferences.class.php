@@ -105,17 +105,58 @@ class Conferences extends \FreePBX_Helpers implements BMO {
 
 
 	public function install() {
-		$sql = "CREATE TABLE IF NOT EXISTS `meetme` ( `exten` VARCHAR( 50 ) NOT NULL , `options` VARCHAR( 15 ) ,
-				`userpin` VARCHAR( 50 ) , `adminpin` VARCHAR( 50 ) , `description` VARCHAR( 50 ) ,
-				`joinmsg_id` INTEGER, `music` VARCHAR(80), `users` TINYINT DEFAULT 0, `language` VARCHAR(10) NOT NULL DEFAULT '') ";
-		$this->db->query($sql);
 
-		global $db;
-		if (!$db->getAll('SHOW COLUMNS FROM meetme WHERE FIELD = "language"')) {
-			out(_("Adding language column"));
-			$sql = "ALTER TABLE `meetme` ADD COLUMN `language` varchar (10) NOT NULL DEFAULT ''";
-			$result = $db->query($sql);
-		}
+		$table = $this->FreePBX->Database->migrate("meetme");
+		$cols = array(
+			"exten" => array(
+				"type" => "string",
+				"length" => 50,
+				"primaryKey" => true
+			),
+			"options" => array(
+				"type" => "string",
+				"length" => 15,
+				"notnull" => false,
+			),
+			"userpin" => array(
+				"type" => "string",
+				"length" => 50,
+				"notnull" => false,
+			),
+			"adminpin" => array(
+				"type" => "string",
+				"length" => 50,
+				"notnull" => false,
+			),
+			"description" => array(
+				"type" => "string",
+				"length" => 50,
+				"notnull" => false,
+			),
+			"joinmsg_id" => array(
+				"type" => "integer",
+				"notnull" => false,
+			),
+			"music" => array(
+				"type" => "string",
+				"length" => 80,
+				"notnull" => false,
+			),
+			"users" => array(
+				"type" => "smallint",
+				"unsigned" => false,
+				"default" => 0,
+				"notnull" => false
+			),
+			"language" => array(
+				"type" => "string",
+				"length" => 10,
+				"default" => "",
+			),
+		);
+		$table->modify($cols);
+		unset($table);
+
 		//Migrate bad option
 		$confs = $this->listConferences();
 		if (!is_array($confs)) {
@@ -214,9 +255,13 @@ class Conferences extends \FreePBX_Helpers implements BMO {
 	 * @param {string} $music        MOH to play on hold
 	 * @param {int} $users
 	 */
-	public function addConference($room,$name,$userpin,$adminpin,$options,$joinmsg_id = null,$music = '',$users = 0,$language='') {
+	public function addConference($room,$name,$userpin,$adminpin,$options,$joinmsg_id = NULL,$music = '',$users = 0,$language='') {
 		$sql = "INSERT INTO meetme (exten,description,userpin,adminpin,options,joinmsg_id,music,users,language) values (?,?,?,?,?,?,?,?,?)";
 		$sth = $this->db->prepare($sql);
+		/* fixup joinmsg_id to be NULL, not an empty string */
+		if ($joinmsg_id == '') {
+			$joinmsg_id = NULL;
+		}
 		$sth->execute(array($room,$name,$userpin,$adminpin,$options,$joinmsg_id,$music,$users,$language));
 		$language = !is_null($language) ? $language : "";
 		$this->astman->database_put('CONFERENCE/'.$room,'language',$language);
@@ -334,27 +379,28 @@ class Conferences extends \FreePBX_Helpers implements BMO {
 						'id' => 'delete',
 						'value' => _('Delete')
 					)
-    			);
-    		break;
-    	}
-    	if (empty($request['extdisplay']) && empty($request['account']) ) {
-    		unset($buttons['delete']);
-    	}
-    	if($request['view'] != 'form'){
-    		unset($buttons);
-    	}
-    	return $buttons;
-    }
-    public function printExtensions(){
+				);
+				break;
+		}
+		if (empty($request['extdisplay']) && empty($request['account'])) {
+			unset($buttons['delete']);
+		}
+		if ($request['view'] != 'form') {
+			unset($buttons);
+		}
+		return $buttons;
+	}
+
+	public function printExtensions(){
 		$ret = array();
-    	$ret['title'] = _("Conferences");
+		$ret['title'] = _("Conferences");
 		$featurecodes = \featurecodes_getAllFeaturesDetailed();
 		$ret['textdesc'] = _('Conference');
-    	$ret['numdesc'] = _('Extension');
-    	$ret['items'] = array();
-    	foreach ($this->listConferences() as $conf) {
-    		$ret['items'][] = array($conf[1],$conf[0]);
-    	}
-    	return $ret;
-    }
+		$ret['numdesc'] = _('Extension');
+		$ret['items'] = array();
+		foreach ($this->listConferences() as $conf) {
+			$ret['items'][] = array($conf[1],$conf[0]);
+		}
+	return $ret;
+	}
 }

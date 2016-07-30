@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-03 15:28-0800\n"
-"PO-Revision-Date: 2015-04-23 03:30+0200\n"
-"Last-Translator: philippebolduc <philippe@florenceinc.com>\n"
+"POT-Creation-Date: 2016-03-02 15:15-0800\n"
+"PO-Revision-Date: 2016-02-05 06:17+0200\n"
+"Last-Translator: Nicolas Riendeau <freepbx@riendeau.org>\n"
 "Language-Team: French <http://weblate.freepbx.org/projects/freepbx/pinsets/"
 "fr_FR/>\n"
 "MIME-Version: 1.0\n"
@@ -19,15 +19,23 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Weblate 2.2-dev\n"
 
-#: views/grid.php:24
+#: views/grid.php:26
 msgid "Actions"
+msgstr "Actions"
+
+#: views/bootnav.php:2 views/grid.php:8
+msgid "Add Pinset"
 msgstr ""
 
-#: views/bootnav.php:2
-msgid "Add PIN Sets"
+#: pinsets.i18n.php:8
+msgid ""
+"Allow creation of lists of PINs (numbers for passwords) that can be used by "
+"other modules (eg, trunks)."
 msgstr ""
+"Permets la création de NIP (nombres utilisés comme mot de passe) qui peuvent "
+"être utilisés par d'autres modules ( p. ex. jonctions)."
 
-#: Pinsets.class.php:51
+#: Pinsets.class.php:61
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -39,10 +47,6 @@ msgstr "Editer le jeu de PIN"
 msgid "Enter a list of one or more PINs.  One PIN per line."
 msgstr "Entrez une liste d'un ou plusieurs PINs. Un PIN par ligne."
 
-#: views/bootnav.php:1
-msgid "List PIN Sets"
-msgstr ""
-
 #: views/form.php:16
 msgid "New PIN Set"
 msgstr "Nouveau jeu de PIN"
@@ -51,11 +55,11 @@ msgstr "Nouveau jeu de PIN"
 msgid "No"
 msgstr ""
 
-#: functions.inc.php:244
+#: functions.inc.php:241
 msgid "None"
 msgstr "Aucun"
 
-#: functions.inc.php:260
+#: functions.inc.php:257
 msgid ""
 "Optional: Select a PIN set to use. If using this option, leave the Route "
 "Password field blank."
@@ -67,13 +71,17 @@ msgstr ""
 msgid "PIN List"
 msgstr ""
 
-#: functions.inc.php:239 views/grid.php:23
+#: functions.inc.php:236
 msgid "PIN Set"
 msgstr "Jeu de PIN"
 
 #: views/form.php:29
 msgid "PIN Set Description"
 msgstr ""
+
+#: pinsets.i18n.php:4 pinsets.i18n.php:10
+msgid "PIN Sets"
+msgstr "Jeux de PIN"
 
 #: page.pinsets.php:6
 msgid ""
@@ -90,6 +98,10 @@ msgstr ""
 msgid "Pin Sets"
 msgstr ""
 
+#: views/bootnav.php:8 views/grid.php:25
+msgid "Pinset"
+msgstr ""
+
 #: views/form.php:41
 msgid "Please enter a description for this pinset"
 msgstr ""
@@ -102,9 +114,9 @@ msgstr "Entrez une description valide"
 msgid "Record In CDR"
 msgstr ""
 
-#: Pinsets.class.php:56
+#: Pinsets.class.php:66
 msgid "Reset"
-msgstr ""
+msgstr "Réinitialiser"
 
 #: views/form.php:68
 msgid ""
@@ -112,21 +124,25 @@ msgid ""
 "when used"
 msgstr ""
 
-#: Pinsets.class.php:61
-msgid "Submit"
+#: pinsets.i18n.php:6 pinsets.i18n.php:12
+msgid "Settings"
 msgstr ""
 
-#: functions.inc.php:130 functions.inc.php:139
+#: Pinsets.class.php:71
+msgid "Submit"
+msgstr "Soumettre"
+
+#: functions.inc.php:125 functions.inc.php:134
 msgid "Unnamed"
-msgstr ""
+msgstr "Sans nom"
 
 #: views/form.php:58
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 #: install.php:99
 msgid "already done"
-msgstr ""
+msgstr "déjà fait"
 
 #: install.php:30
 msgid "checking if migration required.."
@@ -138,7 +154,7 @@ msgstr ""
 
 #: install.php:86
 msgid "done"
-msgstr ""
+msgstr "complété"
 
 #: install.php:88
 msgid "dropping used_by field.."
@@ -146,26 +162,23 @@ msgstr ""
 
 #: install.php:34
 msgid "migrating.."
-msgstr ""
+msgstr "en cours de migration"
 
 #: install.php:44
 msgid "migration aborted"
-msgstr ""
+msgstr "migration abandonnée"
 
 #: install.php:92
 msgid "no used_by field???"
-msgstr ""
+msgstr "pas de champ used_by ???"
 
 #: install.php:94
 msgid "ok"
-msgstr ""
+msgstr "ok"
 
 #: install.php:43
 msgid "unknown error fetching table data"
-msgstr ""
-
-#~ msgid "PIN Sets"
-#~ msgstr "Jeux de PIN"
+msgstr "erreur inconnue lors de l'obtention des données de la table"
 
 #~ msgid "Add PIN Set"
 #~ msgstr "Ajouter un jeu de PIN"

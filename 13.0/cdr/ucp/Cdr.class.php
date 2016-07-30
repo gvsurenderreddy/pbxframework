@@ -58,7 +58,7 @@ class Cdr extends Modules{
 			'calls' => $this->postProcessCalls($this->cdr->getCalls($ext,$page,$orderby,$order,$search,$this->limit),$ext),
 		);
 		$html = '';
-		$html = "<script>var extension = '".$ext."';var showPlayback = ".json_encode($this->_checkPlayback($ext)).";var showDownload = ".json_encode($this->_checkDownload($ext))."; var supportedHTML5 = '".implode(",",$this->UCP->FreePBX->Media->getSupportedHTML5Formats())."';</script>";
+		$html = "<script>var extension = '".htmlentities($ext)."';var showPlayback = ".json_encode($this->_checkPlayback($ext)).";var showDownload = ".json_encode($this->_checkDownload($ext))."; var supportedHTML5 = '".implode(",",$this->UCP->FreePBX->Media->getSupportedHTML5Formats())."';</script>";
 		switch($view) {
 			case 'settings':
 				$html .= $this->load_view(__DIR__.'/views/settings.php',$displayvars);
@@ -392,10 +392,13 @@ class Cdr extends Modules{
 			echo _("Not Found");
 			exit;
 		}
+		$media = $this->UCP->FreePBX->Media;
+		$mimetype = $media->getMIMEtype($record['recordingfile']);
 		header("Content-length: " . filesize($record['recordingfile']));
 		header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 		header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 		header('Content-Disposition: attachment;filename="' . basename($record['recordingfile']).'"');
+		header('Content-type: ' . $mimetype);
 		readfile($record['recordingfile']);
 	}
 

@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-22 13:14-0700\n"
-"PO-Revision-Date: 2015-04-27 22:42+0200\n"
-"Last-Translator: philippebolduc <philippe@florenceinc.com>\n"
+"POT-Creation-Date: 2016-05-10 13:49-0700\n"
+"PO-Revision-Date: 2016-02-04 23:02+0200\n"
+"Last-Translator: Nicolas Riendeau <freepbx@riendeau.org>\n"
 "Language-Team: French <http://weblate.freepbx.org/projects/freepbx/"
 "presencestate/fr_FR/>\n"
 "MIME-Version: 1.0\n"
@@ -21,17 +21,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Weblate 2.2-dev\n"
 
-#: views/grid.php:6
+#: views/grid.php:16
 msgid "Actions"
-msgstr ""
+msgstr "Actions"
 
 #: ucp/assets/js/global.js:81
 msgid "Actions List"
 msgstr "Liste des actions"
 
-#: views/bootnav.php:2
+#: views/bootnav.php:2 views/grid.php:2
 msgid "Add State"
-msgstr ""
+msgstr "Ajouter un état"
+
+#: presencestate.i18n.php:6 presencestate.i18n.php:12
+msgid "Admin"
+msgstr "Administrateur"
 
 #: functions.inc.php:7 ucp/Presencestate.class.php:118
 #: ucp/Presencestate.class.php:211
@@ -88,23 +92,27 @@ msgstr "Trouvez-moi/Suivez-moi"
 
 #: views/ucp_config.php:18
 msgid "Inherit"
-msgstr ""
+msgstr "Hérite"
 
 #: Presencestate.class.php:173
 msgid "Invalid Request"
-msgstr ""
+msgstr "Requête invalide"
 
-#: views/bootnav.php:1
+#: views/bootnav.php:3
 msgid "List States"
-msgstr ""
+msgstr "Liste des états"
 
-#: views/grid.php:5
+#: presencestate.i18n.php:8
+msgid "Manage list of presence states."
+msgstr "Gérer la liste des états de présence."
+
+#: views/bootnav.php:15 views/grid.php:15
 msgid "Message"
 msgstr "Message"
 
 #: views/ucp_config.php:15
 msgid "No"
-msgstr ""
+msgstr "Non"
 
 #: ucp/Presencestate.class.php:124 ucp/Presencestate.class.php:217
 msgid "Offline"
@@ -120,17 +128,18 @@ msgstr "Sur connexion à UCP mettre l'état à"
 
 #: views/form.php:50
 msgid "Optional Message"
-msgstr ""
+msgstr "Message optionnel"
 
 #: views/form.php:62
 msgid "Optional message, example: Lunch"
-msgstr ""
+msgstr "Message optionnel, exemple : Repas"
 
 #: ucp/Presencestate.class.php:248
 msgid "Presence"
 msgstr "Présence"
 
-#: Presencestate.class.php:118
+#: Presencestate.class.php:118 presencestate.i18n.php:4
+#: presencestate.i18n.php:10
 msgid "Presence State"
 msgstr "État de la présence"
 
@@ -140,15 +149,15 @@ msgstr "Paramètres état de la présence"
 
 #: page.presencestate.php:6
 msgid "Presence States"
-msgstr ""
+msgstr "États de présence"
 
 #: Presencestate.class.php:192
 msgid "Reset"
-msgstr ""
+msgstr "Réinitialiser"
 
 #: views/form.php:38
 msgid "State type"
-msgstr ""
+msgstr "Type d'état"
 
 #: ucp/assets/js/global.js:35
 msgid "Status Not Set"
@@ -158,7 +167,7 @@ msgstr "Statut non défini"
 msgid "Submit"
 msgstr "Soumettre"
 
-#: views/form.php:24 views/grid.php:4
+#: views/bootnav.php:14 views/form.php:24 views/grid.php:14
 msgid "Type"
 msgstr "Type"
 
@@ -177,17 +186,11 @@ msgstr ""
 
 #: views/ucp_config.php:13
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 #: ucp/assets/js/global.js:109
 msgid "Your settings have been saved"
 msgstr "Vos paramètres ont été enregistrés"
-
-#~ msgid "Admin"
-#~ msgstr "Administrateur"
-
-#~ msgid "Manage list of presence states."
-#~ msgstr "Gérer la liste des états de présence."
 
 #~ msgid "New Presence State"
 #~ msgstr "Nouvel état de présence"

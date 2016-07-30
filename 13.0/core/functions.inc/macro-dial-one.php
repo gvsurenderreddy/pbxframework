@@ -65,7 +65,7 @@ $ext->add($mcontext,$exten,'', new ext_gosubif('$["${ALERT_INFO}"!="" & "${ALERT
 // This is now broken. SIPADDHEADER needs to be a hash. TODO figure out how to fix this
 // $ext->add($mcontext,$exten,'', new ext_execif('$["${SIPADDHEADER}"!=""]', 'SIPAddHeader', '${SIPADDHEADER}'));
 
-$ext->add($mcontext,$exten,'', new ext_execif('$["${MOHCLASS}"!=""]', 'Set', 'CHANNEL(musicclass)=${MOHCLASS}'));
+$ext->add($mcontext,$exten,'', new ext_execif('$[("${MOHCLASS}"!="default") & ("${MOHCLASS}"!="")]', 'Set', 'CHANNEL(musicclass)=${MOHCLASS}'));
 $ext->add($mcontext,$exten,'', new ext_gosubif('$["${QUEUEWAIT}"!=""]','qwait,1'));
 $ext->add($mcontext,$exten,'', new ext_set('__CWIGNORE', '${CWIGNORE}'));
 $ext->add($mcontext,$exten,'', new ext_set('__KEEPCID', 'TRUE'));
@@ -90,6 +90,9 @@ if ($amp_conf['AST_FUNC_CONNECTEDLINE']) {
 //Purpose is to have the option to add sip-headers as with the trunk pre dial out hook.
 //We need to have this as we have mobile extensions connected directly to the pbx as sip extensions.
 $ext->add($mcontext,$exten,'godial', new ext_macro('dialout-one-predial-hook'));
+
+//dont allow inbound callers to transfer around inside the system
+$ext->add($mcontext,$exten,'', new ext_execif('$["${DIRECTION}" = "INBOUND"]', 'Set', 'D_OPTIONS=${STRREPLACE(D_OPTIONS,T)}I'));
 $ext->add($mcontext,$exten,'', new ext_dial('${DSTRING}', '${ARG1},${D_OPTIONS}b(func-apply-sipheaders^s^1)'));
 $ext->add($mcontext,$exten,'', new ext_execif('$["${DIALSTATUS}"="ANSWER" & "${CALLER_DEST}"!=""]', 'MacroExit'));
 

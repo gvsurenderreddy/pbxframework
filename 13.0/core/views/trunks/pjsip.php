@@ -22,7 +22,7 @@ $codechtml = '<ul class="sortable">';
 			. ' </label></a></li>';
 	}
 $codechtml .= '</ul>';
-
+$ast_ge_12 = version_compare(\FreePBX::Config()->get("ASTVERSION"), "13.0", "ge");
 ?>
 
 <h3><?php echo _("PJSIP Settings")?></h3>
@@ -68,7 +68,7 @@ $codechtml .= '</ul>';
 						<label class="control-label" for="secret"><?php echo _("Secret") ?></label>
 					</div>
 					<div class="col-md-9">
-						<input type="password" class="form-control" name="secret" id="secret" value="<?php echo $secret?>"/>
+						<input type="password" class="form-control clicktoedit" name="secret" id="secret" value="<?php echo $secret?>"/>
 					</div>
 				</div>
 			</div>
@@ -92,7 +92,7 @@ $codechtml .= '</ul>';
 				</div>
 				<div class="col-md-12">
 					<span id="authentication-help" class="help-block fpbx-help-block"><?php echo _("Usually, this will be set to 'Outbound', which authenticates calls going out, and allows unauthenticated calls in from the other server. If you select 'None', all calls from or to the specified SIP Server are unauthenticated. <strong>Setting this to 'None' may be insecure!</strong>")?></span>
-                                </div>
+				</div>
 			</div>
 		</div>
 		<div class="element-container">
@@ -111,7 +111,31 @@ $codechtml .= '</ul>';
 				</div>
 				<div class="col-md-12">
 					<span id="registration-help" class="help-block fpbx-help-block"><?php echo _("You normally <strong>Send</strong> registration, which tells the remote server where to send your calls. If the other server is not on a fixed address, it will need to register to this server (<strong>Receive</strong>), so this server can send calls to it. You would select <strong>None</strong> if both machines have a fixed address and do not require registration.")."<br>"._("<strong>Warning:</strong> If you select 'None', registration attempts for the Username and Secret specified above will be rejected. Setting this incorrectly may result in firewall services detecting this as an attack and blocking the machine trying to register. Do not change this unless you control both servers, and are sure it is required!")?></span>
-                                </div>
+					</div>
+			</div>
+		</div>
+		<div class="element-container">
+			<div class="row">
+				<div class="col-md-3">
+					<label class="control-label" for="language"><?php echo _("Language Code") ?></label>
+					<i class="fa fa-question-circle fpbx-help-icon" data-for="language"></i>
+				</div>
+				<div class="col-md-9">
+					<?php if(\FreePBX::Modules()->checkStatus("soundlang")) {?>
+						<?php $langs = \FreePBX::Soundlang()->getLanguages(); $langs = is_array($langs) ? $langs : array();?>
+						<select name="language" class="form-control">
+							<option value=""><?php echo _("Default")?></option>
+							<?php foreach($langs as $key => $lang) { ?>
+								<option value="<?php echo $key?>" <?php echo ($language == $key) ? "selected" : ""?>><?php echo $lang?></option>
+							<?php } ?>
+						</select>
+					<?php } else { ?>
+						<input name="language" class="form-control" value="<?php echo $language?>">
+					<?php } ?>
+				</div>
+				<div class="col-md-12">
+					<span id="language-help" class="help-block fpbx-help-block"><?php echo _("This will cause all messages and voice prompts to use the selected language if installed. Languages can be added or removed in the Sound Languages module")?></span>
+				</div>
 			</div>
 		</div>
 		<!--SIP SERVER-->
@@ -201,8 +225,6 @@ $codechtml .= '</ul>';
 		</div><!--END TRANSPORT-->
 	</div><!--END GENERAL TAB-->
 	<div role="tabpanel" id="pjsadvanced" class="tab-pane">
-		<br/>
-		<br/>
 		<!--TRANSPORT-->
 		<div class="element-container">
 			<div class="row">
@@ -215,10 +237,12 @@ $codechtml .= '</ul>';
 							</div>
 							<div class="col-md-9">
 								<select name="dtmfmode" id="dtmfmode" class="form-control">
+									<?php if($ast_ge_12) {?>
+										<option value="auto" <?php echo isset($dtmfmode) && $dtmfmode == "auto" ? "selected" : ""?>><?php echo _("Auto")?></option>
+									<?php } ?>
 									<option value="rfc4733" <?php echo isset($dtmfmode) && $dtmfmode == "rfc4733" ? "selected" : ""?>>RFC 4733</option>
 									<option value="inband" <?php echo isset($dtmfmode) && $dtmfmode == "inband" ? "selected" : ""?>><?php echo _("Inband")?></option>
 									<option value="info" <?php echo isset($dtmfmode) && $dtmfmode == "info" ? "selected" : ""?>><?php echo _("Info")?></option>
-									<option value="none" <?php echo isset($dtmfmode) && $dtmfmode == "none" ? "selected" : ""?>><?php echo _("None")?></option>
 								</select>
 							</div>
 						</div>
@@ -227,7 +251,7 @@ $codechtml .= '</ul>';
 			</div>
 			<div class="row">
 				<div class="col-md-12">
-					<span id="dtmfmode-help" class="help-block fpbx-help-block"><?php echo _("The DTMF signaling mode used by this trunk, usually RFC for most trunks<ul><li>rfc4733 - DTMF is sent out of band of the main audio stream.This supercedes the older RFC-2833 used within the older chan_sip.</li><li>inband - DTMF is sent as part of audio stream.</li><li>info - DTMF is sent as SIP INFO packets.</li></ul>")?></span>
+					<span id="dtmfmode-help" class="help-block fpbx-help-block"><?php echo sprintf(_("The DTMF signaling mode used by this trunk, usually RFC for most trunks<ul><li>Auto [%s] - DTMF is sent as RFC 4733 if the other side supports it or as INBAND if not.</li><li>rfc4733 - DTMF is sent out of band of the main audio stream.This supercedes the older RFC-2833 used within the older chan_sip.</li><li>inband - DTMF is sent as part of audio stream.</li><li>info - DTMF is sent as SIP INFO packets.</li></ul>"),"Asterisk 13")?></span>
 				</div>
 			</div>
 		</div><!--END TRANSPORT-->

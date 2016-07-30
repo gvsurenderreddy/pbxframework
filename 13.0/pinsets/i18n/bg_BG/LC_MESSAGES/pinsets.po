@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FreePBX v2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-03 15:28-0800\n"
+"POT-Creation-Date: 2016-03-02 15:15-0800\n"
 "PO-Revision-Date: 2014-07-22 12:37+0200\n"
 "Last-Translator: Chavdar <chavdar_75@yahoo.com>\n"
 "Language-Team: Bulgarian <http://git.freepbx.org/projects/freepbx/pinsets/bg/"
@@ -22,15 +22,23 @@ msgstr ""
 "X-Poedit-Country: BULGARIA\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: views/grid.php:24
+#: views/grid.php:26
 msgid "Actions"
 msgstr ""
 
-#: views/bootnav.php:2
-msgid "Add PIN Sets"
+#: views/bootnav.php:2 views/grid.php:8
+msgid "Add Pinset"
 msgstr ""
 
-#: Pinsets.class.php:51
+#: pinsets.i18n.php:8
+msgid ""
+"Allow creation of lists of PINs (numbers for passwords) that can be used by "
+"other modules (eg, trunks)."
+msgstr ""
+"Позволява създаването на списък с PIN-ове (номера за пароли) които могат да "
+"се използват от други модули (например външни линии)."
+
+#: Pinsets.class.php:61
 msgid "Delete"
 msgstr ""
 
@@ -42,10 +50,6 @@ msgstr "Редактирай PIN Въвеждане"
 msgid "Enter a list of one or more PINs.  One PIN per line."
 msgstr "Въведете списък от един или повече PIN кода. Един PIN на ред."
 
-#: views/bootnav.php:1
-msgid "List PIN Sets"
-msgstr ""
-
 #: views/form.php:16
 msgid "New PIN Set"
 msgstr "Ново PIN Въвеждане"
@@ -54,11 +58,11 @@ msgstr "Ново PIN Въвеждане"
 msgid "No"
 msgstr ""
 
-#: functions.inc.php:244
+#: functions.inc.php:241
 msgid "None"
 msgstr "Няма"
 
-#: functions.inc.php:260
+#: functions.inc.php:257
 msgid ""
 "Optional: Select a PIN set to use. If using this option, leave the Route "
 "Password field blank."
@@ -70,13 +74,17 @@ msgstr ""
 msgid "PIN List"
 msgstr ""
 
-#: functions.inc.php:239 views/grid.php:23
+#: functions.inc.php:236
 msgid "PIN Set"
 msgstr "PIN Въвеждане"
 
 #: views/form.php:29
 msgid "PIN Set Description"
 msgstr ""
+
+#: pinsets.i18n.php:4 pinsets.i18n.php:10
+msgid "PIN Sets"
+msgstr "PIN Въвеждания"
 
 #: page.pinsets.php:6
 msgid ""
@@ -92,6 +100,10 @@ msgstr ""
 msgid "Pin Sets"
 msgstr ""
 
+#: views/bootnav.php:8 views/grid.php:25
+msgid "Pinset"
+msgstr ""
+
 #: views/form.php:41
 msgid "Please enter a description for this pinset"
 msgstr ""
@@ -104,7 +116,7 @@ msgstr "Моля въведете правилно Описание"
 msgid "Record In CDR"
 msgstr ""
 
-#: Pinsets.class.php:56
+#: Pinsets.class.php:66
 msgid "Reset"
 msgstr ""
 
@@ -114,11 +126,15 @@ msgid ""
 "when used"
 msgstr ""
 
-#: Pinsets.class.php:61
+#: pinsets.i18n.php:6 pinsets.i18n.php:12
+msgid "Settings"
+msgstr "Настройки"
+
+#: Pinsets.class.php:71
 msgid "Submit"
 msgstr ""
 
-#: functions.inc.php:130 functions.inc.php:139
+#: functions.inc.php:125 functions.inc.php:134
 msgid "Unnamed"
 msgstr "Без име"
 
@@ -165,19 +181,6 @@ msgstr "ok"
 #: install.php:43
 msgid "unknown error fetching table data"
 msgstr "непозната грешка при извличане на данни от таблицата"
-
-#~ msgid ""
-#~ "Allow creation of lists of PINs (numbers for passwords) that can be used "
-#~ "by other modules (eg, trunks)."
-#~ msgstr ""
-#~ "Позволява създаването на списък с PIN-ове (номера за пароли) които могат "
-#~ "да се използват от други модули (например външни линии)."
-
-#~ msgid "PIN Sets"
-#~ msgstr "PIN Въвеждания"
-
-#~ msgid "Settings"
-#~ msgstr "Настройки"
 
 #~ msgid "Add PIN Set"
 #~ msgstr "Добави PIN Въвеждане"

@@ -11,16 +11,19 @@ class Timeconditions implements \BMO {
 		}
 		$this->FreePBX = $freepbx;
 		$this->db = $freepbx->Database;
+		$this->astman = $freepbx->astman;
 		$this->errormsg ='';
 	}
-    public function install() {}
-    public function uninstall() {}
-    public function backup() {}
-    public function restore($backup) {}
-    public function doConfigPageInit($page) {
-    	$request = $_REQUEST;
-    	switch($page){
-    		case "timeconditions":
+	public function install() {
+		$this->cleanuptcmaint();
+	}
+	public function uninstall() {}
+	public function backup() {}
+	public function restore($backup) {}
+	public function doConfigPageInit($page) {
+		$request = $_REQUEST;
+		switch($page) {
+			case "timeconditions":
 				isset($request['action'])?$action = $request['action']:$action='';
 				isset($request['itemid'])?$itemid=$request['itemid']:$itemid='';
 				isset($request['view'])?$view=$request['view']:$view='';
@@ -29,18 +32,18 @@ class Timeconditions implements \BMO {
 				//if submitting form, update database
 				switch ($action) {
 					case "add":
-						$itemid = timeconditions_add($request);
+						$itemid = $this->addTimeCondition($request);
 						$_REQUEST['extdisplay'] = $itemid;
-						needreload();
+						\needreload();
 					break;
 					case "delete":
-						timeconditions_del($itemid);
+						$this->delTimeCondition($itemid);
 						$_REQUEST['extdisplay'] = NULL;
-						needreload();
+						\needreload();
 					break;
 					case "edit":  //just delete and re-add
-						timeconditions_edit($itemid,$request);
-						needreload();
+						$this->editTimeCondition($itemid,$request);
+						\needreload();
 					break;
 				}
 			break;
@@ -51,11 +54,13 @@ class Timeconditions implements \BMO {
 				$times = isset($request['times'])?$request['times']:null;
 				switch($action){
 					case 'add':
-						$_REQUEST['extdisplay'] = timeconditions_timegroups_add_group($description,$times);
+						$this->addTimeGroup($description,$times);
+						unset($_REQUEST['view']);
 						break;
 					case 'edit':
-						timeconditions_timegroups_edit_group($timegroup,$description);
-						timeconditions_timegroups_edit_times($timegroup,$times);
+						$this->editTimeGroup($timegroup,$description);
+						$this->editTimes($timegroup,$times);
+						unset($_REQUEST['view']);
 						break;
 					case 'del':
 						$usage =  timeconditions_timegroups_list_usage($timegroup);
@@ -63,31 +68,98 @@ class Timeconditions implements \BMO {
 							$this->errormsg = _("Could not delete time group as it is in use");
 							return;
 						}
-						timeconditions_timegroups_del_group($timegroup);
+						$this->delTimeGroup($timegroup);
+						unset($_REQUEST['view']);
 						break;
 					case 'getJSON':
-    					header('Content-Type: application/json');
-    					switch ($request['jdata']) {
-    						case 'grid':
-    							$timegroupslist = timeconditions_timegroups_list_groups();
-    							$rdata = array();
-    							foreach($timegroupslist as $tg){
+						header('Content-Type: application/json');
+						switch ($request['jdata']) {
+							case 'grid':
+								$timegroupslist = timeconditions_timegroups_list_groups();
+								$rdata = array();
+								foreach($timegroupslist as $tg){
 									$rdata[] = array('text' => $tg['text'],'value' => $tg['value'], 'link' => array($tg['text'],$tg['value']));
-    							}
-    							echo json_encode($rdata);
-    							exit();
-    						break;
-   			 				default:
-    							echo json_encode(array("error"=>"Unknown Request"));
-    							exit();
-    						break;
-    					}
-    				break;
-    			}
-    		break;
+								}
+								echo json_encode($rdata);
+								exit();
+								break;
+							default:
+								echo json_encode(array("error"=>"Unknown Request"));
+								exit();
+								break;
+						}
+						break;
+				}
+			break;
 		}
-    }
-    public function getActionBar($request) {
+	}
+
+	/**
+	 * Gets rid of the millions of rows of tc-maint
+	 * slowly over time
+	 */
+	public function cleanuptcmaint($limit = 4000) {
+		$ASTVARLIBDIR = $this->FreePBX->Config->get("ASTVARLIBDIR");
+		foreach($this->FreePBX->Cron->getAll() as $cron) {
+			$str = str_replace("/", "\/", $ASTVARLIBDIR."/bin/cleanuptcmaint.php");
+			if(preg_match("/cleanuptcmaint.php$/",$cron)) {
+				$this->FreePBX->Cron->remove($cron);
+			}
+		}
+		try {
+			$dbh = $this->FreePBX->Cel->cdrdb;
+			$limit = !empty($limit) ? " LIMIT ".$limit : "";
+			$del = $dbh->prepare("DELETE from asteriskcdrdb.cel WHERE context LIKE '%tc-maint%'".$limit);
+			$del->execute();
+			$count = $del->rowCount();
+			if($count > 0 && !empty($limit)) {
+				$this->FreePBX->Cron->add("0 */6 * * * ".$ASTVARLIBDIR."/bin/cleanuptcmaint.php");
+				return true;
+			}
+		} catch(\Exception $e) {
+			return;
+		}
+		return false;
+	}
+
+	/**
+	 * Update or remove the TC-Maint cron job
+	 * @return [type]           [description]
+	 */
+	public function updateCron() {
+		$ASTVARLIBDIR = $this->FreePBX->Config->get("ASTVARLIBDIR");
+		$TCMAINT = $this->FreePBX->Config->get("TCMAINT");
+		$TCINTERVAL = $this->FreePBX->Config->get("TCINTERVAL");
+
+		foreach($this->FreePBX->Cron->getAll() as $cron) {
+			$str = str_replace("/", "\/", $ASTVARLIBDIR."/bin/schedtc.php");
+			if(preg_match("/schedtc.php/",$cron)) {
+				$this->FreePBX->Cron->remove($cron);
+			}
+		}
+		if(!$TCMAINT) {
+			return;
+		}
+		switch($TCINTERVAL) {
+			case "900":
+			case "600":
+			case "300":
+			case "240":
+			case "180":
+			case "120":
+				$t = $TCINTERVAL / 60;
+				$time = "*/".$t." * * * *";
+			break;
+			case "60":
+			default:
+				$time = "* * * * *";
+			break;
+		}
+		$line = $time." [ -x ".$ASTVARLIBDIR."/bin/schedtc.php ] && ".$ASTVARLIBDIR."/bin/schedtc.php";
+		$this->FreePBX->Cron->add($line);
+	}
+
+	public function getActionBar($request) {
 		switch($request['display']) {
 			case 'timeconditions':
 			case 'timegroups':
@@ -126,6 +198,7 @@ class Timeconditions implements \BMO {
 	}
 	public function ajaxRequest($req, &$setting) {
 		switch ($req) {
+			case 'getGroups':
 			case 'getJSON':
 				return true;
 			break;
@@ -137,6 +210,14 @@ class Timeconditions implements \BMO {
 	public function ajaxHandler(){
 		$request = $_REQUEST;
 		switch ($_REQUEST['command']) {
+			case 'getGroups':
+				$sql = 'SELECT id FROM timegroups_groups order by id desc limit 1';
+				$sth = $this->db->prepare($sql);
+				$sth->execute();
+				$row = $sth->fetch(\PDO::FETCH_ASSOC);
+				$timegroupslist = $this->listTimegroups();
+				return array("status" => true, "groups" => $timegroupslist, "last" => $row['id']);
+			break;
 			case 'getJSON':
 			switch ($request['jdata']) {
 				case 'tggrid':
@@ -154,9 +235,14 @@ class Timeconditions implements \BMO {
 					foreach($timegroups as $tg){
 						$tgs[$tg['value']] = $tg['text'];
 					}
+					$tcs = $this->astman->database_show("TC");
+					dbug($timeconditions);
 					foreach ($timeconditions as $key => $value) {
+						$id = $value['timeconditions_id'];
+						$state = isset($tcs['/TC/'.$id]) ? $tcs['/TC/'.$id] : '';
 						$tgstime = isset($tgs[$value['time']])?$tgs[$value['time']]:'';
 						$timeconditions[$key]['group'] = $tgstime;
+						$timeconditions[$key]['state'] = $state;
 					}
 					return array_values($timeconditions);
 				break;
@@ -209,5 +295,446 @@ class Timeconditions implements \BMO {
 			break;
 		}
 	}
+	/**
+	* checkTime:
+	* Attempts to faithfuly replicate the logic portion of the dialplan application
+	* gotoiftime. You pass a string with the same format and it returns true or false.
+	* most items can be a *, single (mon), or range (mon-fri) see the gotiftime docs.
+	* @time: <time range>,<days of week>,<days of month>,<months>
+	* return bool
+	*/
+	public function checkTime($time){
+	  $monthA = array(
+	    'jan' => 1,
+	    'feb' => 2,
+	    'mar' => 3,
+	    'apr' => 4,
+	    'may' => 5,
+	    'jun' => 6,
+	    'jul' => 7,
+	    'aug' => 8,
+	    'sep' => 9,
+	    'oct' => 10,
+	    'nov' => 11,
+	    'dec' => 12
+	  );
+	  $daysA = array(
+	    'sun' => 0,
+	    'mon' => 1,
+	    'tue' => 2,
+	    'wed' => 3,
+	    'thu' => 4,
+	    'fri' => 5,
+	    'sat' => 6,
+	  );
+	  //match all don't take time to parse out anything
+	  if($time == '*|*|*|*'){
+	    return true;
+	  }
+	  $return = false;
+	  list($hour, $dow, $dom, $month, $tz) = explode("|", $time);
+	  if($month === '*'){
+	    $return = true;
+	  }else{
+	    $months = explode('-',$month);
+	    $range = isset($months[1]);
+	    if(!$range){
+	        if($monthA[$month] == date('n')){
+	          $return = true;
+	        }else{
+	          return false;
+	        }
+	    }else{
+	      if((date('n') >= $monthA[$months[0]]) && (date('n') <= $monthA[$months[1]])){
+	        $return = true;
+	      }else{
+	        return false;
+	      }
+	    }
+	  }
+	  if($dom === '*'){
+	    $return = true;
+	  }else{
+	    $daysom = explode('-',$dom);
+	    $range = isset($daysom[1]);
+	    if(!$range){
+	        if($dom == date('j')){
+	          $return = true;
+	        }else{
+	          return false;
+	        }
+	    }else{
+	      if((date('j') >= $daysom[0]) && (date('j') <= $daysom[1])){
+	        $return = true;
+	      }else{
+	        return false;
+	      }
+	    }
+	  }
+	  if($dow === '*'){
+	    $return = true;
+	  }else{
+	    $days = explode('-',$dow);
+	    $range = isset($days[1]);
+	    if(!$range){
+	        if($daysA[$dow] == date('w')){
+	          $return = true;
+	        }else{
+	          return false;
+	        }
+	    }else{
+	      if((date('w') >= $daysA[$days[0]]) && (date('w') <= $daysA[$days[1]])){
+	        $return = true;
+	      }else{
+	        return false;
+	      }
+	    }
+	  }
+	  if($hour === '*'){
+	    $return = true;
+	  }else{
+	    $hours = explode('-',$hour);
+	    $range = isset($hours[1]);
+	    if(!$range){
+	        if(strtotime(date('H:i')) == strtotime($hour)){
+	          $return = true;
+	        }else{
+	          return false;
+	        }
+	    }else{
+	      if((strtotime(date('H:i')) >= strtotime($hours[0])) && (strtotime(date('H:i')) <= strtotime($hours[1]))){
+	        $return = true;
+	      }else{
+	        return false;
+	      }
+	    }
+	  }
+	  return $return;
+	}
 
+	/**
+	 * FreePBX chown hooks
+	 */
+	public function chownFreepbx() {
+		$files = array();
+
+		$files[] = array('type' => 'execdir',
+			'path' => __DIR__.'/bin',
+			'perms' => 0755);
+
+		return $files;
+	}
+	public function addTimeCondition($post){
+		$displayname = empty($post['displayname'])?_("unnamed"):$post['displayname'];
+		$invert_hint = ($post['invert_hint'] == '1') ? '1' : '0';
+		$vars = array(
+		':displayname' => $displayname,
+		':time' => $post['time'],
+		':timezone' => $post['timezone'],
+		':falsegoto' => $post[$post['goto1'].'1'],
+		':truegoto' => $post[$post['goto0'].'0'],
+		':invert_hint' => $invert_hint,
+		':fcc_password' => $post['fcc_password'],
+		':deptname' => $post['deptname'],
+		':generate_hint' => '1',
+		);
+		$sql = "INSERT INTO timeconditions (displayname,time,truegoto,falsegoto,deptname,generate_hint,fcc_password,invert_hint,timezone) values (:displayname, :time, :truegoto, :falsegoto, :deptname, :generate_hint, :fcc_password, :invert_hint, :timezone)";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute($vars);
+		$id = $this->db->lastInsertId();
+		$this->createFeatureCode($id, $displayname);
+		\FreePBX::Hooks()->processHooks(array('id' => $id, 'post' => $post));
+		return $id;
+	}
+	public function editTimeCondition($id,$post){
+		$displayname = empty($post['displayname'])?_("unnamed"):$post['displayname'];
+		$invert_hint = ($post['invert_hint'] == '1') ? '1' : '0';
+		$vars = array(
+		':id' => $id,
+		':displayname' => $displayname,
+		':time' => $post['time'],
+		':timezone' => $post['timezone'],
+		':falsegoto' => $post[$post['goto1'].'1'],
+		':truegoto' => $post[$post['goto0'].'0'],
+		':invert_hint' => $invert_hint,
+		':fcc_password' => $post['fcc_password'],
+		':deptname' => $post['deptname'],
+		':generate_hint' => '1',
+	);
+		$old = $this->getTimeCondition($id);
+
+		$sql = "UPDATE timeconditions SET displayname = :displayname, time = :time, truegoto = :truegoto, falsegoto = :falsegoto, deptname = :deptname, generate_hint = :generate_hint, invert_hint = :invert_hint, fcc_password = :fcc_password, timezone = :timezone WHERE timeconditions_id = :id";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute($vars);
+		//If invert was switched we need to update the asterisk DB
+		$post['tcstate_new'] = (($old['invert_hint'] != $invert_hint) && $post['tcstate_new'] == 'unchanged') ? $this->getState($id) : $post['tcstate_new'];
+		if (isset($post['tcstate_new']) && $post['tcstate_new'] != 'unchanged') {
+			$this->setState($id, $post['tcstate_new'],!empty($invert_hint));
+		}
+
+		$fcc = new \featurecode('timeconditions', 'toggle-mode-'.$id);
+		if ($displayname) {
+			$fcc->setDescription("$id: $displayname");
+		} else {
+			$fcc->setDescription($id._(": Time Condition Override"));
+		}
+		$fcc->update();
+		unset($fcc);
+		\FreePBX::Hooks()->processHooks(array('id' => $id, 'post' => $post));
+	}
+
+	public function getTimeCondition($id){
+		$sql = "SELECT * FROM timeconditions WHERE timeconditions_id = :id LIMIT 1";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(array(':id' => $id));
+		$results = $stmt->fetch();
+		$fcc = new \featurecode('timeconditions', 'toggle-mode-'.$id);
+		$c = $fcc->getCodeActive();
+		$results['tcval'] = $fcc->getCode();
+		unset($fcc);
+		if ($c == '') {
+			$results['tcstate'] = false;
+			$results['tccode'] = false;
+		} else {
+			$results['tccode'] = $c;
+			if ($this->astman != null) {
+				$results['tcstate'] = $this->getState($id);
+			} else {
+				die_freepbx("No manager connection, can't get Time Condition State");
+			}
+		}
+		return $results;
+	}
+
+	public function createFeatureCode($id, $displayname=''){
+		$fcc = new \featurecode('timeconditions', 'toggle-mode-'.$id);
+		if ($displayname) {
+			$fcc->setDescription("$id: $displayname");
+		} else {
+			$fcc->setDescription($id._(": Time Condition Override"));
+		}
+		$fcc->setDefault('*27'.$id);
+		$fcc->setProvideDest();
+		$fcc->update();
+		unset($fcc);
+		$this->setState($id, '');
+	}
+
+	public function getState($id){
+			return $this->astman->database_get("TC", $id);
+	}
+
+	public function setState($id, $state,$invert=false){
+		if ($this->astman != null) {
+			switch ($state) {
+			case 'auto':
+			case '':
+				$state = '';
+				$blf = ($invert)?'INUSE':'NOT_INUSE';
+				$sticky = ($invert)?'INUSE':'NOT_INUSE';
+				break;
+			case 'true':
+				$blf = 'NOT_INUSE';
+				$sticky = 'NOT_INUSE';
+				break;
+			case 'true_sticky':
+				$blf = 'NOT_INUSE';
+				$sticky = 'INUSE';
+				break;
+			case 'false':
+				$blf = 'INUSE';
+				$sticky = 'NOT_INUSE';
+				break;
+			case 'false_sticky':
+				$blf = 'INUSE';
+				$sticky = 'INUSE';
+				break;
+			default:
+				$state = false;
+				break;
+			}
+
+			if ($state !== false) {
+				$this->astman->database_put("TC", $id, $state);
+				$DEVSTATE = \FreePBX::Config()->get('AST_FUNC_DEVICE_STATE');
+				if ($DEVSTATE) {
+					$this->astman->set_global($DEVSTATE . "(Custom:TC" . $id . ")", $blf);
+					$this->astman->set_global($DEVSTATE . "(Custom:TCSTICKY" . $id . ")", $sticky);
+				}
+			}
+		} else {
+			die_freepbx("No manager connection, can't update Time Condition State");
+		}
+
+	}
+
+	public function delTimeCondition($id){
+		$sql = "DELETE FROM timeconditions WHERE timeconditions_id = :id";
+		$stmt = $this->db->prepare($sql);
+		$fcc = new \featurecode('timeconditions', 'toggle-mode-'.$id);
+		$fcc->delete();
+		unset($fcc);
+		if ($this->astman != null) {
+			$this->astman->database_del("TC",$id);
+		}
+		\FreePBX::Hooks()->processHooks($id);
+		return $stmt->execute(array(':id' => $id));
+	}
+	public function addTimeGroup($description, $times=null){
+		$sql = "INSERT timegroups_groups(description) VALUES (:description)";
+		$stmt = $this->db->prepare($sql);
+		$ret = $stmt->execute(array(':description' => $description));
+		$timegroup = $this->db->lastInsertId();
+		if (isset($times)) {
+			$this->editTimes($timegroup,$times);
+		}
+		needreload();
+		\FreePBX::Hooks()->processHooks($timegroup);
+		return $timegroup;
+	}
+	public function editTimeGroup($id,$description){
+		$sql = "UPDATE timegroups_groups SET description = :description WHERE id = :id";
+		$stmt = $this->db->prepare($sql);
+		$ret = $stmt->execute(array(':description' => $description, ':id' => $id));
+		\FreePBX::Hooks()->processHooks($id);
+		needreload();
+		return $ret;
+	}
+
+	public function delTimeGroup($id){
+		$sql = "delete from timegroups_details where timegroupid = :id";
+		$stmt = $this->db->prepare($sql);
+		$ret1 = $stmt->execute(array(':id'=>$id));
+		$sql = "delete from timegroups_groups where id = :id";
+		$stmt = $this->db->prepare($sql);
+		$ret2 = $stmt->execute(array(':id'=>$id));
+		needreload();
+		\FreePBX::Hooks()->processHooks($id);
+		return ($ret1 && $ret2);
+	}
+
+	public function editTimes($id,$times){
+		$sql = "DELETE FROM timegroups_details WHERE timegroupid = :id";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(array(':id' => $id));
+		$times = is_array($times)?$times:array();
+		$sql = "INSERT timegroups_details (timegroupid, time) VALUES (:id, :time)";
+		$stmt = $this->db->prepare($sql);
+		foreach ($times as $key=>$val) {
+			extract($val);
+			$time = $this->buildTime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish);
+			if (isset($time) && $time != '' && $time <> '*|*|*|*') {
+				$stmt->execute(array(':id' => $id, ':time' => $time));
+			}
+		}
+		needreload();
+	}
+	public function buildTime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish) {
+
+		//----- Time Hour Interval proccess ----
+		//
+		if ($minute_start == '-') {
+			$time_minute_start = "00";
+		} else {
+			$time_minute_start = sprintf("%02d",$minute_start);
+		}
+		if ($minute_finish == '-') {
+			$time_minute_finish = "00";
+		} else {
+			$time_minute_finish = sprintf("%02d",$minute_finish);
+		}
+		if ($hour_start == '-') {
+			$time_hour_start = '*';
+		} else {
+			$time_hour_start = sprintf("%02d",$hour_start) . ':' . $time_minute_start;
+		}
+		if ($hour_finish == '-') {
+			$time_hour_finish = '*';
+		} else {
+			$time_hour_finish = sprintf("%02d",$hour_finish) . ':' . $time_minute_finish;
+		}
+		if ($time_hour_start === '*') {
+			$time_hour_start = $time_hour_finish;
+		}
+		if ($time_hour_finish === '*') {$time_hour_finish = $time_hour_start;}
+		if ($time_hour_start == $time_hour_finish) {
+			$time_hour = $time_hour_start;
+		} else {
+			$time_hour = $time_hour_start . '-' . $time_hour_finish;
+		}
+
+		//----- Time Week Day Interval proccess -----
+		//
+		if ($wday_start == '-') {
+			$time_wday_start = '*';
+		} else {
+			$time_wday_start = $wday_start;
+		}
+		if ($wday_finish == '-') {
+			$time_wday_finish = '*';
+		} else {
+			$time_wday_finish = $wday_finish;
+		}
+		if ($time_wday_start === '*') {
+			$time_wday_start = $time_wday_finish;
+		}
+		if ($time_wday_finish === '*') {
+			$time_wday_finish = $time_wday_start;
+		}
+		if ($time_wday_start == $time_wday_finish) {
+			$time_wday = $time_wday_start;
+		} else {
+			$time_wday = $time_wday_start . '-' . $time_wday_finish;
+		}
+
+		//----- Time Month Day Interval proccess -----
+		//
+		if ($mday_start == '-') {
+			$time_mday_start = '*';
+		} else {
+			$time_mday_start = $mday_start;
+		}
+		if ($mday_finish == '-') {
+			$time_mday_finish = '*';
+		} else {
+			$time_mday_finish = $mday_finish;
+		}
+		if ($time_mday_start === '*') {
+			$time_mday_start = $time_mday_finish;
+		}
+		if ($time_mday_finish === '*') {
+			$time_mday_finish = $time_mday_start;
+		}
+		if ($time_mday_start == $time_mday_finish) {
+			$time_mday = $time_mday_start;
+		} else {
+			$time_mday = $time_mday_start . '-' . $time_mday_finish;
+		}
+
+		//----- Time Month Interval proccess -----
+		//
+		if ($month_start == '-') {
+			$time_month_start = '*';
+		} else {
+			$time_month_start = $month_start;
+		}
+		if ($month_finish == '-') {
+			$time_month_finish = '*';
+		} else {
+			$time_month_finish = $month_finish;
+		}
+		if ($time_month_start === '*') {
+			$time_month_start = $time_month_finish;
+		}
+		if ($time_month_finish === '*') {
+			$time_month_finish = $time_month_start;
+		}
+		if ($time_month_start == $time_month_finish) {
+			$time_month = $time_month_start;
+		} else {
+			$time_month = $time_month_start . '-' . $time_month_finish;
+		}
+		$time = $time_hour . '|' . $time_wday . '|' . $time_mday . '|' . $time_month;
+		return $time;
+	}
 }

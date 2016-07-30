@@ -2,13 +2,33 @@
 	<rawname>voicemail</rawname>
 	<repo>standard</repo>
 	<name>Voicemail</name>
-	<version>13.0.31</version>
+	<version>13.0.51.1</version>
 	<publisher>Ringfree</publisher>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<license>GPLv3+</license>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.51.1* Ringfree branch
+		*13.0.51* FREEPBX-12680 Force Greeting appears twice missing Force Name
+		*13.0.50* FREEPBX-12475 Voicemail Admin write out settings during install, also fix up display
+		*13.0.49* FREEPBX-12428 Moving vm msg in UCP does not refresh page automatically
+		*13.0.48* FREEPBX-12361 XSS in sub argument
+		*13.0.47* FREEPBX-12212 FREEPBX-12124
+		*13.0.46* FREEPBX-10998 FREEPBX-12036 FREEPBX-11479 FREEPBX-12218
+		*13.0.45* FREEPBX-11617 UCP Quick Link(s) to Return Calls to Voicemail
+		*13.0.44* FREEPBX-11597 set voicemail to yes
+		*13.0.43* FREEPBX-12168 Support voicemailRefresh when changing mailboxes
+		*13.0.42* Revert the work done in 41, bring back dynamic hints
+		*13.0.41* FREEPBX-11223 for res_mwi_blf dont use dynamic hints
+		*13.0.40* FREEPBX-11928 VMX locator settings do not stick
+		*13.0.39* Make sure VmX locator is actually loaded
+		*13.0.38* FREEPBX-11223 Another attempt. If there is nothing in the DB then just assume default
+		*13.0.37* FREEPBX-11103 FREEPBX-11223
+		*13.0.36* FREEPBX-10571 remove repeat add restart button to player
+		*13.0.35* Simplify settings
+		*13.0.33* FREEPBX-11425 correct ucp sorting problems
+		*13.0.32* FREEPBX-11466 Add media class method to try and determine asterisk mimetypes
 		*13.0.31* FREEPBX-10680 and FREEPBX-10961
 		*13.0.30* Support global file name functions
 		*13.0.29* FREEPBX-11080 look for 40 character hashes
@@ -61,8 +81,8 @@
 		<voicemail>Voicemail Admin</voicemail>
 	</menuitems>
 	<depends>
-		<module>core ge 13.0.16</module>
-		<version>13.0.41</version>
+		<module>core ge 13.0.84</module>
+		<version>13.0.111</version>
 	</depends>
 	<supported>
 		<version>13.0</version>
@@ -88,6 +108,6 @@
 			<method callingMethod="delGroup" class="Voicemail" namespace="FreePBX\modules">ucpDelGroup</method>
 		</ucp>
 	</hooks>
-	<location>release/13.0/voicemail-13.0.31.tgz</location>
-	<md5sum>ee34af80410ae48fe0009a744d56cdb5</md5sum>
+	<location>release/13.0/voicemail-13.0.51.1.tgz</location>
+	<md5sum></md5sum>
 </module>

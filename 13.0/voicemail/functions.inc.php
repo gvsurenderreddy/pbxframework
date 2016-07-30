@@ -131,20 +131,25 @@ function voicemail_get_config($engine) {
 function voicemail_directdialvoicemail($c) {
 	global $ext;
 
-	$userlist = core_users_list();
+	$userlist = FreePBX::Core()->getAllUsers();
 	if (is_array($userlist)) {
 		foreach($userlist as $item) {
-			$exten = core_users_get($item[0]);
-			$vm = ((($exten['voicemail'] == "novm") || ($exten['voicemail'] == "disabled") || ($exten['voicemail'] == "")) ? "novm" : $exten['extension']);
+			$vm = ((($item['voicemail'] == "novm") || ($item['voicemail'] == "disabled") || ($item['voicemail'] == "")) ? "novm" : $item['extension']);
 
 			if($vm != "novm") {
 				$context = 'ext-local';
-				$exten_num = $exten['extension'];
+				$exten_num = $item['extension'];
 				// This usually gets called from macro-exten-vm but if follow-me destination need to go this route
+				$ext->add($context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+				$ext->add($context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(name,i)',sprintf(_("%s Voicemail"),$exten_num)));
+				$ext->add($context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(num,i)',$exten_num));
 				$ext->add($context, $c.$exten_num, '', new ext_macro('vm',$vm.',DIRECTDIAL,${IVR_RETVM}'));
 				$ext->add($context, $c.$exten_num, '', new ext_goto('1','vmret'));
 
 				$ivr_context = 'from-did-direct-ivr';
+				$ext->add($ivr_context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+				$ext->add($ivr_context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(name,i)',sprintf(_("%s Voicemail"),$exten_num)));
+				$ext->add($ivr_context, $c.$exten_num, '', new ext_set('CONNECTEDLINE(num,i)',$exten_num));
 				$ext->add($ivr_context, $c.$exten_num, '', new ext_macro('blkvm-clr'));
 				$ext->add($ivr_context, $c.$exten_num, '', new ext_setvar('__NODEST', ''));
 				$ext->add($ivr_context, $c.$exten_num, '', new ext_macro('vm',$vm.',DIRECTDIAL,${IVR_RETVM}'));
@@ -162,9 +167,12 @@ function voicemail_myvoicemail($c) {
 
 	$ext->addInclude('from-internal-additional', $id); // Add the include from from-internal
 
+	$ext->add($id, $c, '', new ext_macro('user-callerid')); // $cmd,n,Macro(user-callerid)
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name,i)',_("My Voicemail")));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(num,i)','${AMPUSER}'));
 	$ext->add($id, $c, '', new ext_answer('')); // $cmd,1,Answer
 	$ext->add($id, $c, '', new ext_wait('1')); // $cmd,n,Wait(1)
-	$ext->add($id, $c, '', new ext_macro('user-callerid')); // $cmd,n,Macro(user-callerid)
 	$ext->add($id, $c, '', new ext_macro('get-vmcontext','${AMPUSER}'));
 	$ext->add($id, $c, 'check', new ext_vmexists('${AMPUSER}@${VMCONTEXT}')); // n,VoiceMailMain(${VMCONTEXT})
 	$ext->add($id, $c, '', new ext_gotoif('$["${VMBOXEXISTSSTATUS}" = "SUCCESS"]', 'mbexist'));
@@ -202,6 +210,9 @@ function voicemail_dialvoicemail($c) {
 	$ext->addInclude('from-internal-additional', $id); // Add the include from from-internal
 
 	$ext->add($id, $c, '', new ext_macro('user-callerid'));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name,i)',_("Dial Voicemail")));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(num,i)','${EXTEN}'));
 	$ext->add($id, $c, '', new ext_answer(''));
 	$ext->add($id, $c, 'start', new ext_wait('1'));
 	$ext->add($id, $c, '', new ext_noop($id.': Asking for mailbox'));
@@ -212,6 +223,7 @@ function voicemail_dialvoicemail($c) {
 	$ext->add($id, $c, '', new ext_gotoif('$["${VMBOXEXISTSSTATUS}" = "SUCCESS"]', 'good', 'bad'));
 	$ext->add($id, $c, '', new ext_macro('hangupcall'));
 	$ext->add($id, $c, 'good', new ext_noop($id.': Good mailbox ${MAILBOX}@${VMCONTEXT}'));
+	//$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(num)','${MAILBOX}')); //makes audio stutter on the phone
 	$ext->add($id, $c, '', new ext_vmmain('${MAILBOX}@${VMCONTEXT}'));
 	$ext->add($id, $c, '', new ext_gotoif('$["${IVR_RETVM}" = "RETURN" & "${IVR_CONTEXT}" != ""]','playret'));
 	$ext->add($id, $c, '', new ext_macro('hangupcall'));
@@ -236,21 +248,20 @@ function voicemail_dialvoicemail($c) {
 			$resmwiblf_module = preg_match('/[1-9] modules loaded/', $resmwiblf_check['data']);
 		}
 	}
-	//if ($resmwiblf_module && $amp_conf['USERESMWIBLF']) { // TODO: PUT THIS BACK
-	if (true) { // TODO: FOR TESTING ONLY
-		$userlist = core_users_list();
+	if ($resmwiblf_module && $amp_conf['USERESMWIBLF']) { // TODO: PUT THIS BACK
+		$userlist = FreePBX::Core()->getAllUsers();
 		if (is_array($userlist)) {
 			foreach($userlist as $item) {
-				$exten = core_users_get($item[0]);
-				$vm = ((($exten['voicemail'] == "novm") || ($exten['voicemail'] == "disabled") || ($exten['voicemail'] == "")) ? "novm" : $exten['extension']);
+				$vm = ((($item['voicemail'] == "novm") || ($item['voicemail'] == "disabled") || ($item['voicemail'] == "")) ? "novm" : $item['extension']);
 
 				if($vm != "novm") {
 					$ext->add($id, $c.$vm, '', new ext_goto('1','dvm${EXTEN:'.strlen($c).'}'));
-					//$ext->addHint($id, $c.$vm, "MWI:$vm@".$exten['voicemail']);
+					//$ext->addHint($id, $c.$vm, 'MWI:'.$vm.'@'.$item['voicemail']);
 				}
 			}
 			$c_len = strlen($c);
 			//$ext->add($id, "_$c".'X.', '', new ext_noop("This extension does not have access to this"));
+			//
 			$ext->addHint($id, "_$c".'X.', 'MWI:${EXTEN:'.$c_len.'}@${DB(AMPUSER/${EXTEN:'.$c_len.'}/voicemail)}');
 		}
 		$c = '_dvm.';
@@ -260,10 +271,13 @@ function voicemail_dialvoicemail($c) {
 		$c = "_$c.";
 	}
 
-	$ext->add($id, $c, '', new ext_answer('')); // $cmd,1,Answer
-	$ext->add($id, $c, '', new ext_wait('1')); // $cmd,n,Wait(1)
 	// How long is the command? We need to strip that off the front
 	$clen = strlen($c)-2;
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(name,i)',_("Dial Voicemail")));
+	$ext->add($id, $c, '', new ext_set('CONNECTEDLINE(num,i)','${EXTEN:'.$clen.'}'));
+	$ext->add($id, $c, '', new ext_answer('')); // $cmd,1,Answer
+	$ext->add($id, $c, '', new ext_wait('1')); // $cmd,n,Wait(1)
 	$ext->add($id, $c, '', new ext_macro('get-vmcontext','${EXTEN:'.$clen.'}'));
 	$ext->add($id, $c, '', new ext_vmmain('${EXTEN:'.$clen.'}@${VMCONTEXT}')); // n,VoiceMailMain(${VMCONTEXT})
 	$ext->add($id, $c, '', new ext_gotoif('$["${IVR_RETVM}" = "RETURN" & "${IVR_CONTEXT}" != ""]','${IVR_CONTEXT},return,1'));
@@ -513,6 +527,18 @@ function voicemail_configpageload() {
 		$dvm = new featurecode('voicemail', 'dialvoicemail');
 		$extword = ($display == 'extensions') ? _('Extension') : _('Device');
 
+		$display_mode = "advanced";
+		$mode = \FreePBX::Config()->get("FPBXOPMODE");
+		if(!empty($mode)) {
+			$display_mode = $mode;
+		}
+		if($display_mode == "basic") {
+			$tb = $rb = "gui_hidden";
+		} else {
+			$tb = "gui_textbox";
+			$rb = "gui_radio";
+		}
+
 		$el = array(
 			"elemname" => "passlogin",
 			"prompttext" => sprintf(_('Require From Same %s'),$extword),
@@ -522,7 +548,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 		$novmstar = !empty($extdisplay) ? $astman->connected() && $astman->database_get("AMPUSER", $extdisplay."/novmstar") : 'yes';
 		$novmstar = !empty($novmstar) ? 'yes' : 'no';
@@ -535,7 +561,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "email",
@@ -561,7 +587,7 @@ function voicemail_configpageload() {
 			"class" => $class,
 			"disable" => $disable
 		);
-		$currentcomponent->addguielem($section, new gui_textbox(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $tb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "attach",
@@ -572,7 +598,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "saycid",
@@ -583,7 +609,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "envelope",
@@ -594,7 +620,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "vmdelete",
@@ -605,7 +631,7 @@ function voicemail_configpageload() {
 			"disable" => $disable,
 			"class" => $class
 		);
-		$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $rb(array_merge($guidefaults,$el)),$category);
 
 
 		if ($amp_conf['VM_SHOW_IMAP'] || $vmops_imapuser || $vmops_imappassword) {
@@ -617,7 +643,7 @@ function voicemail_configpageload() {
 				"class" => $class,
 				"disable" => $disable
 			);
-			$currentcomponent->addguielem($section, new gui_textbox(array_merge($guidefaults,$el)),$category);
+			$currentcomponent->addguielem($section, new $tb(array_merge($guidefaults,$el)),$category);
 
 			$el = array(
 				"elemname" => "imappassword",
@@ -627,7 +653,7 @@ function voicemail_configpageload() {
 				"class" => $class,
 				"disable" => $disable
 			);
-			$currentcomponent->addguielem($section, new gui_textbox(array_merge($guidefaults,$el)),$category);
+			$currentcomponent->addguielem($section, new $tb(array_merge($guidefaults,$el)),$category);
 		}
 
 		$el = array(
@@ -638,7 +664,7 @@ function voicemail_configpageload() {
 			"class" => $class,
 			"disable" => $disable
 		);
-		$currentcomponent->addguielem($section, new gui_textbox(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $tb(array_merge($guidefaults,$el)),$category);
 
 		$el = array(
 			"elemname" => "vmcontext",
@@ -650,7 +676,7 @@ function voicemail_configpageload() {
 			"jsvalidation" => "frm_${display}_isVoiceMailEnabled() && isEmpty()",
 			"failvalidationmsg" => $msgInvalidVMContext,
 		);
-		$currentcomponent->addguielem($section, new gui_textbox(array_merge($guidefaults,$el)),$category);
+		$currentcomponent->addguielem($section, new $tb(array_merge($guidefaults,$el)),$category);
 
 		voicemail_draw_vmxgui($extdisplay, $disable);
 	}
@@ -659,6 +685,15 @@ function voicemail_configpageload() {
 function voicemail_draw_vmxgui($extdisplay, $vmdisable) {
 	global $currentcomponent;
 	global $display;
+
+	$display_mode = "advanced";
+	$mode = \FreePBX::Config()->get("FPBXOPMODE");
+	if(!empty($mode)) {
+		$display_mode = $mode;
+	}
+	if($display_mode == "basic") {
+		return true;
+	}
 
 	$section = _("VmX Locater&trade;");
 	$group = "vmxgroup";
@@ -687,7 +722,7 @@ function voicemail_draw_vmxgui($extdisplay, $vmdisable) {
 
 	$vmxsettings['option'][0] = array(
 		"disabled" => false,
-		"value" => !$disable ? $vmxobj->getMenuOpt(0) : '',
+		"value" =>  $vmxobj->getMenuOpt(0),
 		"checked" => false
 	);
 	if($vmxsettings['option'][0]['value'] == '') {
@@ -779,19 +814,18 @@ function voicemail_draw_vmxgui($extdisplay, $vmdisable) {
 		"pairedvalues" => false
 	);
 	$currentcomponent->addguielem($section, new gui_radio(array_merge($guidefaults,$el)), $category);
-
 	$el = array(
 		"elemname" => "vmx_option_0_number",
 		"prompttext" => _("Press 0:"),
 		"helptext" => _("Pressing 0 during your personal Voicemail greeting goes to the Operator. Uncheck to enter another destination here. This feature can be used while still disabling VmX to allow an alternative Operator extension without requiring the VmX feature for the user."),
 		"currentvalue" => $vmxsettings['option'][0]['value'],
-		"disable" => $vmxsettings['option'][0]['disabled'],
+		"disable" => false,
 		"class" => '',
 		"disabled_value" => $vmxsettings['option'][0]['value'],
 		"cblabel" => _("Go To Operator"),
 		"cbelemname" => "vmx_option_0_system_default",
 		"check_enables" => 'false',
-		"cbdisable" => $disable,
+		"cbdisable" => false,
 		"cbclass" => $group,
 		"cbchecked" => $vmxsettings['option'][0]['checked']
 	);
@@ -1414,39 +1448,21 @@ function voicemail_del_greeting_files($vmail_root, $context="", $exten="", $name
 	}
 }
 function voicemail_get_storage($path) {
-	$storage_result = array();
-	$matches        = array();
-	foreach (glob($path) as $filename) {
-		$storage_result[] = $filename;
-	}
-	if (preg_match("/[0-9]*\.*[0-9]*[a-zA-Z]*/", $storage_result[0], $matches) > 0) {
-		$storage = $matches[0];
-		unset($matches);
-		$matches = array();
-		# Expecting storage value as #.#U where # = number, . = dot, and U = units (e.g. M, K, etc.)
-		# Massage the string so that there is a space between the number value and character(s)
-		# denoting the unit
-		#
-		# Extract the numeric part. /[0-9]*\.*[0-9]*[a-zA-Z]*/
-		if (preg_match("/[0-9]*\.*[0-9]*/", $storage, $matches)) {
-			$st_num = $matches[0];
-		} else {
-			$st_num = "0";
+	$bytes = 0;
+	$path = realpath($path);
+	if($path!==false){
+		foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object){
+			if($object->isLink()){
+				continue;
+			}
+			$bytes += $object->getSize();
 		}
-		unset($matches);
-		$matches = array();
-		if (preg_match("/[a-zA-Z]+$/", $storage, $matches)) {
-			$st_unit = $matches[0];
-		} else {
-			$st_unit = "";
-		}
-		# reset $storage to new string
-		$storage = $st_num . "&nbsp;" . $st_unit;
-	} else {
-		$storage = "unknown";
 	}
-	return $storage;
+	$base = log($bytes, 1024);
+	$suffixes = array('', _('KB'), _('MB'), _('GB'), _('TB'));
+	return sprintf('%1.2f %s',round(pow(1024, $base - floor($base)), 5),$suffixes[floor($base)]);
 }
+
 function voicemail_get_usage($vmail_info, $scope, &$acts_total, &$acts_act, &$acts_unact, &$disabled_count,
 							&$msg_total, &$msg_in, &$msg_other,&$name, &$unavail, &$busy, &$temp, &$abandoned,
 							&$storage, $context="", $extension="") {
@@ -1678,4 +1694,3 @@ function voicemail_get_greeting_timestamps($name=0, $unavail=0, $busy=0, $temp=0
 	}
 	return $ts;
 }
-?>

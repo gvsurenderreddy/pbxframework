@@ -30,8 +30,7 @@ try {
 }
 ob_end_clean();
 
-\Emojione::$imagePathPNG = 'assets/images/emoji/png/'; // defaults to jsdelivr's free CDN
-\Emojione::$imagePathSVG = 'assets/images/emoji/svg/'; // defaults to jsdelivr's free CDN
+
 
 $user = $ucp->User->getUser();
 
@@ -43,11 +42,13 @@ if(empty($ucp->Session->isMobile)) {
 	$ucp->Session->isMobile = $ucp->detect->isMobile();
 	$ucp->Session->isTablet = $ucp->detect->isTablet();
 }
+
 //Send back only PJAX relevant data
 //This is to force a complete page refresh if/when UCP gets updates
 //The header HTTP_X_PJAX comes from the JS PJAX lib, letting us know we don't need the whole html document
 if(isset($_SERVER['HTTP_X_PJAX'])) {
-	header("X-PJAX-Version: ".$ucp->getVersion());
+	$forceRefresh = $ucp->User->refresh() ? '-force' : '';
+	header("X-PJAX-Version: ".$ucp->getVersion().$forceRefresh);
 }
 
 //http://htmlpurifier.org/docs/enduser-utf8.html#fixcharset
@@ -109,12 +110,6 @@ if ( !isset($_SERVER['HTACCESS']) && preg_match("/apache/i", $_SERVER['SERVER_SO
 	if($nt->exists('ucp', 'htaccess')) {
 		$nt->delete('ucp', 'htaccess');
 	}
-}
-
-exec('/usr/bin/env sox --version',$output);
-if(!preg_match('/sox:\s*SoX v(.*)/',$output[0])) {
-	$nt->add_warning('ucp', 'sox', _('SOX is not installed on this server but is required by UCP. Please install it'),
-	_("SOX is required for UCP to be able to do transcoding of playback for browser playback of files. Without it files will not playback within UCP"),"",true,true);
 }
 
 try {
@@ -219,7 +214,7 @@ switch($display) {
 			"badge" => false,
 			"icon" => "fa-cog",
 			"menu" => array(
-				"html" => '<li>' . $originate . '</li><li><a data-pjax href="?display=settings">' . _('Settings') . '</a></li><li><a class="logout" href="?logout=1">' . _('Logout') . '</a></li>'
+				"html" => '<li>' . $originate . '</li><li><a data-pjax href="?display=settings">' . _('User Settings') . '</a></li><li><a class="logout" href="?logout=1">' . _('Logout') . '</a></li>'
 			)
 		);
 		$ucp->View->show_view(__DIR__.'/views/dashboard.php',$displayvars);

@@ -11,11 +11,12 @@
  * Copyright 2006-2014 Schmooze Com Inc.
  */
 namespace UCP;
+use Emojione\Client;
+use Emojione\Ruleset;
 include(__DIR__.'/UCP_Helpers.class.php');
 class UCP extends UCP_Helpers {
 	// Static Object used for self-referencing.
-	private static $obj;
-	public static $conf;
+	private static $uobj;
 
 	function __construct($mode = 'local') {
 		if($mode == 'local') {
@@ -33,9 +34,13 @@ class UCP extends UCP_Helpers {
 			//$this->db->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 		}
 
+		$this->emoji = new Client(new Ruleset());
+		$this->emoji->imagePathPNG = 'assets/images/emoji/png/'; // defaults to jsdelivr's free CDN
+		$this->emoji->imagePathSVG = 'assets/images/emoji/svg/'; // defaults to jsdelivr's free CDN
+
 		$this->detect = new \Mobile_Detect;
 		// Ensure the local object is available
-		self::$obj = $this;
+		self::$uobj = $this;
 	}
 
 	/**
@@ -49,10 +54,10 @@ class UCP extends UCP_Helpers {
 	 * @return object FreePBX UCP Object
 	 */
 	public static function create() {
-		if (!isset(self::$obj)) {
-			self::$obj = new UCP();
+		if (!isset(self::$uobj)) {
+			self::$uobj = new UCP();
 		}
-		return self::$obj;
+		return self::$uobj;
 	}
 
 	/**
@@ -79,7 +84,7 @@ class UCP extends UCP_Helpers {
 	* @param string $setting  The setting key
 	*/
 	function getCombinedSettingByID($uid,$module,$setting) {
-		return $this->FreePBX->UCP->getCombinedSettingByID($uid,$module,$setting);
+		return $this->FreePBX->Ucp->getCombinedSettingByID($uid,$module,$setting);
 	}
 
 	/**
@@ -89,7 +94,7 @@ class UCP extends UCP_Helpers {
 	 * @param string $setting  The setting key
 	 */
 	function getSetting($username,$module,$setting) {
-		return $this->FreePBX->UCP->getSetting($username,$module,$setting);
+		return $this->FreePBX->Ucp->getSetting($username,$module,$setting);
 	}
 
 	/**
@@ -100,7 +105,7 @@ class UCP extends UCP_Helpers {
 	 * @param string $value    the setting value
 	 */
 	function setSetting($username,$module,$setting,$value) {
-		return $this->FreePBX->UCP->setSetting($username,$module,$setting,$value);
+		return $this->FreePBX->Ucp->setSetting($username,$module,$setting,$value);
 	}
 
 	/**
@@ -108,14 +113,20 @@ class UCP extends UCP_Helpers {
 	 */
 	function getServerSettings() {
 		if(!$this->FreePBX->Modules->checkStatus('ucpnode')) {
-			return array("enabled" => false, "port" => "0", "host" => "");
+			return array("enabled" => false, "port" => "0", "host" => "", "enabledS" => false, "portS" => "0", "hostS" => "");
 		}
 		$enabled = $this->FreePBX->Config->get('NODEJSENABLED');
 		$enabled = is_bool($enabled) || is_int($enabled) ? $enabled : true;
 		$port = $this->FreePBX->Config->get('NODEJSBINDPORT');
 		$port = !empty($port) ? $port : 8001;
-		$serverparts = explode($_SERVER['HTTP_HOST'], ":"); //strip off port because we define it
-		return array("enabled" => $enabled, "port" => $port, "host" => $serverparts[0]);
+
+		$enabledS = $this->FreePBX->Config->get('NODEJSTLSENABLED');
+		$enabledS = is_bool($enabledS) || is_int($enabledS) ? $enabledS : true;
+		$portS = $this->FreePBX->Config->get('NODEJSHTTPSBINDPORT');
+		$portS = !empty($portS) ? $portS : 8003;
+
+		$serverparts = explode(":", $_SERVER['HTTP_HOST']); //strip off port because we define it
+		return array("enabled" => $enabled, "port" => $port, "host" => $serverparts[0], "enabledS" => $enabledS, "portS" => $portS);
 	}
 
 	/**
@@ -137,6 +148,8 @@ class UCP extends UCP_Helpers {
 			"bootstrap-table-cookie.js",
 			"bootstrap-table-toolbar.js",
 			"bootstrap-table-mobile.js",
+			"bootstrap-table-export.js",
+			"tableExport.js",
 			"jquery-ui-1.10.4.custom.min.js",
 			/*"jquery.keyframes.min.js",*/
 			"fileinput.js",
@@ -154,13 +167,16 @@ class UCP extends UCP_Helpers {
 			"packery.pkgd.min.js",
 			"class.js",
 			/*"jquery.transit.min.js",*/
-			"date.format.js",
 			"jquery.textfill.min.js",
 			"jed.js",
 			"modgettext.js",
 			"jquery.cookie.js",
 			"emojione.min.js",
 			"jquery.tokenize.js",
+			"moment.js",
+			"moment-timezone.js",
+			"nprogress.js",
+			"imagesloaded.pkgd.min.js",
 			"ucp.js",
 			"module.js"
 		);

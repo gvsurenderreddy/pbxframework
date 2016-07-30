@@ -84,6 +84,9 @@ var VoicemailC = UCPMC.extend({
 			}
 			$("#voicemail-badge").text(data.total);
 			$.each( data.boxes, function( extension, messages ) {
+				if(typeof extension === "undefined") {
+					return false;
+				}
 				$("#voicemail-" + extension + "-badge").text(messages);
 			});
 			voicemailNotification = new Notify("Voicemail", {
@@ -155,6 +158,12 @@ var VoicemailC = UCPMC.extend({
 						});
 					}
 				);
+			});
+			$("#voicemail-grid .clickable").click(function(e) {
+				var text = $(this).text();
+				if (UCP.validMethod("Contactmanager", "showActionDialog")) {
+					UCP.Modules.Contactmanager.showActionDialog("number", text, "phone");
+				}
 			});
 			$("#voicemail-grid a.forward").click(function() {
 				var id = $(this).data("id");
@@ -235,7 +244,7 @@ var VoicemailC = UCPMC.extend({
 						$.each(sel, function(i, v){
 							$this.moveVoicemail(v.msg_id, $("#VMmove").val(), extension, function(data) {
 								if(data.status) {
-									$('#voicemail-grid').bootstrapTable('hideRow', {index: v.msg_id, isIdField: true});
+									$('#voicemail-grid').bootstrapTable('remove', {field: "msg_id", values: [String(v.msg_id)]});
 								}
 								processed++;
 								if(processed == total) {
@@ -249,7 +258,7 @@ var VoicemailC = UCPMC.extend({
 							$.each(sel, function(i, v){
 								$this.moveVoicemail(v.msg_id, $("#VMmove").val(), extension, function(data) {
 									if(data.status) {
-										$('#voicemail-grid').bootstrapTable('hideRow', {index: v.msg_id, isIdField: true});
+										$('#voicemail-grid').bootstrapTable('remove', {field: "msg_id", values: [String(v.msg_id)]});
 									}
 									processed++;
 									if(processed == total) {
@@ -513,7 +522,7 @@ var VoicemailC = UCPMC.extend({
 					$("#freepbx_player_unavail").removeClass("greet-hidden");
 					$this.toggleGreeting("unavail", true);
 				} else {
-					console.log(data.result.message);
+					console.warn(data.result.message);
 				}
 			},
 			progressall: function(e, data) {
@@ -552,7 +561,7 @@ var VoicemailC = UCPMC.extend({
 					$("#freepbx_player_busy").removeClass("greet-hidden");
 					$this.toggleGreeting("busy", true);
 				} else {
-					console.log(data.result.message);
+					console.warn(data.result.message);
 				}
 			},
 			progressall: function(e, data) {
@@ -591,7 +600,7 @@ var VoicemailC = UCPMC.extend({
 					$("#freepbx_player_greet").removeClass("greet-hidden");
 					$this.toggleGreeting("greet", true);
 				} else {
-					console.log(data.result.message);
+					console.warn(data.result.message);
 				}
 			},
 			progressall: function(e, data) {
@@ -635,7 +644,7 @@ var VoicemailC = UCPMC.extend({
 					$("#freepbx_player_temp").removeClass("greet-hidden");
 					$this.toggleGreeting("temp", true);
 				} else {
-					console.log(data.result.message);
+					console.warn(data.result.message);
 				}
 			},
 			progressall: function(e, data) {
@@ -914,7 +923,7 @@ var VoicemailC = UCPMC.extend({
 				'<div class="jp-gui jp-interface">'+
 					'<div class="jp-controls">'+
 						'<i class="fa fa-play jp-play"></i>'+
-						'<i class="fa fa-repeat jp-repeat"></i>'+
+						'<i class="fa fa-undo jp-restart"></i>'+
 					'</div>'+
 					'<div class="jp-progress">'+
 						'<div class="jp-seek-bar progress">'+
@@ -987,7 +996,7 @@ var VoicemailC = UCPMC.extend({
 									if(data.status) {
 										player.on($.jPlayer.event.error, function(event) {
 											$(container).removeClass("jp-state-loading");
-											console.log(event);
+											console.warn(event);
 										});
 										player.one($.jPlayer.event.canplay, function(event) {
 											$(container).removeClass("jp-state-loading");
@@ -1000,6 +1009,14 @@ var VoicemailC = UCPMC.extend({
 									}
 								}
 							});
+						}
+					});
+					var $this = this;
+					$(container).find(".jp-restart").click(function() {
+						if($($this).data("jPlayer").status.paused) {
+							$($this).jPlayer("pause",0);
+						} else {
+							$($this).jPlayer("play",0);
 						}
 					});
 				},

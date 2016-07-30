@@ -7,13 +7,19 @@
  * @param int $extension Extension number
  */
 function checkRange($extension){
-	$low = isset($_SESSION["AMP_user"]->_extension_low)?$_SESSION["AMP_user"]->_extension_low:'';
-	$high = isset($_SESSION["AMP_user"]->_extension_high)?$_SESSION["AMP_user"]->_extension_high:'';
-
-	if ((($extension >= $low) && ($extension <= $high)) || ($low == '' && $high == ''))
+	$high = '';
+	$low = '';
+	if(isset($_SESSION["AMP_user"]) && is_object($_SESSION["AMP_user"])){
+		$low = $_SESSION["AMP_user"]->getExtensionLow();
+		$high = $_SESSION["AMP_user"]->getExtensionHigh();
+	} else {
 		return true;
-	else
+	}
+	if ((($extension >= $low) && ($extension <= $high)) || ($low == '' && $high == '')){
+		return true;
+	}else{
 		return false;
+	}
 }
 
 /**

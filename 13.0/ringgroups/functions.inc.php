@@ -35,7 +35,7 @@ function ringgroups_getdestinfo($dest) {
 			return array();
 		} else {
 			return array('description' => sprintf(_("Ring Group %s: "),$grp).$thisgrp['description'],
-			             'edit_url' => 'config.php?display=ringgroups&extdisplay=GRP-'.urlencode($grp),
+			             'edit_url' => 'config.php?display=ringgroups&view=form&extdisplay=GRP-'.urlencode($grp),
 								  );
 		}
 	} else {
@@ -53,7 +53,7 @@ function ringgroups_recordings_usage($recording_id) {
 		//$type = isset($active_modules['ivr']['type'])?$active_modules['ivr']['type']:'setup';
 		foreach ($results as $result) {
 			$usage_arr[] = array(
-				'url_query' => 'config.php?display=ringgroups&extdisplay=GRP-'.urlencode($result['grpnum']),
+				'url_query' => 'config.php?display=ringgroups&view=form&extdisplay=GRP-'.urlencode($result['grpnum']),
 				'description' => sprintf(_("Ring Group: %s"),$result['description']),
 			);
 		}
@@ -83,6 +83,7 @@ function ringgroups_get_config($engine) {
 					$grplist = $grp['grplist'];
 					$postdest = $grp['postdest'];
 					$grppre = (isset($grp['grppre'])?$grp['grppre']:'');
+					$progress = (isset($grp['progress'])?$grp['progress']:'yes');
 					$annmsg_id = (isset($grp['annmsg_id'])?$grp['annmsg_id']:'');
 					$alertinfo = $grp['alertinfo'];
 					$needsconf = $grp['needsconf'];
@@ -106,9 +107,15 @@ function ringgroups_get_config($engine) {
 					} else {
 						$dialopts = 'm(' . $ringing . ')${REPLACE(DIAL_OPTIONS,r)}';
 					}
+					if ($progress == 'yes') {
+						$ext->add($contextname, $grpnum, '', new ext_gotoif('$["${__RINGINGSENT}" = "TRUE"]', 'cid'));
+						if($ringing == 'Ring' || empty($ringing) ) {
+							$ext->add($contextname, $grpnum, '', new ext_playtones("ring"));
+						}
+						$ext->add($contextname, $grpnum, '', new ext_progress());
+					}
 
-
-					$ext->add($contextname, $grpnum, '', new ext_macro('user-callerid'));
+					$ext->add($contextname, $grpnum, 'cid', new ext_macro('user-callerid'));
 
 					// block voicemail until phone is answered at which point a macro should be called on the answering
 					// line to clear this flag so that subsequent transfers can occur, if already set by a the caller
@@ -137,11 +144,11 @@ function ringgroups_get_config($engine) {
 						$ext->add($contextname, $grpnum, '', new ext_setvar('__ALERT_INFO', str_replace(';', '\;', $alertinfo)));
 					}
 					if ($cwignore != '') {
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('__CWIGNORE', 'TRUE'));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('__CWIGNORE', 'TRUE'));
 					}
 					if ($cfignore != '') {
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('_CFIGNORE', 'TRUE'));
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('_FORWARD_CONTEXT', 'block-cf'));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('_CFIGNORE', 'TRUE'));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('_FORWARD_CONTEXT', 'block-cf'));
 					}
 					if ($cpickup != '') {
 					  $ext->add($contextname, $grpnum, '', new ext_set('__PICKUPMARK','${EXTEN}'));
@@ -151,8 +158,8 @@ function ringgroups_get_config($engine) {
 					//$ext->add($contextname, $grpnum, '', new ext_setvar('RecordMethod','Group'));
 					//$ext->add($contextname, $grpnum, '', new ext_macro('record-enable',$grplist.',${RecordMethod}'));
 
-          //TODO: hardcoded needs to be configurable in the ringgroup
-          $ext->add($contextname, $grpnum, '', new ext_gosub('1','s','sub-record-check',"rg,$grpnum,$recording"));
+					//TODO: hardcoded needs to be configurable in the ringgroup
+					$ext->add($contextname, $grpnum, '', new ext_gosub('1','s','sub-record-check',"rg,$grpnum,$recording"));
 
 					// group dial
 					$ext->add($contextname, $grpnum, '', new ext_setvar('RingGroupMethod',$strategy));
@@ -167,13 +174,13 @@ function ringgroups_get_config($engine) {
 						$remotealert = recordings_get_file($remotealert_id);
 						$toolate = recordings_get_file($toolate_id);
 						$len=strlen($grpnum)+4;
-  					$ext->add("grps", "_RG-${grpnum}-.", '', new ext_nocdr(''));
+						$ext->add("grps", "_RG-${grpnum}-.", '', new ext_nocdr(''));
 						$ext->add("grps", "_RG-${grpnum}-.", '', new ext_macro('dial', "$grptime,$dialopts" . "M(confirm^${remotealert}^${toolate}^${grpnum})" . ',${EXTEN:' . $len . '}'));
 						$ext->add($contextname, $grpnum, 'DIALGRP', new ext_macro('dial-confirm',"$grptime,$dialopts,$grplist,$grpnum"));
 					} else {
 						$ext->add($contextname, $grpnum, 'DIALGRP', new ext_macro('dial',$grptime.",$dialopts,".$grplist));
 					}
-          $ext->add($contextname, $grpnum, '', new ext_gosub('1','s','sub-record-cancel'));
+					$ext->add($contextname, $grpnum, '', new ext_gosub('1','s','sub-record-cancel'));
 					$ext->add($contextname, $grpnum, '', new ext_setvar('RingGroupMethod',''));
 
 
@@ -181,18 +188,18 @@ function ringgroups_get_config($engine) {
 					//
 					$ext->add($contextname, $grpnum, '', new ext_gotoif('$["foo${RRNODEST}" != "foo"]', 'nodest'));
 					if ($cwignore != '') {
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('__CWIGNORE', ''));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('__CWIGNORE', ''));
 					}
 					if ($cpickup != '') {
-					  $ext->add($contextname, $grpnum, '', new ext_set('__PICKUPMARK',''));
+						$ext->add($contextname, $grpnum, '', new ext_set('__PICKUPMARK',''));
 					}
 					// TODO: Asterisk uses a blank FORWARD_CONTEXT as a literal at the time of this change. A better solution would be
 					//       if it would ignore blank, since it is possible in a customcontext setup you would not want this set to
 					//       from-internal
 					//
 					if ($cfignore != '') {
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('_CFIGNORE', ''));
- 						$ext->add($contextname, $grpnum, '', new ext_setvar('_FORWARD_CONTEXT', 'from-internal'));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('_CFIGNORE', ''));
+						$ext->add($contextname, $grpnum, '', new ext_setvar('_FORWARD_CONTEXT', 'from-internal'));
 					}
 					$ext->add($contextname, $grpnum, '', new ext_setvar('__NODEST', ''));
 					$ext->add($contextname, $grpnum, '', new ext_macro('blkvm-clr'));
@@ -222,40 +229,41 @@ function ringgroups_get_config($engine) {
 
           NODEST      - has the exten num called, hoaky if that goes away but for now use it
         */
-        if (count($ringlist)) {
-          $contextname = 'sub-rgsetcid';
-          $exten = 's';
-          $ext->add($contextname, $exten, '', new ext_goto('1','s-${DB(RINGGROUP/${NODEST}/changecid)}'));
+				if (count($ringlist)) {
+					$contextname = 'sub-rgsetcid';
+					$exten = 's';
+					$ext->add($contextname, $exten, '', new ext_goto('1','s-${DB(RINGGROUP/${NODEST}/changecid)}'));
 
-          $exten = 's-fixed';
-          $ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${DB(RINGGROUP/${NODEST}/fixedcid)})}" = "1"]', 'Set', '__TRUNKCIDOVERRIDE=${DB(RINGGROUP/${NODEST}/fixedcid)}'));
-          $ext->add($contextname, $exten, '', new ext_return(''));
+					$exten = 's-fixed';
+					$ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${DB(RINGGROUP/${NODEST}/fixedcid)})}" = "1"]', 'Set', '__TRUNKCIDOVERRIDE=${DB(RINGGROUP/${NODEST}/fixedcid)}'));
+					$ext->add($contextname, $exten, '', new ext_return(''));
 
-          $exten = 's-extern';
-          $ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${DB(RINGGROUP/${NODEST}/fixedcid)})}" == "1" & "${FROM_DID}" != ""]', 'Set', '__TRUNKCIDOVERRIDE=${DB(RINGGROUP/${NODEST}/fixedcid)}'));
-          $ext->add($contextname, $exten, '', new ext_return(''));
+					$exten = 's-extern';
+					$ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${DB(RINGGROUP/${NODEST}/fixedcid)})}" == "1" & "${FROM_DID}" != ""]', 'Set', '__TRUNKCIDOVERRIDE=${DB(RINGGROUP/${NODEST}/fixedcid)}'));
+					$ext->add($contextname, $exten, '', new ext_return(''));
 
-          $exten = 's-did';
-          $ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${FROM_DID})}" = "1"]', 'Set', '__REALCALLERIDNUM=${FROM_DID}'));
-          $ext->add($contextname, $exten, '', new ext_return(''));
+					$exten = 's-did';
+					$ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${FROM_DID})}" = "1"]', 'Set', '__REALCALLERIDNUM=${FROM_DID}'));
+					$ext->add($contextname, $exten, '', new ext_return(''));
 
-          $exten = 's-forcedid';
-          $ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${FROM_DID})}" = "1"]', 'Set', '__TRUNKCIDOVERRIDE=${FROM_DID}'));
-          $ext->add($contextname, $exten, '', new ext_return(''));
+					$exten = 's-forcedid';
+					$ext->add($contextname, $exten, '', new ext_execif('$["${REGEX("^[\+]?[0-9]+$" ${FROM_DID})}" = "1"]', 'Set', '__TRUNKCIDOVERRIDE=${FROM_DID}'));
+					$ext->add($contextname, $exten, '', new ext_return(''));
 
-          $exten = '_s-.';
-          $ext->add($contextname, $exten, '', new ext_noop('Unknown value for RINGGROUP/${NODEST}/changecid of ${DB(RINGGROUP/${NODEST}/changecid)} set to "default"'));
-          $ext->add($contextname, $exten, '', new ext_setvar('DB(RINGGROUP/${NODEST}/changecid)', 'default'));
-          $ext->add($contextname, $exten, '', new ext_return(''));
-        }
+					$exten = '_s-.';
+					$ext->add($contextname, $exten, '', new ext_noop('Unknown value for RINGGROUP/${NODEST}/changecid of ${DB(RINGGROUP/${NODEST}/changecid)} set to "default"'));
+					$ext->add($contextname, $exten, '', new ext_setvar('DB(RINGGROUP/${NODEST}/changecid)', 'default'));
+					$ext->add($contextname, $exten, '', new ext_return(''));
+				}
 			}
-		break;
+			break;
 	}
 }
 
-function ringgroups_add($grpnum,$strategy,$grptime,$grplist,$postdest,$desc,$grppre='',$annmsg_id='0',$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid='default',$fixedcid='',$cpickup='', $recording='dontcare') {
+function ringgroups_add($grpnum,$strategy,$grptime,$grplist,$postdest,$desc,$grppre='',$annmsg_id='0',$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid='default',$fixedcid='',$cpickup='', $recording='dontcare',$progress='yes') {
 	global $db;
 	global $astman;
+	global $amp_conf;
 
 	$extens = ringgroups_list();
 	if(is_array($extens)) {
@@ -266,14 +274,18 @@ function ringgroups_add($grpnum,$strategy,$grptime,$grplist,$postdest,$desc,$grp
 			}
 		}
 	}
-	//Random error that can crop up, so we fix it here, this probably happens if something went wrong with announcements.
+	// Random error that can crop up, so we fix it here, this probably
+	// happens if something went wrong with announcements.
 	$annmsg_id = (!empty($annmsg_id) && ctype_digit($annmsg_id)) ? $annmsg_id : 0;
+	// XXX: Kludge to force to zero if unset or not numeric
+	$remotealert_id = (!empty($remotealert_id) && ctype_digit($remotealert_id)) ? $remotealert_id : 0;
+	$toolate_id = (!empty($toolate_id) && ctype_digit($toolate_id)) ? $toolate_id : 0;
 
-	$sql = "INSERT INTO ringgroups (grpnum, strategy, grptime, grppre, grplist, annmsg_id, postdest, description, alertinfo, needsconf, remotealert_id, toolate_id, ringing, cwignore, cfignore, cpickup, recording) VALUES ('".$db->escapeSimple($grpnum)."', '".$db->escapeSimple($strategy)."', ".$db->escapeSimple($grptime).", '".$db->escapeSimple($grppre)."', '".$db->escapeSimple($grplist)."', '".$annmsg_id."', '".$db->escapeSimple($postdest)."', '".$db->escapeSimple($desc)."', '".$db->escapeSimple($alertinfo)."', '$needsconf', '$remotealert_id', '$toolate_id', '$ringing', '$cwignore', '$cfignore', '$cpickup', '$recording')";
+	$sql = "INSERT INTO ringgroups (grpnum, strategy, grptime, grppre, grplist, annmsg_id, postdest, description, alertinfo, needsconf, remotealert_id, toolate_id, ringing, cwignore, cfignore, cpickup, recording, progress) VALUES ('".$db->escapeSimple($grpnum)."', '".$db->escapeSimple($strategy)."', ".$db->escapeSimple($grptime).", '".$db->escapeSimple($grppre)."', '".$db->escapeSimple($grplist)."', '".$annmsg_id."', '".$db->escapeSimple($postdest)."', '".$db->escapeSimple($desc)."', '".$db->escapeSimple($alertinfo)."', '$needsconf', '$remotealert_id', '$toolate_id', '$ringing', '$cwignore', '$cfignore', '$cpickup', '$recording', '".$db->escapeSimple($progress)."')";
 	$results = sql($sql);
 
-  // from followme, put these in astdb, should migrate more settings to astdb from sql so that user portal control can be
-  // added. So consider this a start.
+	// from followme, put these in astdb, should migrate more settings to astdb from sql so that user portal control can be
+	// added. So consider this a start.
 	if ($astman) {
 		$astman->database_put("RINGGROUP",$grpnum."/changecid",$changecid);
 	  $fixedcid = preg_replace("/[^0-9\+]/" ,"", trim($fixedcid));
@@ -287,6 +299,7 @@ function ringgroups_add($grpnum,$strategy,$grptime,$grplist,$postdest,$desc,$grp
 function ringgroups_del($grpnum) {
 	global $db;
 	global $astman;
+	global $amp_conf;
 
 	$results = sql("DELETE FROM ringgroups WHERE grpnum = '".$db->escapeSimple($grpnum)."'","query");
 	if ($astman) {
@@ -297,7 +310,7 @@ function ringgroups_del($grpnum) {
 }
 
 function ringgroups_list($get_all=false) {
-	dbug("ringgroups_list has been moved to BMO Ringgroups->listRinggroups");
+	_ringgroups_backtrace();
 	return \FreePBX::Ringgroups()->listRinggroups($get_all);
 }
 
@@ -317,7 +330,7 @@ function ringgroups_check_extensions($exten=true) {
 		$thisexten = $result['grpnum'];
 		$extenlist[$thisexten]['description'] = sprintf(_("Ring Group: %s"),$result['description']);
 		$extenlist[$thisexten]['status'] = _('INUSE');
-		$extenlist[$thisexten]['edit_url'] = 'config.php?display=ringgroups&extdisplay=GRP-'.urlencode($thisexten);
+		$extenlist[$thisexten]['edit_url'] = 'config.php?display=ringgroups&view=form&extdisplay=GRP-'.urlencode($thisexten);
 	}
 	return $extenlist;
 }
@@ -343,7 +356,7 @@ function ringgroups_check_destinations($dest=true) {
 		$destlist[] = array(
 			'dest' => $thisdest,
 			'description' => sprintf(_("Ring Group: %s (%s)"),$result['description'],$thisid),
-			'edit_url' => 'config.php?display=ringgroups&extdisplay=GRP-'.urlencode($thisid),
+			'edit_url' => 'config.php?display=ringgroups&view=form&extdisplay=GRP-'.urlencode($thisid),
 		);
 	}
 	return $destlist;
@@ -357,23 +370,24 @@ function ringgroups_change_destination($old_dest, $new_dest) {
 function ringgroups_get($grpnum) {
 	global $db;
 	global $astman;
+	global $amp_conf;
 
-	$results = sql("SELECT grpnum, strategy, grptime, grppre, grplist, annmsg_id, postdest, description, alertinfo, needsconf, remotealert_id, toolate_id, ringing, cwignore, cfignore, cpickup, recording FROM ringgroups WHERE grpnum = '".$db->escapeSimple($grpnum)."'","getRow",DB_FETCHMODE_ASSOC);
-  if ($astman) {
-    $astdb_changecid = strtolower($astman->database_get("RINGGROUP",$grpnum."/changecid"));
-    switch($astdb_changecid) {
-      case 'default':
-      case 'did':
-      case 'forcedid':
-      case 'fixed':
-      case 'extern':
-        break;
-      default:
-        $astdb_changecid = 'default';
-    }
-    $results['changecid'] = $astdb_changecid;
-    $fixedcid = $astman->database_get("RINGGROUP",$grpnum."/fixedcid");
-    $results['fixedcid'] = preg_replace("/[^0-9\+]/" ,"", trim($fixedcid));
+	$results = sql("SELECT grpnum, strategy, grptime, grppre, grplist, annmsg_id, postdest, description, alertinfo, needsconf, remotealert_id, toolate_id, ringing, cwignore, cfignore, cpickup, recording, progress FROM ringgroups WHERE grpnum = '".$db->escapeSimple($grpnum)."'","getRow",DB_FETCHMODE_ASSOC);
+	if ($astman) {
+		$astdb_changecid = strtolower($astman->database_get("RINGGROUP",$grpnum."/changecid"));
+		switch($astdb_changecid) {
+			case 'default':
+			case 'did':
+			case 'forcedid':
+			case 'fixed':
+			case 'extern':
+				break;
+			default:
+				$astdb_changecid = 'default';
+		}
+		$results['changecid'] = $astdb_changecid;
+		$fixedcid = $astman->database_get("RINGGROUP",$grpnum."/fixedcid");
+		$results['fixedcid'] = preg_replace("/[^0-9\+]/" ,"", trim($fixedcid));
 	} else {
 		die_freepbx("Cannot connect to Asterisk Manager with ".$amp_conf["AMPMGRUSER"]."/".$amp_conf["AMPMGRPASS"]);
 	}
@@ -381,16 +395,16 @@ function ringgroups_get($grpnum) {
 }
 /* Get a list of all extensions that belongs to a ringgroup */
 function ringgroups_get_extensions($grpnum) {
-        global $db;
-        $results = sql("SELECT grplist FROM ringgroups WHERE grpnum = '".$db->escapeSimple($grpnum)."'","getRow",DB_FETCHMODE_ASSOC);
-        return $results;
+	global $db;
+	$results = sql("SELECT grplist FROM ringgroups WHERE grpnum = '".$db->escapeSimple($grpnum)."'","getRow",DB_FETCHMODE_ASSOC);
+	return $results;
 }
 
 /* Update the list of extensions for the specific ringgroup */
 function ringgroups_update_extensions($grpnum, $extensions) {
-        global $db;
-        $sql = 'UPDATE ringgroups SET grplist = "' . $extensions . '" WHERE grpnum = "' . $grpnum . '"';
-        sql($sql, "query");
+	global $db;
+	$sql = 'UPDATE ringgroups SET grplist = "' . $extensions . '" WHERE grpnum = "' . $grpnum . '"';
+	sql($sql, "query");
 }
 
 function ringgroups_hook_core($viewing_itemid, $request) {
@@ -398,30 +412,30 @@ function ringgroups_hook_core($viewing_itemid, $request) {
 }
 
 function ringgroups_hookProcess_core($viewing_itemid, $request) {
-
-        if (!isset($request['action']))
-                return;
-        switch ($request['action']) {
-            case 'del':
-                // Get all ringgroups
-                $grouplist = ringgroups_list();
-                if(isset($grouplist)) {
-                    foreach($grouplist as $list => $group){
-                        // Get the extension list for the ringgroup
-                        $extensionlist = ringgroups_get_extensions($group['grpnum']);
-                        $extensions = explode('-', $extensionlist['grplist']);
-                        $key = array_search($viewing_itemid, $extensions);
-                        if($key !== FALSE) {
-                            unset($extensions[$key]);
-                            $new_grplist = implode('-',$extensions);
-                            ringgroups_update_extensions($group['grpnum'], $new_grplist);
-                        }
-                    }
-                }
-            break;
-        }
+	if (!isset($request['action']))
+		return;
+	switch ($request['action']) {
+	case 'del':
+		// Get all ringgroups
+		$grouplist = ringgroups_list();
+		if(isset($grouplist)) {
+			foreach($grouplist as $list => $group) {
+				// Get the extension list for the ringgroup
+				$extensionlist = ringgroups_get_extensions($group['grpnum']);
+				$extensions = explode('-', $extensionlist['grplist']);
+				$key = array_search($viewing_itemid, $extensions);
+				if ($key !== FALSE) {
+					unset($extensions[$key]);
+					$new_grplist = implode('-',$extensions);
+					ringgroups_update_extensions($group['grpnum'], $new_grplist);
+				}
+			}
+		}
+		break;
+	}
 }
 
+global $amp_conf;
 if ($amp_conf['EXTENSION_LIST_RINGGROUPS']) {
 
 	function ringgroups_configpageinit($pagename) {
@@ -446,7 +460,7 @@ if ($amp_conf['EXTENSION_LIST_RINGGROUPS']) {
 
 			$ringgroup_count = 0;
 			foreach($results as $result) {
-				$addURL = '?display=ringgroups&extdisplay='.$result['grpnum'];
+				$addURL = '?display=ringgroups&view=form&extdisplay='.$result['grpnum'];
 				$ringgroup_icon = 'images/email_edit.png';
 				$ringgroup_label = $result['grpnum']." ".$result['description'];
 				$ringgroup_label = '&nbsp;<span>
@@ -458,4 +472,11 @@ if ($amp_conf['EXTENSION_LIST_RINGGROUPS']) {
 	}
 
 } // only included if feature enabled
-?>
+
+function _ringgroups_backtrace() {
+	$trace = debug_backtrace();
+	$function = $trace[1]['function'];
+	$line = $trace[1]['line'];
+	$file = $trace[1]['file'];
+	freepbx_log(FPBX_LOG_WARNING,'Depreciated Function '.$function.' detected in '.$file.' on line '.$line);
+}

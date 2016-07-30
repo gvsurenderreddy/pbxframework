@@ -103,7 +103,7 @@ function logfiles_highlight_asterisk($line,&$channels) {
 /**
  * Get last X lines of log file, with html tags to provide highlighting
  */
-function logfiles_get_logfile($lines = 500, $file) {
+function logfiles_get_logfile($lines = 500, $file, $filter=false) {
 	global $amp_conf;
 	$files = logfiles_list();
 	$logfile = $amp_conf['ASTLOGDIR'] . '/' . $files[$file];
@@ -115,6 +115,20 @@ function logfiles_get_logfile($lines = 500, $file) {
 
 	$channels = array();
 	exec(fpbx_which('tail') . ' -n' . $lines . ' ' . $logfile, $log);
+	if($filter){
+		$regex_check = @preg_match('/'.$filter.'/', null);
+		if($regex_check !== 0){
+				echo _("Invalid pattern");
+				return;
+		}else{
+				$log = preg_grep('/'.$filter.'/', $log);
+		}
+	}
+	//If we filter out all the things....
+	if(empty($log)){
+		echo _("No lines returned");
+		return;
+	}
 	foreach($log as $l){
 		switch (true) {
 		case strpos($l, 'INFO'):
@@ -294,14 +308,14 @@ function logfiles_put_opts($opts) {
 	//save options
 	foreach ($opts as $k => $v) {
 		switch ($k) {
-		case 'appendhostname':
+			case 'appendhostname':
 			case 'dateformat':
-				case 'queue_log':
-					case 'rotatestrategy':
-						$data[] = array($k, $v);
-						break;
-					default:
-						break; //do nothing
+			case 'queue_log':
+			case 'rotatestrategy':
+				$data[] = array($k, $v);
+		break;
+		default:
+		break; //do nothing
 		}
 	}
 
@@ -327,6 +341,10 @@ function logfiles_put_opts($opts) {
 
 	//ensure the order of our array is correct
 	foreach ($logs as $k => $l) {
+		//Skip empty lines
+		if(trim('foo'.$l['name']) == 'foo'){
+			continue;
+		}
 		$data = array('name' => $l['name'],
 			'debug' => $l['debug'],
 			'dtmf' => $l['dtmf'],

@@ -13,16 +13,19 @@ $rotatehelp .= _('Timestamp: Rename the logfiles using a timestamp instead of a 
 function log_dropdown($name,$value,$i){
 		$ret = '<select class="form-control" name="logfiles['.$name.']['.$i.']">';
 		$ret .= '<option value="on" '.(($value == 'on')?"SELECTED":"").'>'._("On").'</option>';
-		$ret .= '<option value="off" '.(($value == 'off')?"SELECTED":"").'>'._("Off").'</option>';
+		$ret .= '<option value="" '.(($value == '')?"SELECTED":"").'>'._("Off").'</option>';
 		$ret .=	'</select>';
 	return $ret;
 }
 
 function verbose_log_dropdown($name,$value,$i){
+		$value = ($value == 'on')?3:$value;
+		$value = ($value == 0)?'off':$value;
+		$value = (is_numeric($value) && $value >= 10)?10:$value;
 		$ret = '<select class="form-control" name="logfiles['.$name.']['.$i.']">';
-		$ret .= '<option value="on" '.(($value == 'on')?"SELECTED":"").'>'._("On").'</option>';
 		$ret .= '<option value="off" '.(($value == 'off')?"SELECTED":"").'>'._("Off").'</option>';
-		for($i = 0; $i <= 20; $i++) {
+		$ret .= '<option value="3" '.(($value == '3')?"SELECTED":"").'>'._("On").'</option>';
+		for($i = 4; $i <= 10; $i++) {
 			$ret .= '<option value="'.$i.'" '.(($value == $i)?"SELECTED":"").'>'.$i.'</option>';
 		}
 		$ret .= '<option value="*" '.(($value == '*')?"SELECTED":"").'>*</option>';

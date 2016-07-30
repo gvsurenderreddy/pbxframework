@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-03 15:28-0800\n"
+"POT-Creation-Date: 2016-03-02 15:15-0800\n"
 "PO-Revision-Date: 2015-10-16 08:31+0200\n"
 "Last-Translator: Media <mousavi.media@gmail.com>\n"
 "Language-Team: Persian <http://weblate.freepbx.org/projects/freepbx/pinsets/"
@@ -21,15 +21,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 2.2-dev\n"
 
-#: views/grid.php:24
+#: views/grid.php:26
 msgid "Actions"
 msgstr "عملیات"
 
-#: views/bootnav.php:2
-msgid "Add PIN Sets"
-msgstr "افزودن  PIN"
+#: views/bootnav.php:2 views/grid.php:8
+msgid "Add Pinset"
+msgstr ""
 
-#: Pinsets.class.php:51
+#: pinsets.i18n.php:8
+msgid ""
+"Allow creation of lists of PINs (numbers for passwords) that can be used by "
+"other modules (eg, trunks)."
+msgstr ""
+
+#: Pinsets.class.php:61
 msgid "Delete"
 msgstr "حذف"
 
@@ -41,10 +47,6 @@ msgstr "ویرایش PIN"
 msgid "Enter a list of one or more PINs.  One PIN per line."
 msgstr "فهرستی از یک یا چند PIN وارد کنید. هر PIN در یک خط."
 
-#: views/bootnav.php:1
-msgid "List PIN Sets"
-msgstr "فهرست PIN"
-
 #: views/form.php:16
 msgid "New PIN Set"
 msgstr "PIN جدید"
@@ -53,11 +55,11 @@ msgstr "PIN جدید"
 msgid "No"
 msgstr "خیر"
 
-#: functions.inc.php:244
+#: functions.inc.php:241
 msgid "None"
 msgstr "هیچ"
 
-#: functions.inc.php:260
+#: functions.inc.php:257
 msgid ""
 "Optional: Select a PIN set to use. If using this option, leave the Route "
 "Password field blank."
@@ -67,13 +69,17 @@ msgstr "اختیاری：یک PIN برای کاربر انتخاب کنید."
 msgid "PIN List"
 msgstr "فهرست PIN"
 
-#: functions.inc.php:239 views/grid.php:23
+#: functions.inc.php:236
 msgid "PIN Set"
 msgstr "تنظیمات PIN"
 
 #: views/form.php:29
 msgid "PIN Set Description"
 msgstr "شرح PIN"
+
+#: pinsets.i18n.php:4 pinsets.i18n.php:10
+msgid "PIN Sets"
+msgstr ""
 
 #: page.pinsets.php:6
 msgid ""
@@ -85,6 +91,10 @@ msgstr ""
 #: page.pinsets.php:7
 msgid "Pin Sets"
 msgstr "تنظیمات PIN"
+
+#: views/bootnav.php:8 views/grid.php:25
+msgid "Pinset"
+msgstr ""
 
 #: views/form.php:41
 msgid "Please enter a description for this pinset"
@@ -98,7 +108,7 @@ msgstr "لطفا شرح معتبر وارد کنید"
 msgid "Record In CDR"
 msgstr "ذخیره در CDR"
 
-#: Pinsets.class.php:56
+#: Pinsets.class.php:66
 msgid "Reset"
 msgstr "بازنشانی"
 
@@ -108,11 +118,15 @@ msgid ""
 "when used"
 msgstr ""
 
-#: Pinsets.class.php:61
+#: pinsets.i18n.php:6 pinsets.i18n.php:12
+msgid "Settings"
+msgstr ""
+
+#: Pinsets.class.php:71
 msgid "Submit"
 msgstr "ثبت"
 
-#: functions.inc.php:130 functions.inc.php:139
+#: functions.inc.php:125 functions.inc.php:134
 msgid "Unnamed"
 msgstr "بدون نام"
 
@@ -159,3 +173,9 @@ msgstr "تایید"
 #: install.php:43
 msgid "unknown error fetching table data"
 msgstr "خطا نامشخص در جدول دیتا"
+
+#~ msgid "Add PIN Sets"
+#~ msgstr "افزودن  PIN"
+
+#~ msgid "List PIN Sets"
+#~ msgstr "فهرست PIN"

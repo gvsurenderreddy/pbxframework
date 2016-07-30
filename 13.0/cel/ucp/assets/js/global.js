@@ -45,7 +45,7 @@ var CelC = UCPMC.extend({
 		return UCP.dateFormatter(value);
 	},
 	formatControls: function (value, row, index) {
-		if(typeof row.recordings === "undefined") {
+		if(typeof row.recordings === "undefined" || showDownload === "0") {
 			return '';
 		}
 		var links = '';
@@ -58,7 +58,7 @@ var CelC = UCPMC.extend({
 		return links;
 	},
 	formatPlayback: function (value, row, index) {
-		if(typeof row.recordings === "undefined") {
+		if(typeof row.recordings === "undefined" || showPlayback === "0") {
 			return '';
 		}
 		var html = '',
@@ -72,7 +72,7 @@ var CelC = UCPMC.extend({
 					'<div class="jp-gui jp-interface">'+
 						'<div class="jp-controls">'+
 							'<i class="fa fa-play jp-play"></i>'+
-							'<i class="fa fa-repeat jp-repeat"></i>'+
+							'<i class="fa fa-undo jp-restart"></i>'+
 						'</div>'+
 						'<div class="jp-progress">'+
 							'<div class="jp-seek-bar progress">'+
@@ -138,6 +138,14 @@ var CelC = UCPMC.extend({
 									}
 								}
 							});
+						}
+					});
+					var $this = this;
+					$(container).find(".jp-restart").click(function() {
+						if($($this).data("jPlayer").status.paused) {
+							$($this).jPlayer("pause",0);
+						} else {
+							$($this).jPlayer("play",0);
 						}
 					});
 				},

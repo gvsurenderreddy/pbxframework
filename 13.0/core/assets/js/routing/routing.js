@@ -54,9 +54,16 @@ $(function() {
 			});
 		}
 	});
-	$("a[id^='del']").click(function(){
+});
+
+$('#routes').on("post-body.bs.table", function () {
+	$("a[id^='del']").click(function(e){
+		e.preventDefault();
+		if(confirm("Are you sure you want to delete this route?") === false){
+			return false;
+		}
 		var id = $(this).data('id'),
-				curRow = $(this).closest('tr');
+		curRow = $(this).closest('tr');
 		$.ajax({
 			type: 'POST',
 			url: "ajax.php",
@@ -90,27 +97,27 @@ $(document).on('click',"a[id^='routerowadd']",function(e){
 	var id = $("tr[id^='dprow']").length++;
 	var newhtml = '';
 	newhtml +='<tr id="dprow'+id+'">';
-	newhtml +=	'<td class="hidden-xs prepend">';
+	newhtml +=	'<td class="prepend">';
 	newhtml +=	'	<div class="input-group">';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+10)+'">(</span>';
 	newhtml +=	'		<input placeholder="prepend" type="text" id="prepend_digit_'+id+'" name="prepend_digit[]" class="form-control " value="">';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+11)+'">)</span>';
 	newhtml +=	'	</div>';
 	newhtml +=	'</td>';
-	newhtml +=	'<td class="prefix">';
+	newhtml +=	'<td>';
 	newhtml +=	'	<div class="input-group">';
 	newhtml +=	'		<input placeholder="prefix" type="text" id="pattern_prefix_'+id+'" name="pattern_prefix[]" class="form-control " value=""> ';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+12)+'">|</span>';
 	newhtml +=	'	</div>';
 	newhtml +=	'</td>';
-	newhtml +=	'<td class="match">';
+	newhtml +=	'<td>';
 	newhtml +=	'	<div class="input-group">';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+13)+'">[</span>';
 	newhtml +=	'		<input placeholder="match pattern" type="text" id="pattern_pass_'+id+'" name="pattern_pass[]" class="form-control dpt-value" value="">';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+14)+'">/</span>';
 	newhtml +=	'	</div>';
 	newhtml +=	'</td>';
-	newhtml +=	'<td class="hidden-xs hidden-sm callerid">';
+	newhtml +=	'<td>';
 	newhtml +=	'	<div class="input-group">';
 	newhtml +=	'		<input placeholder="CallerID" type="text" id="match_cid_'+id+'" name="match_cid[]" class="form-control " value="">';
 	newhtml +=	'		<span class="input-group-addon" id="basic-addon'+(id+15)+'">]</span>';
@@ -301,8 +308,16 @@ function bindToLast() {
 	});
 }
 
-$("#duplicate").click(function(){
-	$("#action").val("copyroute");
+$("#duplicate").click(function(e){
+	e.preventDefault();
+	e.stopPropagation();
+	var name = $("#routename").val();
+	$("#routename").val(name + "-" + _("copy"));
+	$("#action").val("addroute");
+	$("#extdisplay").val("");
+	$("#id").val("");
+	$("#routeEdit").submit();
+	//$("#action").val("copyroute");
 });
 $("#routeEdit").submit(function(){
 	var patlen = 0;

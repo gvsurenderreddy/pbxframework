@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-22 13:14-0700\n"
-"PO-Revision-Date: 2015-07-27 10:31+0200\n"
+"POT-Creation-Date: 2016-05-10 13:49-0700\n"
+"PO-Revision-Date: 2015-10-30 06:23+0200\n"
 "Last-Translator: Kevin <kevin@qloog.com>\n"
 "Language-Team: Japanese <http://weblate.freepbx.org/projects/freepbx/"
 "presencestate/ja_JP/>\n"
@@ -32,17 +32,21 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 2.2-dev\n"
 
-#: views/grid.php:6
+#: views/grid.php:16
 msgid "Actions"
-msgstr ""
+msgstr "アクション"
 
 #: ucp/assets/js/global.js:81
 msgid "Actions List"
 msgstr ""
 
-#: views/bootnav.php:2
+#: views/bootnav.php:2 views/grid.php:2
 msgid "Add State"
 msgstr ""
+
+#: presencestate.i18n.php:6 presencestate.i18n.php:12
+msgid "Admin"
+msgstr "アドミン"
 
 #: functions.inc.php:7 ucp/Presencestate.class.php:118
 #: ucp/Presencestate.class.php:211
@@ -99,23 +103,27 @@ msgstr "ファインドミー／フォローミー"
 
 #: views/ucp_config.php:18
 msgid "Inherit"
-msgstr ""
+msgstr "引き継ぐ"
 
 #: Presencestate.class.php:173
 msgid "Invalid Request"
 msgstr ""
 
-#: views/bootnav.php:1
+#: views/bootnav.php:3
 msgid "List States"
 msgstr ""
 
-#: views/grid.php:5
+#: presencestate.i18n.php:8
+msgid "Manage list of presence states."
+msgstr "ステータスのリストを管理します。"
+
+#: views/bootnav.php:15 views/grid.php:15
 msgid "Message"
 msgstr "メッセージ"
 
 #: views/ucp_config.php:15
 msgid "No"
-msgstr ""
+msgstr "いいえ"
 
 #: ucp/Presencestate.class.php:124 ucp/Presencestate.class.php:217
 msgid "Offline"
@@ -141,7 +149,8 @@ msgstr ""
 msgid "Presence"
 msgstr ""
 
-#: Presencestate.class.php:118
+#: Presencestate.class.php:118 presencestate.i18n.php:4
+#: presencestate.i18n.php:10
 msgid "Presence State"
 msgstr "プレゼンスステータス"
 
@@ -155,7 +164,7 @@ msgstr ""
 
 #: Presencestate.class.php:192
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: views/form.php:38
 msgid "State type"
@@ -169,7 +178,7 @@ msgstr "ステータスは設定されていません"
 msgid "Submit"
 msgstr "送信"
 
-#: views/form.php:24 views/grid.php:4
+#: views/bootnav.php:14 views/form.php:24 views/grid.php:14
 msgid "Type"
 msgstr "種類"
 
@@ -186,17 +195,11 @@ msgstr "このユーザーがUCPで自分のステータスを変更できるか
 
 #: views/ucp_config.php:13
 msgid "Yes"
-msgstr ""
+msgstr "はい"
 
 #: ucp/assets/js/global.js:109
 msgid "Your settings have been saved"
 msgstr ""
-
-#~ msgid "Admin"
-#~ msgstr "アドミン"
-
-#~ msgid "Manage list of presence states."
-#~ msgstr "ステータスのリストを管理します。"
 
 #~ msgid "New Presence State"
 #~ msgstr "新規ステータス"

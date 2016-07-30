@@ -3,14 +3,16 @@
 //
 //Agent Quick Select
 $("[id^='qsagents']").on('change',function(){
-	var taelm = $(this).data('for');
-	var cval = $('#'+taelm).val();
-	if(cval.length === 0){
-		$('#'+taelm).val($(this).val());
-		$(this).children('option[value="'+$(this).val()+'"]').remove();
-	}else{
-		$('#'+taelm).val(cval+"\n"+$(this).val());
-		$(this).children('option[value="'+$(this).val()+'"]').remove();
+	if($(this).val().length) {
+		var taelm = $(this).data('for');
+		var cval = $('#'+taelm).val();
+		if(cval.length === 0){
+			$('#'+taelm).val($(this).val());
+			$(this).children('option[value="'+$(this).val()+'"]').remove();
+		}else{
+			$('#'+taelm).val(cval+"\n"+$(this).val());
+			$(this).children('option[value="'+$(this).val()+'"]').remove();
+		}
 	}
 });
 
@@ -55,6 +57,7 @@ function checkGRP(theForm) {
 	var msgInvalidGrpTimeRange = _('Time must be between 1 and 300 seconds');
 	var msgInvalidDescription = _('Please enter a valid Group Description');
 	var msgInvalidRingStrategy = _('Only ringall, ringallv2, hunt and the respective -prim versions are supported when confirmation is checked');
+	var msgInvalidCID = _("Invalid CID");
 
 	// set up the Destination stuff
 	setDestinations(theForm, 1);
@@ -72,6 +75,10 @@ function checkGRP(theForm) {
 
 	if (isEmpty(theForm.grplist.value))
 		return warnInvalid(theForm.grplist, msgInvalidExtList);
+
+	if(theForm.grplist.length > 255){
+		return warnInvalid(theForm.grplist, _("The group list can only contain a maximum of 255 characters."));
+	}
 
 	if (!theForm.fixedcid.disabled) {
 		fixedcid = $.trim(theForm.fixedcid.value);

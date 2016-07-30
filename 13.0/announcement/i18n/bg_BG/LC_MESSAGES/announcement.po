@@ -20,17 +20,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
-"PO-Revision-Date: 2014-11-17 16:32+0200\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
+"PO-Revision-Date: 2016-02-25 21:18+0200\n"
 "Last-Translator: Chavdar <chavdar_75@yahoo.com>\n"
-"Language-Team: Bulgarian <http://git.freepbx.org/projects/freepbx/"
+"Language-Team: Bulgarian <http://weblate.freepbx.org/projects/freepbx/"
 "announcement/bg_BG/>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: bg_BG\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 1.10-dev\n"
+"X-Generator: Weblate 2.2-dev\n"
 
 #: page.announcement.php:15
 msgid ": Add"
@@ -40,17 +40,17 @@ msgstr ": Добавяне"
 msgid ": Edit"
 msgstr ": Редактиране"
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
 msgstr "Действия"
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
 msgstr "Добави"
 
 #: views/rnav.php:3
 msgid "Add Announcements"
-msgstr ""
+msgstr "Добавяне на Съобщения"
 
 #: views/form.php:153
 msgid "Allow Skip"
@@ -65,19 +65,27 @@ msgstr "Съобщение"
 msgid "Announcement: %s"
 msgstr "Съобщение: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Съобщения"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr "Приложения"
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Проверка дали записите имат нужда от преместване.."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Изтрий"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Описание"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
 msgstr "Направление"
 
@@ -87,7 +95,7 @@ msgstr "Направление след Възпроизвеждане"
 
 #: views/rnav.php:8
 msgid "Destinations"
-msgstr ""
+msgstr "Направления"
 
 #: views/form.php:72
 msgid "Disable"
@@ -121,7 +129,7 @@ msgstr ""
 "установено на Да, това ще доведе до връщане към този IVR което може да не е "
 "очакваното поведение."
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Въведено е неправилно описание"
 
@@ -151,9 +159,21 @@ msgstr ""
 msgid "No"
 msgstr "Не"
 
+#: assets/js/announcement.js:33
+msgid "No Destination"
+msgstr ""
+
 #: views/form.php:32
 msgid "None"
 msgstr "Няма"
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
+msgstr ""
+"Възпроизвежда един от системните записи (възможно е потребителя да го "
+"прескочи) и се насочва към друго направление."
 
 #: views/form.php:45
 msgid "Recording"
@@ -163,11 +183,11 @@ msgstr "Запис"
 msgid "Repeat"
 msgstr "Повтори"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
 msgstr "Изчисти"
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Върни се към IVR"
 
@@ -187,7 +207,7 @@ msgstr ""
 "използвате съобщение в IVR или други източници които вече са отворили "
 "канала, тази 1 секунда пауза може да е нежелана."
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
 msgstr "Приеми"
 
@@ -239,19 +259,6 @@ msgstr "няма поле за записи???"
 #: install.php:104 install.php:143
 msgid "ok"
 msgstr "ok"
-
-#~ msgid "Announcements"
-#~ msgstr "Съобщения"
-
-#~ msgid "Applications"
-#~ msgstr "Приложения"
-
-#~ msgid ""
-#~ "Plays back one of the system recordings (optionally allowing the user to "
-#~ "skip it) and then goes to another destination."
-#~ msgstr ""
-#~ "Възпроизвежда един от системните записи (възможно е потребителя да го "
-#~ "прескочи) и се насочва към друго направление."
 
 #~ msgid "Add Announcement"
 #~ msgstr "Добави Съобщение"

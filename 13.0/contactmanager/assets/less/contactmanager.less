@@ -29,3 +29,34 @@ table.items {
 .clickable {
   cursor: pointer;
 }
+
+#dropzone {
+	min-height: 75px;
+	width: 90px;
+	border: 3px dotted #ccc;
+	background-color: #F5F5F5;
+	border-radius: 10px;
+	margin-top: 0px;
+	margin-bottom: 3px;
+	.message {
+		text-align: center;
+		font-weight: bold;
+		font-size: 86%;
+		margin-left: 2px;
+	}
+}
+#dropzone.image {
+	img {
+		width: 100%;
+	}
+}
+#upload-progress {
+	margin-top: 5px;
+	margin-bottom: 0px;
+}
+#dropzone.activate {
+	border-color: black;
+	.message {
+		opacity: .5;
+	}
+}

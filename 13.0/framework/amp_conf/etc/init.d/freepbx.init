@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # freepbx Controls freepbx components on start/stop
 # TODO: Update the priorities... we live at 99 in rc.local
 #
-# chkconfig: 345 98 98
+# chkconfig: 345 98 98  
 # description: Controls FreePBX fwconsole commands durring init.
 
 # Source function library.
@@ -12,15 +12,15 @@ FWCONSOLE=/var/lib/asterisk/bin/fwconsole
 LOCKFILE=/var/lock/subsys/freepbx
 
 start() {
-        echo -n "Starting Ringfree PBX Components: "
+        echo -n "Starting FreePBX Components: "
         $FWCONSOLE start
         RETVAL=$?
         [ $RETVAL -eq 0 ] && touch $LOCKFILE
-        return $RETVAL
+        return $RETVAL 
 }
 
 stop() {
-        echo -n "Shutting down Ringfree PBX Components: "
+        echo -n "Shutting down FreePBX Components: "
         $FWCONSOLE stop
         RETVAL=$?
         [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
@@ -33,6 +33,11 @@ status() {
 		echo -e "Asterisk is Running\r\n"
 		else
 		echo -e "Asterisk appears to be NOT running\r\n"
+		fi
+		if pgrep -x mysqld > /dev/null; then
+		echo -e "MySQL is Running\r\n"
+		else
+		echo -e "MySQL appears to be NOT running\r\n"
 		fi
 		if pgrep -x httpd > /dev/null; then
 		echo -e "Apache is Running\r\n"

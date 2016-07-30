@@ -3,7 +3,7 @@
 	<repo>standard</repo>
 	<name>Bulk Handler</name>
 	<description/>
-	<version>13.0.13</version>
+	<version>13.0.14.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,11 +11,15 @@
 	<menuitems>
 		<bulkhandler needsenginedb="yes">Bulk Handler</bulkhandler>
 	</menuitems>
+	<location>release/13.0/bulkhandler-13.0.14.1.tgz</location>
+	<md5sum></md5sum>
 	<depends>
 		<version>13.0</version>
 	</depends>
 	<info/>
 	<changelog>
+		*13.0.14.1* Ringfree branch
+		*13.0.14* FREEPBX-11563 remember last tab selection and go back there
 		*13.0.13* Dont id the same as the real importer
 		*13.0.12* FREEPBX-10077 added edit functionality and better workflows
 		*13.0.11* Add fwconsole import. Update navigation.
@@ -32,6 +36,4 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/bulkhandler-13.0.13.tgz</location>
-	<md5sum>e364bab4ba5494f3a25afd0a43b0ad61</md5sum> 
 </module>

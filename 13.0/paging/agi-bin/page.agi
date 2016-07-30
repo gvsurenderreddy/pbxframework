@@ -1,4 +1,4 @@
-#!/usr/bin/php -q
+#!/usr/bin/env php
 <?php
 //include freepbx configuration
 $restrict_mods = true;
@@ -24,15 +24,14 @@ $get = array(
 	'SIPURI'	=> '',
 	'STREAM'	=> 'beep',
 	'ANNOUNCEMENT' => '',
-	'VXML_URL'	=> ''
+	'VXML_URL'	=> '',
+	'EXTRINGTIME' => ''
 );
 
 foreach ($get as $k => $v) {
 	$tmp = agi_get_var($k);
 	$vars[$k] = $tmp ? $tmp : $v;
 }
-
-dbug($vars);
 
 //clear stream if requested
 $vars['STREAM'] = $vars['STREAM'] == 'NONE' ? '' : $vars['STREAM'];
@@ -52,7 +51,8 @@ $chan_vars = array(
 	'SIPURI',
 	'SIPURI',
 	'VXML_URL',
-	'ANNOUNCEMENT'
+	'ANNOUNCEMENT',
+	'EXTRINGTIME'
 );
 
 foreach ($chan_vars as $var) {
@@ -320,9 +320,23 @@ function __pad_string($string) {
 }
 
 function get_device_state($dev) {
+	// FREEPBX-11929 - If this is a DAHDI device, assume
+	// that people know what they're doing, and if it returns
+	// UNKNOWN, map that to 'NOT_INUSE'
+	if (substr($dev, 0, 5) == "DAHDI") {
+		$state = agi_get_var("DEVICE_STATE($dev)");
+		if ($state == "UNKNOWN") {
+			return "NOT_INUSE";
+		} else {
+			return $state;
+		}
+	}
+
+	// If it's not a PJSIP device, just return our normal device state
 	if (substr($dev, 0, 5) != "PJSIP") {
 		return agi_get_var("DEVICE_STATE($dev)");
 	}
+
 	global $astman, $agi;
 	// There's no way to get the state of an individual PJSIP device at the moment,
 	// but we can see, sorta, if it's in use. Sub-optimal, yes.

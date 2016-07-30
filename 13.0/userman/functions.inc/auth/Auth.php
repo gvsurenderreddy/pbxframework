@@ -26,8 +26,8 @@ abstract class Auth implements Base {
 		$this->FreePBX->Hooks->processHooksByClassMethod("FreePBX\\modules\\Userman", "addUser", array($id, $display, array("id" => $id, "username" => $username, "description" => $description, "password" => $password, "encrypted" => $encrypt, "extraData" => $extraData)));
 	}
 
-	public function updateUserHook($id, $prevUsername, $username, $description, $password, $extraData) {
-		$display = isset($_REQUEST['display']) ? $_REQUEST['display'] : "";
+	public function updateUserHook($id, $prevUsername, $username, $description, $password, $extraData, $nodisplay=false) {
+		$display = !$nodisplay && isset($_REQUEST['display']) ? $_REQUEST['display'] : "";
 		$this->FreePBX->Hooks->processHooksByClassMethod("FreePBX\\modules\\Userman", "updateUser", array($id, $display, array("id" => $id, "prevUsername" => $prevUsername, "username" => $username, "description" => $description, "password" => $password, "extraData" => $extraData)));
 	}
 
@@ -41,8 +41,8 @@ abstract class Auth implements Base {
 		$this->FreePBX->Hooks->processHooksByClassMethod("FreePBX\\modules\\Userman", "addGroup", array($id, $display, array("id" => $id, "groupname" => $groupname, "description" => $description, "users" => $users)));
 	}
 
-	public function updateGroupHook($id, $prevGroupname, $groupname, $description, $users) {
-		$display = isset($_REQUEST['display']) ? $_REQUEST['display'] : "";
+	public function updateGroupHook($id, $prevGroupname, $groupname, $description, $users, $nodisplay=false) {
+		$display = !$nodisplay && isset($_REQUEST['display']) ? $_REQUEST['display'] : "";
 		$this->FreePBX->Hooks->processHooksByClassMethod("FreePBX\\modules\\Userman", "updateGroup", array($id, $display, array("id" => $id, "prevGroupname" => $prevGroupname, "groupname" => $groupname, "description" => $description, "users" => $users)));
 	}
 
@@ -299,7 +299,7 @@ abstract class Auth implements Base {
 	*/
 	public function deleteUserByID($id, $processHooks=true) {
 		$user = $this->getUserByID($id);
-		if(!$user) {
+		if(empty($user)) {
 			return array("status" => false, "type" => "danger", "message" => _("User Does Not Exist"));
 		}
 		$sql = "DELETE FROM ".$this->userTable." WHERE `id` = :id AND auth = :auth";
@@ -322,7 +322,7 @@ abstract class Auth implements Base {
 	*/
 	public function deleteGroupByGID($gid, $processHooks=true) {
 		$group = $this->getGroupByGID($gid);
-		if(!$group) {
+		if(empty($group)) {
 			return array("status" => false, "type" => "danger", "message" => _("Group Does Not Exist"));
 		}
 		$sql = "DELETE FROM ".$this->groupTable." WHERE `id` = :id AND auth = :auth";
@@ -332,7 +332,9 @@ abstract class Auth implements Base {
 		$sql = "DELETE FROM ".$this->groupSettingsTable." WHERE `gid` = :gid";
 		$sth = $this->db->prepare($sql);
 		$sth->execute(array(':gid' => $gid));
-		$this->delGroupHook($gid, $group);
+		if($processHooks) {
+			$this->delGroupHook($gid, $group);
+		}
 		return array("status" => true, "type" => "success", "message" => _("Group Successfully Deleted"));
 	}
 
@@ -405,7 +407,7 @@ abstract class Auth implements Base {
 			} catch (\Exception $e) {
 				return array("status" => false, "type" => "danger", "message" => $e->getMessage());
 			}
-			return array("status" => true, "type" => "success", "message" => _("User Successfully Updated"), "id" => $previous['id'], "new" => false);
+			return array("status" => true, "type" => "success", "message" => _("User Successfully Updated"), "id" => $previous['id'], "prevUsername" => $previous['username'], "new" => false);
 		}
 	}
 
@@ -451,7 +453,7 @@ abstract class Auth implements Base {
 			} catch (\Exception $e) {
 				return array("status" => false, "type" => "danger", "message" => $e->getMessage());
 			}
-			return array("status" => true, "type" => "success", "message" => _("Group Successfully Updated"), "id" => $previous['id'], "new" => false);
+			return array("status" => true, "type" => "success", "message" => _("Group Successfully Updated"), "id" => $previous['id'], "prevGroupname" => $previous['groupname'], "new" => false);
 		}
 	}
 

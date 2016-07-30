@@ -24,20 +24,16 @@ $submit_changes = _("Submit Changes");
 	<!--Allow Anonymous Inbound SIP Calls-->
 	<div class="element-container">
 		<div class="row">
-			<div class="col-md-12">
-				<div class="row">
-					<div class="form-group">
-						<div class="col-md-3">
-							<label class="control-label" for="allowanon"><?php echo _("Allow Anonymous Inbound SIP Calls") ?></label>
-							<i class="fa fa-question-circle fpbx-help-icon" data-for="allowanon"></i>
-						</div>
-						<div class="col-md-9 radioset">
-							<input type="radio" name="allowanon" id="allowanonyes" value="Yes" <?php echo ($this->getConfig("allowanon") == "Yes"?"CHECKED":"") ?>>
-							<label for="allowanonyes"><?php echo _("Yes");?></label>
-							<input type="radio" name="allowanon" id="allowanonno" value="No" <?php echo ($this->getConfig("allowanon") == "Yes"?"":"CHECKED") ?>>
-							<label for="allowanonno"><?php echo _("No");?></label>
-						</div>
-					</div>
+			<div class="form-group">
+				<div class="col-md-3">
+					<label class="control-label" for="allowanon"><?php echo _("Allow Anonymous Inbound SIP Calls") ?></label>
+					<i class="fa fa-question-circle fpbx-help-icon" data-for="allowanon"></i>
+				</div>
+				<div class="col-md-9 radioset">
+					<input type="radio" name="allowanon" id="allowanonyes" value="Yes" <?php echo ($this->getConfig("allowanon") == "Yes"?"CHECKED":"") ?>>
+					<label for="allowanonyes"><?php echo _("Yes");?></label>
+					<input type="radio" name="allowanon" id="allowanonno" value="No" <?php echo ($this->getConfig("allowanon") == "Yes"?"":"CHECKED") ?>>
+					<label for="allowanonno"><?php echo _("No");?></label>
 				</div>
 			</div>
 		</div>
@@ -48,6 +44,59 @@ $submit_changes = _("Submit Changes");
 		</div>
 	</div>
 	<!--END Allow Anonymous Inbound SIP Calls-->
+	<!-- TLS Port Settings -->
+	<div class="element-container">
+		<div class="row">
+			<div class="form-group">
+				<div class="col-md-3">
+					<label class="control-label" for="tlsowner"><?php echo _("Default TLS Port Assignment") ?></label>
+					<i class="fa fa-question-circle fpbx-help-icon" data-for="tlsowner"></i>
+				</div>
+				<div class="col-md-9 radioset">
+<?php
+$tlsowners = array("sip" => _("Chan SIP"), "pjsip" => _("PJSip"));
+$owner = $this->getTlsPortOwner();
+$binds = $this->getBinds();
+foreach ($tlsowners as $chan => $txt) {
+	if ($owner === $chan) {
+		$checked = "checked";
+	} else {
+		$checked = "";
+	}
+
+	// Is this protocol available?
+	if (isset($binds[$chan])) {
+		// Is it listening for TLS anywhere?
+		$foundtls = false;
+		foreach ($binds[$chan] as $protocols) {
+			foreach ($protocols as $p => $pport) {
+				if ($p == "tls") {
+					$foundtls = true;
+					break;
+				}
+			}
+		}
+		if ($foundtls) {
+			$disabled = "";
+		} else {
+			$disabled = "disabled";
+		}
+	} else {
+		$disabled = "disabled";
+	}
+	print "<input type='radio' name='tlsportowner' id='tls-$chan' value='$chan' $disabled $checked>\n";
+	print "<label for='tls-$chan'>$txt</label>\n";
+}
+?>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<span id="tlsowner-help" class="help-block fpbx-help-block"><?php echo _("This lets you explicitly control the SIP Protocol that listens on the default SIP TLS port (5061). If an option is not available, it is because that protocol is not enabled, or, that protocol does not have TLS enabled. If you change this, you will have to restart Asterisk"); ?></span>
+			</div>
+		</div>
+	</div>
 </div>
 <div class="section-title" data-for="ssnat">
 	<h3><i class="fa fa-minus"></i><?php echo _("NAT Settings") ?></h3>
@@ -295,7 +344,7 @@ $submit_changes = _("Submit Changes");
 							<i class="fa fa-question-circle fpbx-help-icon" data-for="turnpassword"></i>
 						</div>
 						<div class="col-md-9">
-							<input type="password" class="form-control" id="turnpassword" name="turnpassword" value="<?php echo $this->getConfig('turnpassword') ?>">
+							<input type="password" class="form-control clicktoedit" id="turnpassword" name="turnpassword" value="<?php echo $this->getConfig('turnpassword') ?>">
 						</div>
 					</div>
 				</div>

@@ -45,10 +45,6 @@ CREATE TABLE IF NOT EXISTS `" . $db_cel_name . "`.`" . $db_cel_table_name . "` (
   `exten` varchar(80) NOT NULL,
   `context` varchar(80) NOT NULL,
   `channame` varchar(80) NOT NULL,
-  `src` varchar(80) NOT NULL,
-  `dst` varchar(80) NOT NULL,
-  `channel` varchar(80) NOT NULL,
-  `dstchannel` varchar(80) NOT NULL,
   `appname` varchar(80) NOT NULL,
   `appdata` varchar(80) NOT NULL,
   `amaflags` int(11) NOT NULL,
@@ -74,6 +70,7 @@ if(DB::IsError($check)) {
 outn(_("checking for extra field.."));
 if (!$dbcdr->getAll('SHOW COLUMNS FROM `' . $db_cel_name . '`.`' . $db_cel_table_name . '` WHERE FIELD = "extra"')) {
 	// rename field
+	set_time_limit(0);
 	$sql = "ALTER TABLE `" . $db_cel_name . "`.`" . $db_cel_table_name . "` CHANGE `eventextra` `extra` varchar(512)";
 	$result = $dbcdr->query($sql);
 	if(DB::IsError($result)) {
@@ -85,24 +82,31 @@ if (!$dbcdr->getAll('SHOW COLUMNS FROM `' . $db_cel_name . '`.`' . $db_cel_table
 	out(_("already exists"));
 }
 
-outn(_("checking for userfield field.."));
-if ($dbcdr->getAll('SHOW COLUMNS FROM `' . $db_cel_name . '`.`' . $db_cel_table_name . '` WHERE FIELD = "userfield"')) {
-	// drop field
-	$sql = "ALTER TABLE `" . $db_cel_name . "`.`" . $db_cel_table_name . "` DROP COLUMN `userfield`";
-	$result = $dbcdr->query($sql);
-	if(DB::IsError($result)) {
-		out(_("ERROR failed to update userfield field"));
+// delete some extranous fields from earlier (incorrect) schemas
+$delfields = array("userfield", "src", "dst", "channel", "dstchannel");
+foreach ($delfields as $field) {
+	outn(sprintf(_("Checking for %s field to remove.."), $field));
+	if ($dbcdr->getAll('SHOW COLUMNS FROM `' . $db_cel_name . '`.`' . $db_cel_table_name . '` WHERE FIELD = "' . $field . '"')) {
+		// drop column
+		set_time_limit(0);
+		outn(_("removing (this might take a long time)"));
+		$sql = "ALTER TABLE `" . $db_cel_name . "`.`" . $db_cel_table_name . "` DROP COLUMN `" . $field . "`";
+		$result = $dbcdr->query($sql);
+		if(DB::IsError($result)) {
+			out(sprintf(_("ERROR failed to delete %s field"), $field));
+		} else {
+			out(_("Removed"));
+		}
 	} else {
-		out(_("OK"));
+		out(_("Already Removed"));
 	}
-} else {
-	out(_("already deleted"));
 }
 
-outn(_("checking for context index.."));
+outn(_("Checking for context index.."));
 $sql = "SHOW INDEXES FROM `" . $db_cel_name . "`.`" . $db_cel_table_name . "` WHERE Key_name='context_index'";
 $check = $dbcdr->getOne($sql);
 if (empty($check)) {
+	outn(_("Adding (this might take a long time)"));
 	$sql = "ALTER TABLE `" . $db_cel_name . "`.`" . $db_cel_table_name . "` ADD INDEX context_index (context)";
 	$result = $dbcdr->query($sql);
 	if(DB::IsError($result)) {
@@ -111,7 +115,7 @@ if (empty($check)) {
 		out(_("OK"));
 	}
 } else {
-	out(_("already indexed"));
+	out(_("Already indexed"));
 }
 
 $set['value'] = true;

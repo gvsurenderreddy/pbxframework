@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-06 14:41-0800\n"
+"POT-Creation-Date: 2016-06-30 16:39-0700\n"
 "PO-Revision-Date: 2011-07-10 09:30+0100\n"
 "Last-Translator: Francesco Romano <francesco.romano@alteclab.it>\n"
 "Language-Team: Italian\n"
@@ -17,14 +17,14 @@ msgstr ""
 "X-Poedit-Language: Italian\n"
 "X-Poedit-Country: ITALY\n"
 
-#: Recordings.class.php:361
+#: Recordings.class.php:420
 msgid "A PHP extension stopped the file upload"
 msgstr ""
 
-#: assets/js/recordings.js:490
+#: assets/js/recordings.js:6
 msgid ""
-"A system recording with this name already exists for this language. Do you "
-"want to overwrite it?"
+"A recording with this name already exists for this language. Do you want to "
+"overwrite it?"
 msgstr ""
 
 #: views/grid.php:25
@@ -53,17 +53,17 @@ msgstr ""
 msgid "Admin"
 msgstr ""
 
-#: assets/js/recordings.js:167
+#: assets/js/recordings.js:171
 msgid "An Error occurred trying to submit this document"
 msgstr ""
 
-#: assets/js/recordings.js:256
+#: assets/js/recordings.js:259
 msgid ""
 "Are you sure you do not want to convert these files? They may not work "
 "correctly in Asterisk without being converted"
 msgstr ""
 
-#: assets/js/recordings.js:472
+#: assets/js/recordings.js:487
 msgid "Are you sure you wish to discard this recordings?"
 msgstr ""
 
@@ -75,12 +75,16 @@ msgstr ""
 msgid "Call"
 msgstr ""
 
-#: assets/js/recordings.js:509
+#: assets/js/recordings.js:532
 msgid "Call!"
 msgstr ""
 
-#: Recordings.class.php:365
+#: Recordings.class.php:424
 msgid "Can Not Find Uploaded Files"
+msgstr ""
+
+#: Recordings.class.php:270
+msgid "Can not find suitable file in this language"
 msgstr ""
 
 #: views/form.php:168 views/form.php:207
@@ -113,16 +117,21 @@ msgstr ""
 msgid "Convert To"
 msgstr ""
 
+#: assets/js/recordings.js:98
+#, perl-format
+msgid "Copying %s to %s"
+msgstr ""
+
 #: recordings.i18n.php:8
 msgid ""
 "Creates and manages system recordings, used by many other modules (eg, IVR)."
 msgstr ""
 
-#: Recordings.class.php:79
+#: Recordings.class.php:80
 msgid "Delete"
 msgstr "Elimina"
 
-#: assets/js/recordings.js:304
+#: assets/js/recordings.js:307
 msgid "Delete Recording"
 msgstr ""
 
@@ -146,7 +155,7 @@ msgstr ""
 msgid "Enter Extension"
 msgstr ""
 
-#: Recordings.class.php:358
+#: Recordings.class.php:417
 msgid "Failed to write file to disk"
 msgstr ""
 
@@ -159,11 +168,11 @@ msgstr "Password Codice Servizio"
 msgid "File List for %s"
 msgstr ""
 
-#: Recordings.class.php:308
+#: Recordings.class.php:209 Recordings.class.php:367
 msgid "File does not exist"
 msgstr ""
 
-#: assets/js/recordings.js:127 assets/js/recordings.js:133
+#: assets/js/recordings.js:133 assets/js/recordings.js:138
 msgid "Finished!"
 msgstr ""
 
@@ -171,7 +180,7 @@ msgstr ""
 msgid "Hit the red record button to start recording from your browser"
 msgstr ""
 
-#: assets/js/recordings.js:49
+#: assets/js/recordings.js:51
 msgid ""
 "If you are doing media conversions this can take a very long time, is that "
 "ok?"
@@ -199,7 +208,7 @@ msgstr ""
 msgid "Missing Sound file auto-created from migration of %s module"
 msgstr "File Audio mancante auto-creato durante la migrazione del modulo %s"
 
-#: Recordings.class.php:355
+#: Recordings.class.php:414
 msgid "Missing a temporary folder"
 msgstr ""
 
@@ -215,7 +224,7 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: Recordings.class.php:352
+#: Recordings.class.php:411
 msgid "No file was uploaded"
 msgstr ""
 
@@ -224,7 +233,7 @@ msgstr ""
 msgid "No files for %s"
 msgstr ""
 
-#: assets/js/recordings.js:29
+#: assets/js/recordings.js:31
 msgid "No files have been added to this recording"
 msgstr ""
 
@@ -241,7 +250,7 @@ msgstr "Registrazione inesistente nel modulo %s"
 msgid "Not supported on compounded or Non-Existent recordings"
 msgstr ""
 
-#: assets/js/recordings.js:851
+#: assets/js/recordings.js:893
 msgid "Not supported on compounded recordings"
 msgstr ""
 
@@ -262,11 +271,11 @@ msgstr ""
 "Password opzionale per proteggere l'accesso a questo codice servizio che "
 "permette ad un utente di riregistrarlo."
 
-#: assets/js/recordings.js:466 assets/js/recordings.js:485
+#: assets/js/recordings.js:481 assets/js/recordings.js:500
 msgid "Please enter a valid name and save"
 msgstr ""
 
-#: assets/js/recordings.js:93
+#: assets/js/recordings.js:96
 #, perl-format
 msgid "Processing %s for %s in format %s"
 msgstr ""
@@ -283,7 +292,7 @@ msgstr ""
 msgid "Recordings"
 msgstr "Registrazioni"
 
-#: Recordings.class.php:84
+#: Recordings.class.php:85
 msgid "Reset"
 msgstr ""
 
@@ -291,7 +300,7 @@ msgstr ""
 msgid "Save"
 msgstr "Salva"
 
-#: install.php:6 assets/js/recordings.js:304
+#: install.php:6 assets/js/recordings.js:307
 msgid "Save Recording"
 msgstr "Salva Registrazione"
 
@@ -304,7 +313,7 @@ msgid ""
 "mode. Anything you upload will then replace this file on save"
 msgstr ""
 
-#: Recordings.class.php:74
+#: Recordings.class.php:75
 msgid "Submit"
 msgstr ""
 
@@ -312,7 +321,7 @@ msgstr ""
 msgid "Supported Languages"
 msgstr ""
 
-#: Recordings.class.php:279 recordings.i18n.php:10
+#: Recordings.class.php:338 recordings.i18n.php:10
 msgid "System Recordings"
 msgstr "Registrazioni di Sistema"
 
@@ -340,27 +349,31 @@ msgid ""
 "will be able to name the file and it will be placed in the list above"
 msgstr ""
 
-#: Recordings.class.php:346
+#: Recordings.class.php:405
 msgid ""
 "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in "
 "the HTML form"
 msgstr ""
 
-#: Recordings.class.php:343
+#: Recordings.class.php:402
 msgid "The uploaded file exceeds the upload_max_filesize directive in php.ini"
 msgstr ""
 
-#: Recordings.class.php:349
+#: Recordings.class.php:408
 msgid "The uploaded file was only partially uploaded"
 msgstr ""
 
-#: Recordings.class.php:114
+#: Recordings.class.php:115
 #, php-format
 msgid "There was an error reading system recordings (%s)"
 msgstr ""
 
-#: assets/js/recordings.js:121
+#: assets/js/recordings.js:127
 msgid "There was an error, See the console for more details"
+msgstr ""
+
+#: assets/js/recordings.js:620
+msgid "This system recording doesnt exist in this language. Continue?"
 msgstr ""
 
 #: views/form.php:178
@@ -376,15 +389,15 @@ msgid ""
 "version or update your %s"
 msgstr ""
 
-#: Recordings.class.php:258
+#: Recordings.class.php:317
 msgid "Unknown Error"
 msgstr ""
 
-#: Recordings.class.php:338
+#: Recordings.class.php:397
 msgid "Unsupported file format"
 msgstr ""
 
-#: assets/js/recordings.js:536
+#: assets/js/recordings.js:559
 msgid "Unsupported file type"
 msgstr ""
 
@@ -407,14 +420,14 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: assets/js/recordings.js:649
+#: assets/js/recordings.js:680
 msgid ""
 "You are entering replace mode on a system file. The next file you add will "
 "replace this system file when you save this recording. Are you sure you want "
 "to do that?"
 msgstr ""
 
-#: assets/js/recordings.js:651
+#: assets/js/recordings.js:682
 msgid ""
 "You are entering replace mode. The next file you add will replace this one "
 "when you save this recording. Are you sure you want to do that?"
@@ -433,7 +446,7 @@ msgid ""
 "have finished uploading/recording the recording will turn grey"
 msgstr ""
 
-#: assets/js/recordings.js:19
+#: assets/js/recordings.js:21
 msgid "You must set a valid name for this recording"
 msgstr ""
 

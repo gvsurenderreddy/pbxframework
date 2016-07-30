@@ -77,6 +77,13 @@ class Arimanager implements BMO {
 		}
 	}
 
+	/**
+	 * Add new ARI User
+	 * @param string  $username Username
+	 * @param string  $password Password
+	 * @param string  $type     Plaintext or cypt password
+	 * @param integer $readonly Read Only user
+	 */
 	public function addUser($username, $password, $type = 'crypt', $readonly = 1) {
 		if($this->checkUsername($username)) {
 			$this->message = array('type' => 'danger', 'message' => _('User Already Exists!'));
@@ -96,6 +103,14 @@ class Arimanager implements BMO {
 		return $id;
 	}
 
+	/**
+	 * Add new ARI User
+	 * @param integer $id       The ID of the user
+	 * @param string  $username Username
+	 * @param integer $readonly Read Only user
+	 * @param string  $password Password
+	 * @param string  $type     Plaintext or cypt password
+	 */
 	public function editUser($id, $username, $readonly = 1, $password = '', $type = 'crypt') {
 		if(empty($password)) {
 			$sql = "UPDATE arimanager SET name = ?, read_only = ? WHERE id = ?";
@@ -118,8 +133,14 @@ class Arimanager implements BMO {
 			}
 		}
 		$this->message = array('type' => 'success', 'message' => _('Sucessfully Updated User'));
+		return true;
 	}
 
+	/**
+	 * Check if username exists
+	 * @param  string $username The username to check
+	 * @return boolean           If the username exists or not
+	 */
 	private function checkUsername($username) {
 		$sql = "SELECT * FROM arimanager WHERE name = ?";
 		$sth = $this->db->prepare($sql);
@@ -128,6 +149,12 @@ class Arimanager implements BMO {
 		return !empty($t);
 	}
 
+	/**
+	 * Generate a crypted password
+	 * @param  string $password The cypted password
+	 * @param  string $type     If crypt this will be 'crypt'
+	 * @return [type]           [description]
+	 */
 	private function genPassword($password,$type) {
 		if($type == 'crypt') {
 			$l = $this->astman->Command('ari mkpasswd '.$password);
@@ -140,6 +167,10 @@ class Arimanager implements BMO {
 		return array("password" => $password, "type" => $type);
 	}
 
+	/**
+	 * Delete User By ID
+	 * @param  integer $id The ID of the user
+	 */
 	public function deleteUser($id) {
 		$sql = 'DELETE FROM arimanager WHERE id = ?';
 		$sth = $this->db->prepare($sql);
@@ -147,6 +178,10 @@ class Arimanager implements BMO {
 		$this->message = array('type' => 'success', 'message' => _('Sucessfully Deleted User'));
 	}
 
+	/**
+	 * Get all users
+	 * @return mixed Return array of users
+	 */
 	public function getAllUsers() {
 		$sql = "SELECT * FROM arimanager";
 		$sth = $this->db->prepare($sql);
@@ -154,6 +189,23 @@ class Arimanager implements BMO {
 		return $sth->fetchAll(PDO::FETCH_ASSOC);
 	}
 
+	/**
+	 * Get User data by username
+	 * @param  string $username Username
+	 * @return mixed           Array of user data or false if no user
+	 */
+	public function getUserByUsername($username) {
+		$sql = "SELECT * FROM arimanager WHERE name = ?";
+		$sth = $this->db->prepare($sql);
+		$sth->execute(array($username));
+		return $sth->fetch(PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Get User by ID
+	 * @param  integer $id The ID of the User
+	 * @return mixed     Array of user data or false if no user
+	 */
 	public function getUser($id) {
 		$sql = "SELECT * FROM arimanager WHERE id = ?";
 		$sth = $this->db->prepare($sql);
@@ -224,6 +276,36 @@ class Arimanager implements BMO {
 		$set['type'] = CONF_TYPE_BOOL;
 		$this->Conf->define_conf_setting('ENABLE_ARI',$set);
 
+		$set['value'] = 'freepbxuser';
+		$set['defaultval'] =& $set['value'];
+		$set['options'] = '';
+		$set['readonly'] = 1;
+		$set['hidden'] = 0;
+		$set['level'] = 0;
+		$set['module'] = '';
+		$set['category'] = _('Asterisk REST Interface');
+		$set['emptyok'] = 0;
+		$set['name'] = _('ARI Username');
+		$set['description'] = _("Username for internal ARI calls");
+		$set['type'] = CONF_TYPE_TEXT;
+				$set['sortorder'] = 98;
+		$this->Conf->define_conf_setting('FPBX_ARI_USER',$set);
+
+		$set['value'] = md5(openssl_random_pseudo_bytes(16));
+		$set['defaultval'] =& $set['value'];
+		$set['options'] = '';
+		$set['readonly'] = 1;
+		$set['hidden'] = 0;
+		$set['level'] = 0;
+		$set['module'] = '';
+		$set['category'] = _('Asterisk REST Interface');
+		$set['emptyok'] = 0;
+		$set['name'] = _('ARI Password');
+		$set['description'] = _("Password for internal ARI calls");
+		$set['type'] = CONF_TYPE_TEXT;
+				$set['sortorder'] = 99;
+		$this->Conf->define_conf_setting('FPBX_ARI_PASSWORD',$set);
+
 		$set['value'] = false;
 		$set['defaultval'] =& $set['value'];
 		$set['options'] = '';
@@ -238,6 +320,34 @@ class Arimanager implements BMO {
 		$set['type'] = CONF_TYPE_BOOL;
 		$this->Conf->define_conf_setting('ENABLE_ARI_PP',$set);
 
+		$set['value'] = '100';
+		$set['defaultval'] =& $set['value'];
+		$set['options'] = array(100,10000);
+		$set['readonly'] = 0;
+		$set['hidden'] = 0;
+		$set['level'] = 0;
+		$set['module'] = '';
+		$set['category'] = _('Asterisk REST Interface');
+		$set['emptyok'] = 0;
+		$set['name'] = _('Web Socket Write Timeout');
+		$set['description'] = _("The timeout (in milliseconds) to set on WebSocket connections.");
+		$set['type'] = CONF_TYPE_INT;
+		$this->Conf->define_conf_setting('ARI_WS_WRITE_TIMEOUT',$set);
+
+		$set['value'] = '*';
+		$set['defaultval'] =& $set['value'];
+		$set['options'] = '';
+		$set['readonly'] = 0;
+		$set['hidden'] = 0;
+		$set['level'] = 0;
+		$set['module'] = '';
+		$set['category'] = _('Asterisk REST Interface');
+		$set['emptyok'] = 0;
+		$set['name'] = _('Allowed Origins');
+		$set['description'] = _("Comma separated list of allowed origins, for Cross-Origin Resource Sharing. May be set to * to allow all origins.");
+		$set['type'] = CONF_TYPE_TEXT;
+		$this->Conf->define_conf_setting('ARI_ALLOWED_ORIGINS',$set);
+
 		$this->Conf->commit_conf_settings();
 	}
 
@@ -250,6 +360,10 @@ class Arimanager implements BMO {
 		//Remove FreePBX Advanced Setting
 		$this->Conf->remove_conf_settings('ENABLE_ARI');
 		$this->Conf->remove_conf_settings('ENABLE_ARI_PP');
+		$this->Conf->remove_conf_settings('ARI_WS_WRITE_TIMEOUT');
+		$this->Conf->remove_conf_settings('ARI_ALLOWED_ORIGINS');
+		$this->Conf->remove_conf_settings('FPBX_ARI_PASSWORD');
+		$this->Conf->remove_conf_settings('FPBX_ARI_USER');
 	}
 
 	public function backup() {
@@ -260,9 +374,24 @@ class Arimanager implements BMO {
 	public function genConfig() {
 		$en = $this->Conf->get_conf_setting('ENABLE_ARI') ? 'yes' : 'no';
 		$pt = $this->Conf->get_conf_setting('ENABLE_ARI_PP') ? 'yes' : 'no';
-		$array['ari_general_additional.conf'] = "enabled=".$en."\npretty=".$pt;
+		$timeout = $this->Conf->get_conf_setting('ARI_WS_WRITE_TIMEOUT');
+		$timeout = $timeout ? $timeout : '100';
+		$allowed_origins = $this->Conf->get_conf_setting('ARI_ALLOWED_ORIGINS');
+		$allowed_origins = $allowed_origins?$allowed_origins:'*';
+		$array['ari_general_additional.conf'] = "enabled=".$en."\npretty=".$pt."\nwebsocket_write_timeout=".$timeout."\nallowed_origins=".$allowed_origins;
+		$ariuser = $this->Conf->get_conf_setting('FPBX_ARI_USER');
+		$aripass = $this->Conf->get_conf_setting('FPBX_ARI_PASSWORD');
+		$ariuser = $ariuser?$ariuser:'freepbxuser';
+		$aripass = $aripass?$aripass:md5(openssl_random_pseudo_bytes(16));
+		$aripass = $this->genPassword($aripass,'crypt');
 
 		$users = $this->getAllUsers();
+		$users[] = array(
+			'name' => $ariuser,
+			'password' => $aripass['password'],
+			'password_format' => 'crypt',
+			'read_only' => ''
+		);
 		$array['ari_additional.conf'] = array();
 		foreach($users as $user) {
 			$array['ari_additional.conf'][$user['name']] = array(
@@ -282,6 +411,7 @@ class Arimanager implements BMO {
 	public function ajaxRequest($req, &$setting) {
        switch ($req) {
            case 'getJSON':
+					 case 'listApps':
                return true;
            break;
            default:
@@ -307,6 +437,14 @@ class Arimanager implements BMO {
                    break;
                }
            break;
+					 case 'listApps':
+					 	$ariuser = $this->Conf->get_conf_setting('FPBX_ARI_USER');
+					 	$aripass = $this->Conf->get_conf_setting('FPBX_ARI_PASSWORD');
+					 	$pest = new \Pest('http://localhost:8088/ari/');
+						$pest->setupAuth($ariuser, $aripass);
+						$apps = $pest->get('/applications');
+						return json_decode($apps);
+					 break;
 
            default:
                return false;

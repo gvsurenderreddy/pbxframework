@@ -2,16 +2,20 @@
 	<rawname>arimanager</rawname>
 	<repo>extended</repo>
 	<name>Asterisk REST Interface Users</name>
-	<version>13.0.3</version>
+	<version>13.0.4.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<location>release/13.0/arimanager-13.0.4.1.tgz</location>
+	<md5sum></md5sum>
 	<category>Settings</category>
 	<menuitems>
 		<arimanager>Asterisk REST Interface Users</arimanager>
 	</menuitems>
 	<changelog>
-		*13.0.3* FREEPBX-9619 Adding user with Asterisk Rest Interface users does not prompt for system reload 
+		*13.0.4.1* Ringfree branch
+		*13.0.4* Comment and add function to find by username
+		*13.0.3* FREEPBX-9619 Adding user with Asterisk Rest Interface users does not prompt for system reload
 		*13.0.2* Version bump Beta
 		*13.0.1alpha2* Visual Styling Fixes
 		*12.0.2* FREEPBX-7793 Add Password generator to the ARI
@@ -25,8 +29,6 @@
 		<module>manager</module>
 		<engine>asterisk 12</engine>
 	</depends>
-	<location>release/13.0/arimanager-13.0.3.tgz</location>
-	<md5sum>53a45aa15219e28b21431f8a1bb6e9bc</md5sum>
 	<supported>
 		<version>13.0</version>
 	</supported>

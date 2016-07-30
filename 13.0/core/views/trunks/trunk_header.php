@@ -62,9 +62,9 @@ if($failtrunk_enable && $failtrunk || $amp_conf['DISPLAY_MONITOR_TRUNK_FAILURES_
 	$mtfhtml .= '						<input type="text" class="form-control" name="failtrunk" id="failtrunk" '.$mtfenable.' value="'.htmlspecialchars($failtrunk).'"/>';
 	$mtfhtml .=	'
 											<span class="radioset">
-											<input type="radio" name="failtrunk_enable" id="failtrunk_enableyes" value="1" '. ($failtrunk_enable == "1"?"CHECKED":"").'>
+											<input type="radio" name="failtrunk_enable" id="failtrunk_enableyes" value="1" '. ($failtrunk_enable == "CHECKED"?"CHECKED":"").'>
 											<label for="failtrunk_enableyes">'._("Yes").'</label>
-											<input type="radio" name="failtrunk_enable" id="failtrunk_enableno" value="0" '.($failtrunk_enable == "1"?"":"CHECKED") .'>
+											<input type="radio" name="failtrunk_enable" id="failtrunk_enableno" value="0" '.($failtrunk_enable == "CHECKED"?"":"CHECKED") .'>
 											<label for="failtrunk_enableno">'. _("No").'</label>
 											</span>
 	';
@@ -113,14 +113,14 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 		$dpinput[] = '<td class="hidden-xs prepend">';
 		$dpinput[] = '	<div class="input-group">';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'1">(</span>';
-		$dpinput[] = '		<input placeholder="' . $pp_tit . '" type="text" id="prepend_digit_'.$idx.'" name="prepend_digit['.$idx.']" class="form-control ' . $dpt_class.'" value="'. $pattern['prepend_digits'].'" tabindex="'.$tabindex++.'">';
+		$dpinput[] = '		<input placeholder="' . $pp_tit . '" type="text" id="prepend_digit_'.$idx.'" name="prepend_digit['.$idx.']" class="form-control dp-prepend ' . $dpt_class.'" value="'. $pattern['prepend_digits'].'" >';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'2">)</span>';
 		$dpinput[] = '	</div>';
 		$dpinput[] = '</td>';
 		$dpt_class = $pattern['match_pattern_prefix'] == '' ? $dpt_title_class : 'dpt-value';
 		$dpinput[] = '<td class="prefix">';
 		$dpinput[] = '	<div class="input-group">';
-		$dpinput[] = '		<input placeholder="'. $pf_tit .'" type="text" id="pattern_prefix_'.$idx.'" name="pattern_prefix['.$idx.']" class="form-control '.$dpt_class.'" value="'.$pattern['match_pattern_prefix'].'" tabindex="'.$tabindex++.'"> ';
+		$dpinput[] = '		<input placeholder="'. $pf_tit .'" type="text" id="pattern_prefix_'.$idx.'" name="pattern_prefix['.$idx.']" class="form-control dp-prefix '.$dpt_class.'" value="'.$pattern['match_pattern_prefix'].'" > ';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'3">|</span>';
 		$dpinput[] = '	</div>';
 		$dpinput[] = '</td>';
@@ -128,14 +128,14 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 		$dpinput[] = '<td class="match">';
 		$dpinput[] = '	<div class="input-group">';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'4">[</span>';
-		$dpinput[] = '		<input placeholder="'.$mp_tit.'" type="text" id="pattern_pass_'.$idx.'" name="pattern_pass['.$idx.']" class="form-control '.$dpt_class.'" value="'.$pattern['match_pattern_pass'].'" tabindex="'.$tabindex++.'"> ';
+		$dpinput[] = '		<input placeholder="'.$mp_tit.'" type="text" id="pattern_pass_'.$idx.'" name="pattern_pass['.$idx.']" class="form-control dp-match '.$dpt_class.'" value="'.$pattern['match_pattern_pass'].'" > ';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'5">/</span>';
 		$dpinput[] = '	</div>';
 		$dpinput[] = '</td>';
 		$dpt_class = $pattern['match_cid'] == '' ? $dpt_title_class : 'dpt-value';
 		$dpinput[] = '<td class="hidden-xs hidden-sm callerid">';
 		$dpinput[] = '	<div class="input-group">';
-		$dpinput[] = '		<input placeholder="'.$ci_tit.'" type="text" id="match_cid_'.$idx.'" name="match_cid['.$idx.']" class="form-control '.$dpt_class.'" value="'.$pattern['match_cid'].'" tabindex="'.$tabindex++.'">';
+		$dpinput[] = '		<input placeholder="'.$ci_tit.'" type="text" id="match_cid_'.$idx.'" name="match_cid['.$idx.']" class="form-control '.$dpt_class.'" value="'.$pattern['match_cid'].'" >';
 		$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'6">]</span>';
 		$dpinput[] = '	</div>';
 		$dpinput[] = '<td>';
@@ -156,14 +156,14 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 	$dpinput[] = '<td class="hidden-xs prepend">';
 	$dpinput[] = '	<div class="input-group">';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'1">(</span>';
-	$dpinput[] = '		<input placeholder="' . $pp_tit . '" type="text" id="prepend_digit_'.$idx.'" name="prepend_digit['.$idx.']" class="form-control ' . $dpt_class.'" value="" tabindex="'.$tabindex++.'">';
+	$dpinput[] = '		<input placeholder="' . $pp_tit . '" type="text" id="prepend_digit_'.$idx.'" name="prepend_digit[]" class="form-control dp-prepend ' . $dpt_class.'" value="" >';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'2">)</span>';
 	$dpinput[] = '	</div>';
 	$dpinput[] = '</td>';
 	$dpt_class = $pattern['match_pattern_prefix'] == '' ? $dpt_title_class : 'dpt-value';
 	$dpinput[] = '<td class="prefix">';
 	$dpinput[] = '	<div class="input-group">';
-	$dpinput[] = '		<input placeholder="'. $pf_tit .'" type="text" id="pattern_prefix_'.$idx.'" name="pattern_prefix['.$idx.']" class="form-control '.$dpt_class.'" value="" tabindex="'.$tabindex++.'"> ';
+	$dpinput[] = '		<input placeholder="'. $pf_tit .'" type="text" id="pattern_prefix_'.$idx.'" name="pattern_prefix[]" class="form-control dp-prefix '.$dpt_class.'" value="" > ';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'3">|</span>';
 	$dpinput[] = '	</div>';
 	$dpinput[] = '</td>';
@@ -171,14 +171,14 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 	$dpinput[] = '<td class="match">';
 	$dpinput[] = '	<div class="input-group">';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'4">[</span>';
-	$dpinput[] = '		<input placeholder="'.$mp_tit.'" type="text" id="pattern_pass_'.$idx.'" name="pattern_pass['.$idx.']" class="form-control '.$dpt_class.'" value="" tabindex="'.$tabindex++.'"> ';
+	$dpinput[] = '		<input placeholder="'.$mp_tit.'" type="text" id="pattern_pass_'.$idx.'" name="pattern_pass[]" class="form-control dp-match '.$dpt_class.'" value="" > ';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'5">/</span>';
 	$dpinput[] = '	</div>';
 	$dpinput[] = '</td>';
 	$dpt_class = $pattern['match_cid'] == '' ? $dpt_title_class : 'dpt-value';
 	$dpinput[] = '<td class="hidden-xs hidden-sm callerid">';
 	$dpinput[] = '	<div class="input-group">';
-	$dpinput[] = '		<input placeholder="'.$ci_tit.'" type="text" id="match_cid_'.$idx.'" name="match_cid['.$idx.']" class="form-control '.$dpt_class.'" value="" tabindex="'.$tabindex++.'">';
+	$dpinput[] = '		<input placeholder="'.$ci_tit.'" type="text" id="match_cid_'.$idx.'" name="match_cid[]" class="form-control '.$dpt_class.'" value="" >';
 	$dpinput[] = '		<span class="input-group-addon" id="basic-addon'.$idx.'6">]</span>';
 	$dpinput[] = '	</div>';
 	$dpinput[] = '<td>';
@@ -210,7 +210,7 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="fpbx-container">
-					<form enctype="multipart/form-data" class="fpbx-submit" name="trunkEdit" id="trunkEdit" action="config.php" method="post"  data-fpbx-delete="config.php?display=trunks&amp;extdisplay=<?php echo urlencode($extdisplay) ?>&amp;action=deltrunk">
+					<form enctype="multipart/form-data" class="fpbx-submit" name="trunkEdit" id="trunkEdit" action="" method="post"  data-fpbx-delete="config.php?display=trunks&amp;extdisplay=<?php echo urlencode($extdisplay) ?>&amp;action=deltrunk">
 						<input type="hidden" name="display" value="<?php echo $display?>"/>
 						<input type="hidden" name="extdisplay" value="<?php echo $extdisplay ?>"/>
 						<input type="hidden" name="action"  id="action" value="<?php echo ($extdisplay ? "edittrunk" : "addtrunk") ?>"/>
@@ -228,7 +228,7 @@ if(!$amp_conf['ENABLEOLDDIALPATTERNS']) {
 							</li>
 							<li role="presentation" data-name="tdialplan" class="change-tab">
 								<a href="#tdialplan" aria-controls="tdialplan" role="tab" data-toggle="tab">
-									<?php echo _("Dialplan Manipulation Rules")?>
+									<?php echo _("Dialed Number Manipulation Rules")?>
 								</a>
 							</li>
 							<li role="presentation" data-name="ttech" class="change-tab">

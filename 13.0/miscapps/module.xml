@@ -2,18 +2,20 @@
   <rawname>miscapps</rawname>
   <repo>extended</repo>
   <name>Misc Applications</name>
-  <version>13.0.2.2</version>
+  <version>13.0.2.3.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
   <category>Applications</category>
   <description>
-		Adds the ability to create feature codes that can go to any FreePBX destination (such as an IVR or queue)
+		Adds the ability to create feature codes that can go to any Ringfree PBX destination (such as an IVR or queue)
 	</description>
   <menuitems>
     <miscapps>Misc Applications</miscapps>
   </menuitems>
 	<changelog>
+		*13.0.2.3.1* Ringfree branch
+		*13.0.2.3* FREEPBX-12371 Fix uninstall
 		*13.0.2.2* FREEPBX-11234
 	  *13.0.2.1* Typo fix
 	  *13.0.2* Version bump Beta
@@ -29,8 +31,8 @@
   <depends>
     <version>2.4.0</version>
   </depends>
-  <location>release/13.0/miscapps-13.0.2.2.tgz</location>
-  <md5sum>2eae72bae0cbd6cb40acb1ee78972e1b</md5sum>
+  <location>release/13.0/miscapps-13.0.2.3.1.tgz</location>
+  <md5sum></md5sum>
   <supported>
     <version>13.0</version>
   </supported>

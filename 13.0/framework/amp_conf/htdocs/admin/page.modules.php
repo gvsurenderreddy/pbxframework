@@ -13,7 +13,7 @@ if (!isset($amp_conf['AMPEXTERNPACKAGES']) || ($amp_conf['AMPEXTERNPACKAGES'] !=
 } else {
 	define('EXTERNAL_PACKAGE_MANAGEMENT', 1);
 }
-
+$edgemode = ($amp_conf['MODULEADMINEDGE'] == 1)?true:false;
 $modulef = module_functions::create();
 
 // Handle the ajax post back of an update online updates email array and status
@@ -158,6 +158,7 @@ if ($online) {
 }
 
 if (!$quietmode) {
+	$displayvars['edgemode'] = $edgemode;
 	show_view('views/module_admin/header.php',$displayvars);
 }
 
@@ -866,8 +867,8 @@ switch ($action) {
 			$numdisplayed++;
 
 			if ($category !== $modules[$name]['category']) {
-				$category = $modules[$name]['category'];
-				$module_display[$category]['name'] = $modules[$name]['category'];
+				$category = !empty($modules[$name]['category']) ? $modules[$name]['category'] : "other";
+				$module_display[$category]['name'] = $category;
 			}
 
 			$module_display[$category]['data'][$name] = $modules[$name];

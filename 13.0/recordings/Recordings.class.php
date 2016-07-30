@@ -15,6 +15,7 @@ class Recordings implements BMO {
 	private $convert = array(
 		"wav",
 		"sln",
+		"sln16",
 		"sln48",
 		"g722",
 		"ulaw",
@@ -30,7 +31,7 @@ class Recordings implements BMO {
 
 		$this->FreePBX = $freepbx;
 		$this->db = $freepbx->Database;
-		$this->temp = \FreePBX::Config()->get("ASTSPOOLDIR") . "/tmp";
+		$this->temp = $this->FreePBX->Config->get("ASTSPOOLDIR") . "/tmp";
 		if(!file_exists($this->temp)) {
 			mkdir($this->temp,0777,true);
 		}
@@ -142,6 +143,7 @@ class Recordings implements BMO {
 			case "record":
 			case "upload":
 			case "grid":
+			case "gethtml5byid":
 			case "gethtml5":
 			case "playback":
 			case "download":
@@ -164,6 +166,48 @@ class Recordings implements BMO {
 
 	public function ajaxHandler() {
 		switch($_REQUEST['command']) {
+			case "gethtml5byid":
+				$media = $this->FreePBX->Media();
+				$file = "";
+				switch($_POST['type']) {
+					case "system":
+						$path = $this->FreePBX->Config->get("ASTVARLIBDIR")."/sounds";
+						$rec = $this->getRecordingById($_REQUEST['id']);
+						if(!empty($rec) && !empty($rec['soundlist'])) {
+							//if there are multiple files (compound) then just play the first
+							//This probably needs to be changed to combine them but
+							//the code for a combine doesnt exist yet *sigh*
+							$fileInfo = reset($rec['soundlist']);
+							$files = $this->fileStatus($fileInfo['name']);
+							if(!empty($files['en'])) {
+								$file = $path."/en/".reset($files['en']);
+							} else {
+								$lang = key($files);
+								$data = reset($files);
+								$file = $path."/".$lang."/".reset($data);
+							}
+						}
+					break;
+					case "temp":
+						$file = basename($_REQUEST['id']);
+						$file = $this->temp . "/" . $file;
+					break;
+					default:
+					break;
+				}
+				if(!empty($file)) {
+					if(file_exists($file)) {
+						$media->load($file);
+						$files = $media->generateHTML5();
+						$final = array();
+						foreach($files as $format => $name) {
+							$final[$format] = "ajax.php?module=recordings&command=playback&file=".urlencode($name);
+						}
+						return array("status" => true, "files" => $final);
+					}
+				}
+				return array("status" => false, "message" => _("File does not exist"));
+			break;
 			case "gethtml5":
 				$media = $this->FreePBX->Media();
 				$lang = basename($_POST['language']);
@@ -187,6 +231,15 @@ class Recordings implements BMO {
 				return array("status" => true, "files" => $final);
 			break;
 			case "convert":
+				/*
+				[file] => en/1-for-am-2-for-pm
+		    [name] => custom/ivr-okkkk-recording-1456170709
+		    [codec] => wav
+		    [lang] => en
+		    [temporary] => 0
+		    [command] => convert
+		    [module] => recordings
+				 */
 				set_time_limit(0);
 				$media = $this->FreePBX->Media;
 				$file = $_POST['file'];
@@ -205,13 +258,20 @@ class Recordings implements BMO {
 					if($temporary) {
 						$media->load($this->temp."/".$file);
 					} else {
-						$status = $this->fileStatus($name);
+						$f = ($file == $name) ? $name : str_replace($lang."/","",$file);
+						$status = $this->fileStatus($f);
 						if(!empty($status[$lang])) {
-							$file = $lang."/".reset($status[$lang]);
+							if(!empty($status[$lang][$codec])) {
+								$file = $lang."/".$status[$lang][$codec];
+							} else {
+								$file = $lang."/".reset($status[$lang]);
+							}
+						} else {
+							return array("status" => false, "message" => _("Can not find suitable file in this language"));
 						}
 						$media->load($this->path."/".$file);
 					}
-					if(!$temporary && file_exists($this->path."/".$lang."/".$name.".".$codec)) {
+					if(!$temporary && file_exists($this->path."/".$lang."/".$name.".".$codec) && $file == $name) {
 						return array("status" => true, "name" => $name);
 					}
 					try {
@@ -231,7 +291,6 @@ class Recordings implements BMO {
 				}
 			break;
 			case "save":
-				//Save the FINAL recording. Do all post processing work here as well
 				$data = $_POST;
 				if($data['id'] == "0" || !empty($data['id'])) {
 					$this->updateRecording($data['id'],$data['name'],$data['description'],implode("&",$data['playback']),$data['fcode'],$data['fcode_pass']);
@@ -391,6 +450,7 @@ class Recordings implements BMO {
 			unset($fcc);
 		}
 		needreload();
+		return $id;
 	}
 
 	/**
@@ -460,6 +520,7 @@ class Recordings implements BMO {
 			return array();
 		}
 		$data['soundlist'] = array();
+		$data['playbacklist'] = array();
 		$langs = array();
 		$files = explode("&",$data['filename']);
 		foreach($files as $file) {
@@ -477,6 +538,7 @@ class Recordings implements BMO {
 				$data['soundlist'][$file]['languages'][] = $lang;
 				$data['soundlist'][$file]['temporary'][$lang] = 0;
 			}
+			$data['playbacklist'][] = $file;
 		}
 		return $data;
 	}

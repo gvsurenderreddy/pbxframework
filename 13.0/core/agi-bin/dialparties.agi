@@ -688,6 +688,10 @@ if ($nodest != '' && $use_confirmation == 'FALSE') {
 	}
 }
 
+//dont allow inbound callers to transfer around inside the system
+$dir = get_var( $AGI, "DIRECTION" );
+$dialopts = ($dir == "INBOUND") ? str_replace("T","",$dialopts) : $dialopts;
+
 if (!strlen($ds)) {
 	$AGI->noop('');
 } else {

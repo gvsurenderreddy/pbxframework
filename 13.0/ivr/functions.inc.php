@@ -83,7 +83,9 @@ function ivr_get_config($engine) {
 					//TODO: do we need to set anything at all?
 					$ext->add($c, 's', '', new ext_setvar('__IVR_RETVM', ''));
 				}
-
+        if ($ivr['alertinfo'] != '') {
+          $ext->add($c, 's', '', new ext_setvar('__ALERT_INFO', str_replace(';', '\;', $ivr['alertinfo'])));
+        }
 				$ext->add($c, 's', '', new ext_gotoif('$["${CHANNEL(state)}" = "Up"]','skip'));
 				$ext->add($c, 's', '', new ext_answer(''));
 				$ext->add($c, 's', '', new ext_wait('1'));
@@ -311,7 +313,7 @@ function ivr_configprocess(){
 	if (isset($_REQUEST['display']) && $_REQUEST['display'] == 'ivr'){
 		global $db;
 		//get variables
-		$get_var = array('id', 'name', 'description', 'announcement',
+		$get_var = array('id', 'name', 'alertinfo', 'description', 'announcement',
 						'directdial', 'invalid_loops', 'invalid_retry_recording',
 						'invalid_destination', 'invalid_recording',
 						'retvm', 'timeout_time', 'timeout_recording',
@@ -321,6 +323,7 @@ function ivr_configprocess(){
 		foreach($get_var as $var){
 			$vars[$var] = isset($_REQUEST[$var]) 	? $_REQUEST[$var]		: '';
 		}
+
 		$vars['timeout_append_announce'] = empty($vars['timeout_append_announce']) ? '0' : '1';
 		$vars['invalid_append_announce'] = empty($vars['invalid_append_announce']) ? '0' : '1';
 		$vars['timeout_ivr_ret'] = empty($vars['timeout_ivr_ret']) ? '0' : '1';
@@ -331,22 +334,32 @@ function ivr_configprocess(){
 
 		switch ($action) {
 			case 'save':
+				if(isset($_REQUEST['announcementrecording'])) {
+					$filepath = FreePBX::Config()->get("ASTSPOOLDIR") . "/tmp/".$_REQUEST['announcementrecording'];
+					$soundspath = FreePBX::Config()->get("ASTVARLIBDIR")."/sounds";
+					$codec = "wav";
+					if(file_exists($filepath)) {
+						FreePBX::Media()->load($filepath);
+						$filename = "ivr-".$vars['name']."-recording-".time();
+						FreePBX::Media()->convert($soundspath."/en/custom/".$filename.".".$codec);
+						$id = FreePBX::Recordings()->addRecording("ivr-".$vars['name']."-recording-".time(),sprintf(_("Recording created for IVR named '%s'"),$vars['name']),"custom/".$filename);
+						$vars['announcement'] = $id;
+					} else {
+						$vars['announcement'] = '';
+					}
+				}
 				//get real dest
-				$_REQUEST['id'] = $vars['id'] = ivr_save_details($vars);
-        $_REQUEST['action'] = 'edit';
+				$vars['id'] = ivr_save_details($vars);
 				ivr_save_entries($vars['id'], $entries);
 				needreload();
-				//$_REQUEST['action'] = 'edit';
 				$this_dest = ivr_getdest($vars['id']);
 				fwmsg::set_dest($this_dest[0]);
-				//redirect_standard_continue('id');
 			break;
 			case 'delete':
 				ivr_delete($vars['id']);
         isset($_REQUEST['id'])?$_REQUEST['id'] = null:'';
         isset($_REQUEST['action'])?$_REQUEST['action'] = null:'';
 				needreload();
-				//redirect_standard_continue();
 			break;
 		}
 	}
@@ -422,11 +435,11 @@ function ivr_save_entries($id, $entries){
 
 //draw uvr entires table header
 function ivr_draw_entries_table_header_ivr() {
-	return  array(_('Ext'), _('Destination'), fpbx_label(_('Return'), _('Return to IVR')), _('Delete'));
+	return  array(fpbx_label(_('Digits'),_("Digits the caller needs to dial to access said destination")), fpbx_label(_('Destination'),_("Choose a destination to route the call to")), fpbx_label(_('Return'), _('Return to this IVR when finished')), _('Delete'));
 }
 
 //draw actualy entires
-function ivr_draw_entries($id){
+function ivr_draw_entries($id,$restrict_mods=false){
 	$headers		= mod_func_iterator('draw_entries_table_header_ivr');
 	$ivr_entries	= ivr_get_entries($id);
 
@@ -446,7 +459,8 @@ function ivr_draw_entries($id){
 	return load_view(dirname(__FILE__) . '/views/entries.php',
 				array(
 					'headers'	=> $headers,
-					'entries'	=>  $entries
+					'entries'	=>  $entries,
+					'restrict_mods' => $restrict_mods
 				)
 			);
 

@@ -26,6 +26,7 @@ $get_vars = array(
 				'menu'				=> '',
 				'name'				=> '',
 				'email'				=> '',
+				'emailfailonly' => false,
 				'path'				=> '',
 				'postbu_hook'		=> '',
 				'postre_hook'		=> '',
@@ -61,6 +62,9 @@ switch ($var['action']) {
 		exit();//no need to do anything else, get out
 	case 'save':
 		$var['id'] = backup_put_backup($var);
+		$_REQUEST['id'] = $var['id'];
+		$_REQUEST['action'] = 'edit';
+		\FreePBX::View()->redirect_standard('id','action');
 		break;
 	case 'run':
 		//dont stop untill were all done
@@ -125,3 +129,5 @@ $heading = _("Backup and Restore");
 		</div>
 	</div>
 </div>
+</br>
+</br>

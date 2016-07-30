@@ -125,7 +125,6 @@ if (!empty($usage_list)) {
 <form name="prompt" id="prompt" class="fpbx-submit" action="?display=daynight" method="post" onsubmit="return prompt_onsubmit();" data-fpbx-delete="?display=daynight&itemid=<?php echo $itemid?>&action=delete">
 <input type="hidden" name="action" value="<?php echo isset($itemid)?'edit':'add' ?>" />
 <input type="hidden" name="display" value="daynight" />
-<input type="hidden" name="view" value="form" />
 <!--Call Flow Toggle Feature Code Index-->
 <div class="element-container">
 	<div class="row">
@@ -214,7 +213,7 @@ if (!empty($usage_list)) {
 					</div>
 					<div class="col-md-9">
 						<div class="input-group">
-							<input type="password" class="form-control" id="password" name="password" value="<?php echo !empty($password) ? $password : "" ?>">
+							<input type="password" class="form-control clicktoedit" id="password" name="password" value="<?php echo !empty($password) ? $password : "" ?>">
 							<span class="input-group-addon toggle-password" id="pwtoggle" data-id="password"><i class="fa fa-eye"></i></a></span>
 						</div>
 					</div>

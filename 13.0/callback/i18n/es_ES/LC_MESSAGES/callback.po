@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: FreePBX - módulo callback module spanish translation\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-07 11:01-0800\n"
-"PO-Revision-Date: 2016-01-03 11:13+0200\n"
+"PO-Revision-Date: 2016-01-14 22:40+0200\n"
 "Last-Translator: Ernesto <ecasas@sangoma.com>\n"
 "Language-Team: Spanish <http://weblate.freepbx.org/projects/freepbx/callback/"
 "es_ES/>\n"
@@ -105,7 +105,7 @@ msgstr "Reiniciar"
 
 #: views/form.php:74
 msgid "Seconds"
-msgstr ""
+msgstr "Segundos"
 
 #: Callback.class.php:62
 msgid "Submit"

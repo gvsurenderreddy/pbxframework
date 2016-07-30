@@ -1,11 +1,14 @@
-var time = $("#idTime").data("time");
-var timezone = $("#idTime").data("zone");
-var updateTime = function() {
-	$("#idTime").text(moment.unix(time).tz(timezone).format('HH:mm:ss z'));
-	time = time + 1;
-};
+if($("#idTime").length) {
+	var time = $("#idTime").data("time");
+	var timezone = $("#idTime").data("zone");
+	var updateTime = function() {
+		$("#idTime").text(moment.unix(time).tz(timezone).format('HH:mm:ss z'));
+		time = time + 1;
+	};
 
-setInterval(updateTime,1000);
+	setInterval(updateTime,1000);
+}
+
 
 $(document).ready(function(){
 	$(".remove_section").click(function(){
@@ -17,8 +20,9 @@ $(document).ready(function(){
 });
 //table
 $("#tgrnav").on('click-row.bs.table',function(e,row,elem){
-  window.location = '?display=timegroups&view=form&extdisplay='+row['value'];
-})
+  window.location = '?display=timegroups&view=form&extdisplay='+row.value;
+});
+
 function actionFormatter(value){
 	var html = '';
 	html += '<a href="?display=timegroups&view=form&extdisplay='+value+'"><i class="fa fa-edit"></i></a>&nbsp;';
@@ -31,14 +35,17 @@ function linkFormatter(value){
 }
 $(document).on('click',"#addTime",function(e){
 	e.preventDefault();
+	var nextid = Math.max.apply(Math,$.map($("#timerows span"), function(n, i){
+ 		return n.id.match(/\d+/);
+	}));
+	nextid++;
 	var curelem = $(this).parent().find('span').last();
 	var curid = $(curelem).attr('id').match(/\d+/);
 	curid = parseInt(curid,10);
-	var nextid = curid + 1;
 	var span = $(this).parent().find('span').last();
 	$("#addTime").remove();
 	var newspan  = span.clone();
-  newspan.attr('id','fstimes['+nextid+']')
+  newspan.attr('id','fstimes['+nextid+']');
 	var items = newspan.children();
 	items.find('select').each(function(){
 		$(this).children().removeAttr("selected");
@@ -58,6 +65,6 @@ $(document).on('click',".delTG",function(e){
   if(rulecount > 1){
     elem.remove();
   }else{
-    alert(_("Cannot remove the only rule. At least 1 rule is required."))
+    alert(_("Cannot remove the only rule. At least 1 rule is required."));
   }
 });

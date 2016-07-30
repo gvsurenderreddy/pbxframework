@@ -2,14 +2,34 @@
 	<rawname>ucp</rawname>
 	<name>User Control Panel</name>
 	<repo>standard</repo>
-	<version>13.0.21</version>
+	<version>13.0.38.1</version>
 	<publisher>Ringfree</publisher>
 	<license>AGPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
 	<description>
-		Formerly ARI, now called User Control Panel
+		The user control panel is a way for users to control call handling and personal settings from a web browser.
 	</description>
+	<location>release/13.0/ucp-13.0.38.1.tgz</location>
+	<md5sum></md5sum>
 	<changelog>
+		*13.0.38.1* Ringfree branch
+		*13.0.38* FREEPBX-12606 Change url
+		*13.0.37* Stored XSS - Douglas Goddard
+		*13.0.36* Colorize links in messages correctly
+		*13.0.35* Recognize ucp ssl port (if set)
+		*13.0.34* Better chat functionality and look and feel
+		*13.0.33* Get rid of loading screen. Use a better looking progress bar instead
+		*13.0.32* Spelling fix for translations
+		*13.0.31* FREEPBX-11617 Add clickable class
+		*13.0.30* Better error message for debugging
+		*13.0.29* Support HTTPS/SSL
+		*13.0.28* Dont logout users when making changes
+		*13.0.27* FREEPBX-11974 use timezoned based dates
+		*13.0.26* FREEPBX-11754 Add bootstrap-table-export plugin
+		*13.0.25* FREEPBX-11878 Change the name of settings to be more detailed
+		*13.0.24* FREEPBX-10099 Add setting in Advanced Settings to Clear sessions after X days, performance improvements
+		*13.0.23* Remove en_US Translations
+		*13.0.22* FREEPBX-11138 Remove confusing popup for password changes
 		*13.0.21* FREEPBX-11172
 		*13.0.20* FREEPBX-11186
 		*13.0.19* FREEPBX-11041
@@ -107,8 +127,7 @@
 		<phpversion>5.3.3</phpversion>
 		<module>userman ge 13.0.35</module>
 		<module>core ge 12.0.1alpha25</module>
+		<module>dashboard</module>
 		<version>13.0.1RC1.27</version>
 	</depends>
-	<location>release/13.0/ucp-13.0.21.tgz</location>
-	<md5sum>3e2b74423002062e8f21d3c1d7e615a0</md5sum>
 </module>

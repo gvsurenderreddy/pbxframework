@@ -21,6 +21,7 @@ class Phonebook implements \BMO {
 		$speeddial = isset($_REQUEST['speeddial'])? trim($_REQUEST['speeddial']) : '';
 		$gensd = isset($_REQUEST['gensd'])? trim($_REQUEST['gensd']) : '';
 		$editnumber = isset($_REQUEST['editnumber'])? trim($_REQUEST['editnumber']) : '';
+		$editspeeddial = isset($_REQUEST['editspeeddial'])? trim($_REQUEST['editspeeddial']) : '';
 
     $dispnum = "phonebook"; //used for switch on config.php
   	switch ($action) {
@@ -34,7 +35,7 @@ class Phonebook implements \BMO {
   		break;
   		case "edit":
   			$numbers = \phonebook_list();
-  			\phonebook_del($editnumber, $numbers[$editnumber]['speeddial']);
+  			\phonebook_del($editnumber, $editspeeddial);
   			\phonebook_add($number, $name, $speeddial, $gensd);
   		break;
   		case "empty":
@@ -126,7 +127,7 @@ class Phonebook implements \BMO {
             foreach ($numbers as $key => $value) {
               $ret[] = array(
                 'number' => $key,
-                'name' => $value['name'],
+                'name' => isset($value['name'])?$value['name']:$key,
                 'dial' => isset($value['speeddial']) ? $value['speeddial'] : ""
               );
             }

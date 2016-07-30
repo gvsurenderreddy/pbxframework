@@ -3,7 +3,9 @@ var recording = false, //if in browser recording is happening
 		recordTimer = null, //setInterval reference recorder timer
 		startTime = null, //recorder start time
 		soundBlob = {}, //sound Blobs from in-browser recording
+		conflictMessage = _("A recording with this name already exists for this language. Do you want to overwrite it?"),
 		soundList = (typeof soundList === "undefined") ? {} : soundList, //sound file list, we attempt to get this from the page
+		playbackList = (typeof playbackList === "undefined") ? [] : playbackList,
 		language = $("#language").val(); //selected language
 
 var temp;
@@ -90,7 +92,11 @@ $("#recordings-frm").submit(function(e) {
 		async.forEachOfSeries(process, function (value, key, callback) {
 			value.command = "convert";
 			value.module = "recordings";
-			$("#recscreen label").html(sprintf(_("Processing %s for %s in format %s"),value.name, value.lang, value.codec));
+			if(value.codec !== "") {
+				$("#recscreen label").html(sprintf(_("Processing %s for %s in format %s"),value.name, value.lang, value.codec));
+			} else {
+				$("#recscreen label").html(sprintf(_("Copying %s to %s"),value.name, value.lang));
+			}
 			$.ajax({
 				type: 'POST',
 				url: "ajax.php",
@@ -125,14 +131,12 @@ $("#recordings-frm").submit(function(e) {
 				$("#recscreen").addClass("hidden");
 			} else {
 				$("#recscreen label").text(_("Finished!"));
-				console.log(playback);
-				recsave(data.id,playback,data.name,data.description,data.fcode,data.fcode_pass,remove);
+				recsave(data.id,playbackList,data.name,data.description,data.fcode,data.fcode_pass,remove);
 			}
 		});
 	} else {
 		$("#recscreen label").text(_("Finished!"));
-		console.log(playback);
-		recsave(data.id,playback,data.name,data.description,data.fcode,data.fcode_pass,remove);
+		recsave(data.id,playbackList,data.name,data.description,data.fcode,data.fcode_pass,remove);
 	}
 
 });
@@ -170,8 +174,7 @@ function recsave(id,playback,name,description,fcode,fcode_pass,remove) {
 	});
 }
 //check if this browser supports WebRTC
-//TODO: This eventually needs to check to make sure we are in HTTPS mode
-if (Modernizr.getusermedia) {
+if (Modernizr.getusermedia && window.location.protocol == "https:") {
 	//show in browser recording if it does
 	$("#record-container").removeClass("hidden");
 	$("#jquery_jplayer_1").jPlayer({
@@ -353,8 +356,21 @@ $("#record").click(function() {
 						input.focus();
 						return;
 					}
-					if(sysRecConflict(value)) {
-						if(!confirm(_("A system recording with this name already exists for this language. Do you want to overwrite it?"))) {
+					if(sysRecConflict("custom/"+value)) {
+						if(!confirm(conflictMessage)) {
+							return;
+						} else {
+							$("#file-custom-"+value).addClass("replace");
+							saveBrowserRecording("replacement-" + Date.now(), function() {
+								$("#jquery_jplayer_1").jPlayer( "clearMedia" );
+								$("#browser-recorder-save").addClass("hidden").removeClass("in");
+								$("#browser-recorder").addClass("in").removeClass("hidden");
+								$("#save-recorder-input").val("");
+								$("#save-recorder-input").prop("disabled", false);
+								$("#save-recorder").text(_("Save!"));
+								$("#save-recorder").prop("disabled", false);
+								title.html(_("Hit the red record button to start recording from your browser"));
+							});
 							return;
 						}
 					}
@@ -398,8 +414,7 @@ $("#record").click(function() {
 		//start the recording!
 		gUM({ audio: true }, function(stream) {
 			var mediaStreamSource = context.createMediaStreamSource(stream);
-			//worker is already loaded but it doesnt seem to cause any issues. eh.
-			recorder = new Recorder(mediaStreamSource,{ workerPath: "assets/recordings/js/recorderWorker.js" });
+			recorder = new Recorder(mediaStreamSource,{ workerPath: "assets/js/recorderWorker.js" });
 			recorder.record();
 			startTime = new Date();
 			//create a normal minutes:seconds timer from micro/milli-seconds
@@ -486,8 +501,16 @@ $("#dial-phone").click(function() {
 										nameInput.focus();
 										return;
 									}
-									if(sysRecConflict(value)) {
-										if(!confirm(_("A system recording with this name already exists for this language. Do you want to overwrite it?"))) {
+									if(sysRecConflict("custom/"+value)) {
+										if(!confirm(conflictMessage)) {
+											return;
+										} else {
+											$("#file-custom-"+value).addClass("replace");
+											$(this).off("click");
+											saveExtensionRecording(num, file, "replacement-" + Date.now(), function() {
+												$("#dialer").addClass("in").removeClass("hidden");
+												$("#dialer-save").removeClass("in").addClass("hidden");
+											});
 											return;
 										}
 									}
@@ -537,8 +560,8 @@ $('#fileupload').fileupload({
 				return false;
 			}
 			var s = v.name.replace(/\.[^/.]+$/, "").replace(/\s|&|<|>|\.|`|'|\*|\?|\"/g, '-').toLowerCase();
-			if(!$(".replace").length && sysRecConflict(s)) {
-				if(!confirm(sprintf(_("File %s will overwrite a file that already exists in this language. Is that ok?"),v.name))) {
+			if(!$(".replace").length && sysRecConflict("custom/"+s)) {
+				if(!confirm(conflictMessage)) {
 					submit = false;
 					return false;
 				}
@@ -591,6 +614,14 @@ $("#systemrecording").on('change', function(evt, params) {
 			var l = info.languages[key];
 			languages.push(l);
 			paths[l] = info.paths[l];
+		}
+	}
+	if(languages.indexOf(language) === -1) {
+		if(!confirm(_("This system recording doesnt exist in this language. Continue?"))) {
+			//reset the drop down to the first empty item
+			$('#systemrecording').val("");
+			$('#systemrecording').trigger('chosen:updated');
+			return false;
 		}
 	}
 	addFile(info.name, paths, languages, false, (languages.indexOf(language) >= 0));
@@ -704,11 +735,17 @@ function addFile(name, filenames, languages, temp, exists) {
 		$(".replace").data("temporary", rtemporary);
 
 		//remove the marking classes
-		$(".replace").removeClass("replace missing");
+		if(!exists) {
+			$(".replace").addClass("missing");
+			$(".replace").removeClass("replace");
+		} else {
+			$(".replace").removeClass("replace missing");
+		}
 		player.jPlayer( "clearMedia");
 	} else {
 		var exists = exists ? "" : "missing ",
-				id = name.replace(/\//gi, "-"),
+				rand = Math.floor((Math.random() * 100) + 1),
+				id = name.replace(/\//gi, "-") + rand,
 				temporary = {};
 		if(typeof temp === "object") {
 			temporary = temp;
@@ -748,7 +785,7 @@ function addFile(name, filenames, languages, temp, exists) {
 				success: function(data) {
 					if(data.status) {
 						player.on($.jPlayer.event.error, function(event) {
-							console.log(event);
+							console.warn(event);
 						});
 						player.jPlayer( "setMedia", data.files)
 						player.one($.jPlayer.event.canplay, function(event) {
@@ -803,6 +840,7 @@ function linkFormatter(value, row, index){
  */
 function convertList() {
 	soundList = {};
+	playbackList = [];
 	$("#files li").each(function() {
 		var name = $(this).data("name");
 		soundList[name] = {
@@ -811,7 +849,8 @@ function convertList() {
 			"temporary": $(this).data("temporary"),
 			"languages": $(this).data("languages")
 		};
-	})
+		playbackList.push(name);
+	});
 }
 
 /**
@@ -824,10 +863,13 @@ function generateList() {
 	$("#replace-file-alert").addClass("hidden");
 	$("#files").html("");
 	if(typeof soundList !== "undefined") {
-		if(!isObjEmpty(soundList)) {
-			$.each(soundList, function(k,v) {
-				var exists = (v.languages.indexOf(language) >= 0);
-				addFile(v.name, v.filenames, v.languages, v.temporary, exists);
+		if(playbackList.length) {
+			$.each(playbackList, function(k,name) {
+				if(typeof soundList[name] !== "undefined") {
+					var v = soundList[name],
+							exists = (v.languages.indexOf(language) >= 0);
+					addFile(v.name, v.filenames, v.languages, v.temporary, exists);
+				}
 			});
 			$("#file-alert").addClass("hidden");
 		} else {

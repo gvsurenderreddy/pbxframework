@@ -1,4 +1,4 @@
-#!/usr/bin/php -q
+#!/usr/bin/env php
 <?php
 //include bootstrap
 //	License for all code of this FreePBX module can be found in the license file inside the module directory
@@ -30,7 +30,7 @@ if(function_exists('sysadmin_get_storage_email')){
 }
 
 //Send email with our mail class
-function chron_scheduler_send_message($to,$from,$subject,$message){
+function cron_scheduler_send_message($to,$from,$subject,$message){
 	$em = new \CI_Email();
 	$em->from($from);
 	$em->to($to);
@@ -59,20 +59,21 @@ if ($email) {
 		$send_email = false;
 
 		$unsigned = $nt->list_signature_unsigned();
+		$text = '';
 		if (count($unsigned)) {
 			$send_email = true;
 			$text = $htext;
-			$text .= _("UNSIGNED MODULES NOTICE:")."\n\n";
+			$text .= "\n" . _("UNSIGNED MODULES NOTICE:")."\n\n";
 			foreach ($unsigned as $item) {
-				$text .= $item['display_text']."\n";
-				$text .= $item['extended_text']."\n\n";
+				$text .= $item['display_text'].":\n";
+				$text .= $item['extended_text']."\n";
 			}
 		}
 		$text .= "\n\n";
 
 		if ($send_email && (! $cm->check_hash('update_sigemail', $text))) {
 			$cm->save_hash('update_sigemail', $text);
-			if (chron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Unsigned Modules Notifications (%s)"),$brand, $mid), $text)) {
+			if (cron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Unsigned Modules Notifications (%s)"),$brand, $mid), $text)) {
 				$nt->delete('freepbx', 'SIGEMAILFAIL');
 			} else {
 				$nt->add_error('freepbx', 'SIGEMAILFAIL', _('Failed to send unsigned modules notification email'), sprintf(_('An attempt to send email to: %s with unsigned modules notifications failed'),$email));
@@ -86,18 +87,18 @@ if ($email) {
 	$security = $nt->list_security();
 	if (count($security)) {
 		$send_email = true;
-		$text = $htext;
+		$text = $htext . "\n";
 		$text .= _("SECURITY NOTICE:")."\n\n";
 		foreach ($security as $item) {
-			$text .= $item['display_text']."\n";
-			$text .= $item['extended_text']."\n\n";
+			$text .= $item['display_text'].":\n";
+			$text .= $item['extended_text']."\n";
 		}
 	}
 	$text .= "\n\n";
 
 	if ($send_email && (! $cm->check_hash('update_semail', $text))) {
 		$cm->save_hash('update_semail', $text);
-		if (chron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Security Notifications (%s)"),$brand, $mid), $text)) {
+		if (cron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Security Notifications (%s)"),$brand, $mid), $text)) {
 			$nt->delete('freepbx', 'SEMAILFAIL');
 		} else {
 			$nt->add_error('freepbx', 'SEMAILFAIL', _('Failed to send security notification email'), sprintf(_('An attempt to send email to: %s with security notifications failed'),$email));
@@ -110,7 +111,7 @@ if ($email) {
 	$updates = $nt->list_update();
 	if (count($updates)) {
 		$send_email = true;
-		$text = $htext;
+		$text = $htext . "\n";
 		$text .= _("UPDATE NOTICE:")."\n\n";
 		foreach ($updates as $item) {
 			$text .= $item['display_text']."\n";
@@ -120,7 +121,7 @@ if ($email) {
 
 	if ($send_email && (! $cm->check_hash('update_email', $text))) {
 		$cm->save_hash('update_email', $text);
-		if (chron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Online Updates Available (%s)"),$brand,$mid), $text)) {
+		if (cron_scheduler_send_message($email, $from_email, sprintf(_("%s: New Online Updates Available (%s)"),$brand,$mid), $text)) {
 			$nt->delete('freepbx', 'EMAILFAIL');
 		} else {
 			$nt->add_error('freepbx', 'EMAILFAIL', _('Failed to send online update email'), sprintf(_('An attempt to send email to: %s with online update status failed'),$email));
@@ -129,3 +130,4 @@ if ($email) {
 } else {
 	$nt->add_notice('freepbx', 'NOEMAIL', _('No email address for online update checks'), _('You are automatically checking for online updates nightly but you have no email address setup to send the results. This can be set in Module Admin. They will continue to show up here.'), 'config.php?display=modules#email', 'PASSIVE', false);
 }
+?>

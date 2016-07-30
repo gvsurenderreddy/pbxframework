@@ -126,7 +126,6 @@ $gen_settings = array(		"adsifdn" 			=> array("ver" => 1.2, "len" => 4, "type" =
 				"mailcmd"                       => array("ver" => 1.2, "len" => $dlen, "type" => "char", "default" => ""),
 				"maxgreet"                      => array("ver" => 1.2, "len" => $dlen, "type" => "num", "default" => ""),
 				"maxlogins"                     => array("ver" => 1.2, "len" => $dlen, "type" => "num", "default" => ""),
-				"maxmessage"			=> array("ver" => 1.2, "len" => $dlen, "type" => "num", "default" => ""),
 				"maxmsg"                        => array("ver" => 1.2, "len" => $dlen, "type" => "num", "default" => ""),
 				"minpassword"                   => array("ver" => 1.8, "len" => 4, "type" => "num", "default" => ""),
 				"maxsecs"                       => array("ver" => 1.6, "len" => $dlen, "type" => "num", "default" => ""),
@@ -216,7 +215,7 @@ $tooltips = array("tz" 	    => array("name" 				=> _("Timezone definition name")
 				     "emailbody"			=> _("Email body."),
 				     "emaildateformat"			=> _("Load date format config for Voicemail mail."),
 				     "emailsubject"			=> _("Email subject"),
-				     "maxsilence"			=> _("How many seconds of silence before we end the recording"),
+				     "maxsilence"			=> _("How many miliseconds of silence before we end the recording"),
 				     "envelope"				=> _("Turn on/off envelope playback before message playback. [ON by default] This does NOT affect option 3,3 from the advanced options menu."),
 				     "exitcontext"			=> _("Context to check for handling * or 0 calls to operator. \"Operator Context\""),
 				     "expungeonhangup"			=> _("Expunge on exit."),
@@ -392,7 +391,7 @@ show_view(dirname(__FILE__).'/views/header.php',array(
 	'title' =>$title,
 		)
 );
-//Do we really need to say "UPDATE COMPLETED??"
+//TODO: Do we really need to say "UPDATE COMPLETED??"
 if ($need_update && $action != 'usage') {
 	$args = array();
 	if (voicemail_update_settings($action, $context, $extension, $_REQUEST)) {
@@ -448,14 +447,32 @@ switch ($action) {
 		show_view(dirname(__FILE__).'/views/dialplan.php',array('settings' => $settings, 'direct_dial_opts' => $direct_dial_opts, 'voicemail_gain_opts' => $voicemail_gain_opts, 'vmx_timeout_opts' => $vmx_timeout_opts, 'vmx_repeat_opts' => $vmx_repeat_opts, 'vmx_loops_opts' => $vmx_loops_opts));
 		break;
 
-	case "bsettings":
 	case "settings":
+		if(!empty($extension)) {
+			$level = "account";
+			$id_prefix = "acct";
+		} else {
+			$level = "general";
+			$id_prefix = "gen";
+		}
+		$level = !empty($extension) ? "account" : "general";
+		$d = \FreePBX::Voicemail()->constructSettings($level);
+		/* get settings */
+		$settings = voicemail_get_settings($uservm, $action, $extension);
+		/* Get Asterisk version. */
+		$ast_info = engine_getinfo();
+		$version = $ast_info["version"];
+
+		show_view(dirname(__FILE__).'/views/ssettings.php',array('d' => $d, 'action' => $action, 'extension' => $extension, 'version' => $version, 'settings' => $settings, 'tooltips' => $tooltips, 'display_settings' => $acct_settings, 'display_tips' => $tooltips["account"], 'id_prefix' => $id_prefix));
+	break;
+	case "bsettings":
 		$output = '';
 		/* get settings */
 		$settings = voicemail_get_settings($uservm, $action, $extension);
 		/* Get Asterisk version. */
 		$ast_info = engine_getinfo();
 		$version = $ast_info["version"];
+
 		$text_size = 40;
 		if (!empty($extension)) {
 			show_view(dirname(__FILE__).'/views/settings.php',array('action' => $action, 'extension' => $extension, 'version' => $version, 'settings' => $settings, 'tooltips' => $tooltips, 'display_settings' => $acct_settings, 'display_tips' => $tooltips["account"], 'id_prefix' => 'acct'));

@@ -7,12 +7,17 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+
 class Moduleadmin extends Command {
 	private $activeRepos = array();
 	private $mf = null;
 	private $setRepos = false;
 	private $format = 'plain';
 	private $pretty = false;
+	private $skipchown = false;
+	private $previousEdge = 0;
 
 	protected function configure(){
 		$this->setName('ma')
@@ -21,6 +26,11 @@ class Moduleadmin extends Command {
 		->setDefinition(array(
 			new InputOption('force', 'f', InputOption::VALUE_NONE, _('Force operation (skips dependency and status checks) <warning>WARNING:</warning> Use at your own risk, modules have dependencies for a reason!')),
 			new InputOption('debug', 'd', InputOption::VALUE_NONE, _('Output debug messages to the console (be super chatty)')),
+			new InputOption('edge', '', InputOption::VALUE_NONE, _('Download/Upgrade forcing edge mode')),
+			new InputOption('color', '', InputOption::VALUE_NONE, _('Colorize table based list')),
+			new InputOption('skipchown', '', InputOption::VALUE_NONE, _('Skip the chown operation')),
+			new InputOption('autoenable', 'e', InputOption::VALUE_NONE, _('Automatically enable disabled modules without prompting')),
+			new InputOption('skipdisabled', '', InputOption::VALUE_NONE, _('Don\'t ask to enable disabled modules assume no.')),
 			new InputOption('format', '', InputOption::VALUE_REQUIRED, sprintf(_('Format can be: %s'),'json, jsonpretty')),
 			new InputOption('repo', 'R', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, _('Set the Repos. -R Commercial -R Contributed')),
 			new InputArgument('args', InputArgument::IS_ARRAY, 'arguments passed to module admin, this is s stopgap', null),))
@@ -31,7 +41,19 @@ class Moduleadmin extends Command {
 		$this->mf = \module_functions::create();
 		$this->out = $output;
 		$this->input = $input;
+		$this->colot = false;
 		$args = $input->getArgument('args');
+		if($input->getOption('skipchown')) {
+			$this->skipchown = true;
+		}
+		if($input->getOption('color')) {
+			$this->color = true;
+		}
+		if($input->getOption('edge')) {
+			$this->writeln('<info>'._('Edge repository temporarily enabled').'</info>');
+			$this->previousEdge = \FreePBX::Config()->get('MODULEADMINEDGE');
+			\FreePBX::Config()->update('MODULEADMINEDGE',1);
+		}
 		if ($input->getOption('debug')) {
 			$this->DEBUG = True;
 		} else {
@@ -87,6 +109,9 @@ class Moduleadmin extends Command {
 			$this->handleArgs($args);
 		} else {
 			$this->writeln($this->showHelp());
+		}
+		if($input->getOption('edge')) {
+			\FreePBX::Config()->update('MODULEADMINEDGE',$this->previousEdge);
 		}
 	}
 
@@ -189,6 +214,26 @@ class Moduleadmin extends Command {
 
 	private function doInstall($modulename, $force) {
 		\FreePBX::Modules()->loadAllFunctionsInc();
+		$module = $this->mf->getinfo($modulename);
+		$modulestatus = isset($module[$modulename]['status'])?$module[$modulename]['status']:false;
+		if($modulestatus === 1 && !$this->input->getOption('skipdisabled') && !$this->input->getOption('autoenable')){
+			$helper = $this->getHelper('question');
+			$question = new ChoiceQuestion(sprintf(_("%s appears to be disabled. What would you like to do?"),$modulename),array(_("Continue"), _("Enable"),_("Cancel")),0);
+			$question->setErrorMessage('Choice %s is invalid');
+			$action = $helper->ask($this->input,$this->out,$question);
+			switch($action){
+				case _("Enable"):
+					$this->mf->enable($modulename, $force);
+				break;
+				case _("Cancel"):
+					exit;
+				break;
+			}
+		}
+		if($this->input->getOption('autoenable') && $modulestatus === 1){
+			$this->writeln(sprintf(_("Enabling %s because autoenable was passed at the command line"),$modulename));
+			$this->mf->enable($modulename, $force);
+		}
 		if(!$force && !$this->mf->resolveDependencies($modulename,array($this,'progress'))) {
 			$this->writeln(sprintf(_("Unable to resolve dependencies for module %s:"),$modulename), "error", false);
 			return false;
@@ -318,7 +363,8 @@ class Moduleadmin extends Command {
 	private function doInstallLocal($force) {
 		//refresh module cache
 		$this->mf->getinfo(false,false,true);
-		$module_info=$this->mf->getinfo(false, MODULE_STATUS_NOTINSTALLED);
+		$module_info=$this->mf->getinfo(false, array(MODULE_STATUS_NOTINSTALLED,MODULE_STATUS_NEEDUPGRADE));
+		$modules = array();
 		foreach ($module_info as $module) {
 			if ($module['rawname'] != 'builtin') {
 				$modules[] = $module['rawname'];
@@ -342,6 +388,7 @@ class Moduleadmin extends Command {
 		} else {
 			$this->writeln(_("All modules up to date."));
 		}
+		return $modules;
 	}
 
 	/**
@@ -369,13 +416,13 @@ class Moduleadmin extends Command {
 	 * @param bool Controls if a simple (names only) or extended (array of name,versions) array is returned
 	 */
 	private function getUpgradableModules($extarray = false) {
-		$modules_local = $this->mf->getinfo(false, MODULE_STATUS_ENABLED);
+		$modules_local = $this->mf->getinfo(false, array(MODULE_STATUS_ENABLED,MODULE_STATUS_NEEDUPGRADE));
 		$modules_online = $this->mf->getonlinexml();
 		$modules_upgradable = array();
 		$this->check_active_repos();
 		foreach (array_keys($modules_local) as $name) {
 			if (isset($modules_online[$name])) {
-				if (version_compare_freepbx($modules_local[$name]['version'], $modules_online[$name]['version']) < 0) {
+				if (($modules_local[$name]['status'] == MODULE_STATUS_NEEDUPGRADE) || version_compare_freepbx($modules_local[$name]['version'], $modules_online[$name]['version']) < 0) {
 					if ($extarray) {
 						$modules_upgradable[] = array(
 							'name' => $name,
@@ -395,6 +442,17 @@ class Moduleadmin extends Command {
 		$modules = $this->getUpgradableModules();
 		if (count($modules) > 0) {
 			$this->writeln(_("Upgrading: ").implode(', ',$modules));
+			//upgrade framework, core, sipsettings
+			//yes the array below is reversed on purpose
+			$prepend = array('sipsettings','core','framework');
+			foreach($prepend as $module) {
+				$key = array_search($module,$modules);
+				if($key !== false) {
+					unset($modules[$key]);
+					array_unshift($modules, $module);
+				}
+			}
+			$modules = array_values($modules);
 			foreach ($modules as $modulename) {
 				$this->writeln(_("Upgrading ").$modulename."..");
 				$this->doUpgrade($modulename, $this->force);
@@ -403,6 +461,7 @@ class Moduleadmin extends Command {
 		} else {
 			$this->writeln(_("Up to date."));
 		}
+		return $modules;
 	}
 
 	private function mirrorrepo(){
@@ -518,16 +577,13 @@ class Moduleadmin extends Command {
 	}
 
 	private function setPerms($action,$args) {
+		if($this->skipchown) {
+			return;
+		}
 		if (posix_getuid() == 0) {
 			$chown = new Chown();
-			switch ($action) {
-				case 'install':
-				case 'upgrade':
-				case 'update':
-					if(sizeof($args) == 1){
-						$chown->moduleName = $args[0];
-					}
-				break;
+			if(sizeof($args) == 1){
+				$chown->moduleName = $args[0];
 			}
 			$chown->execute($this->input, $this->out, true);
 		}
@@ -577,6 +633,7 @@ class Moduleadmin extends Command {
 		} else {
 			$this->writeln(_("All modules up to date."));
 		}
+		return $modules;
 	}
 
 	private function showInfo($modulename) {
@@ -646,15 +703,19 @@ class Moduleadmin extends Command {
 					} else {
 						$status = _('Not Installed (Available online: ').$modules_online[$name]['version'].')';
 					}
+					$status = ($this->color && $this->format != 'json')?'<comment>'.$status.'</comment>':$status;
 				break;
 				case MODULE_STATUS_DISABLED:
 					$status = _('Disabled');
+					$status = ($this->color && $this->format != 'json')?'<question>'.$status.'</question>':$status;
 				break;
 				case MODULE_STATUS_NEEDUPGRADE:
 					$status = _('Disabled; Pending upgrade to ').$modules[$name]['version'];
+					$status = ($this->color && $this->format != 'json')?'<question>'.$status.'</question>':$status;
 				break;
 				case MODULE_STATUS_BROKEN:
 					$status = _('Broken');
+					$status = ($this->color && $this->format != 'json')?'<error>'.$status.'</error>':$status;
 				break;
 				default:
 					// check for online upgrade
@@ -673,6 +734,8 @@ class Moduleadmin extends Command {
 					} else {
 						$status = _('Enabled');
 					}
+					$status = ($this->color && $this->format != 'json')?'<info>'.$status.'</info>':$status;
+
 				break;
 			}
 			$module_version = isset($modules[$name]['dbversion'])?$modules[$name]['dbversion']:'';
@@ -703,6 +766,7 @@ class Moduleadmin extends Command {
 			$this->writeln(_("Done"));
 		}
 		$this->writeln(_("Checking Signatures of Modules..."));
+		$modules = array();
 		foreach($list as $m) {
 			//Check signature status, then if its online then if its signed online then redownload (through force)
 			$this->writeln(sprintf(_("Checking %s..."),$m['rawname']));
@@ -711,7 +775,7 @@ class Moduleadmin extends Command {
 				if(isset($modules_online[$m['rawname']]) && isset($modules_online[$m['rawname']]['signed'])) {
 					$this->writeln("\t".sprintf(_("Refreshing %s"),$m['rawname']));
 					$modulename = $m['rawname'];
-					$modules = $fpbxmodules->getinfo($modulename);
+					$modules[] = $modulename;
 					$this->doUpgrade($modulename,true);
 					$this->writeln("\t"._("Verifying GPG..."));
 					$this->mf->updateSignature($modulename);
@@ -724,6 +788,7 @@ class Moduleadmin extends Command {
 			}
 		}
 		$this->writeln(_("Done"));
+		return $modules;
 	}
 
 	private function showReverseDepends($modulename) {
@@ -805,7 +870,7 @@ class Moduleadmin extends Command {
 
 	private function showHelp(){
 		$help = '<info>'._('Module Administration Help').':'.PHP_EOL;
-		$help .= _('Usage').': fwconsole modadmin [-f][-R reponame][-R reponame][action][arg1][arg2][arg...]</info>' . PHP_EOL;
+		$help .= _('Usage').': fwconsole moduleadmin [-f][-R reponame][-R reponame][action][arg1][arg2][arg...]</info>' . PHP_EOL;
 		$help .= _('Flags').':' . PHP_EOL;
 		$help .= '-f - FORCE' . PHP_EOL;
 		$help .= '-R - REPO, accepts reponame as a single argument' . PHP_EOL;
@@ -818,7 +883,6 @@ class Moduleadmin extends Command {
 		$rows[] = array('delete',_('Deleted module[s], accepts argument module[s]'));
 		$rows[] = array('enable',_('Enable module[s], accepts argument module[s]'));
 		$rows[] = array('install',_('Installs module[s], accepts argument module[s]'));
-		$rows[] = array('installlocal',_('Install local module[s], accepts argument module[s]'));
 		$rows[] = array('uninstall',_('Uninstalls module[s], accepts argument module[s]'));
 		$rows[] = array('upgrade',_('Upgrade module[s], accepts argument module[s]'));
 		foreach($rows as $k => $v){
@@ -830,6 +894,7 @@ class Moduleadmin extends Command {
 		$rows[] = array('installall',_('Installs all modules, accepts no arguments'));
 		$rows[] = array('enableall',_('Trys to enable all modules, accepts no arguments'));
 		$rows[] = array('upgradeall',_('Upgrades all modules, accepts no arguments'));
+		$rows[] = array('installlocal',_('Install all local modules, accepts no arguments'));
 		foreach($rows as $k => $v){
 			$help .= '<info>'.$v[0].'</info> : <comment>' . $v[1] . '</comment>'. PHP_EOL;
 		}
@@ -870,14 +935,18 @@ class Moduleadmin extends Command {
 				break;
 			case 'installall':
 				$this->check_active_repos();
-				$this->doInstallAll(false);
+				$modules = $this->doInstallAll(false);
 				$this->updateHooks();
-				$this->setPerms($action,$args);
+				foreach($modules as $module) {
+					$this->setPerms($action,array($module));
+				}
 				break;
 			case 'installlocal':
-				$this->doInstallLocal(true);
+				$modules = $this->doInstallLocal(true);
 				$this->updateHooks();
-				$this->setPerms($action,$args);
+				foreach($modules as $module) {
+					$this->setPerms($action,array($module));
+				}
 				break;
 			case 'uninstall':
 				if(empty($args)){
@@ -938,9 +1007,11 @@ class Moduleadmin extends Command {
 			case 'updateall':
 			case 'upgradeall':
 				$this->check_active_repos();
-				$this->doUpgradeAll($force);
+				$modules = $this->doUpgradeAll($force);
 				$this->updateHooks();
-				$this->setPerms($action,$args);
+				foreach($modules as $module) {
+					$this->setPerms($action,array($module));
+				}
 				break;
 			case 'list':
 				$this->showList();
@@ -993,7 +1064,6 @@ class Moduleadmin extends Command {
 					$this->doDelete($module, $this->force);
 				}
 				$this->updateHooks();
-				$this->setPerms($action,$args);
 				break;
 			case 'disable':
 				if(empty($args)){
@@ -1037,9 +1107,11 @@ class Moduleadmin extends Command {
 				}
 				break;
 			case 'refreshsignatures':
-				$this->refreshsignatures();
+				$modules = $this->refreshsignatures();
 				$this->updateHooks();
-				$this->setPerms($action,$args);
+				foreach($modules as $module) {
+					$this->setPerms($action,array($module));
+				}
 				break;
 			case 'updatexml':
 				break;

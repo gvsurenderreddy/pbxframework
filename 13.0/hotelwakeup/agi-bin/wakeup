@@ -1,4 +1,4 @@
-#!/usr/bin/php -q
+#!/usr/bin/env php
 <?php
 //	License for all code of this FreePBX module can be found in the license file inside the module directory
 //	Copyright 2013 Schmooze Com Inc.
@@ -27,7 +27,7 @@ if($config['operator_mode']) {
 	if(in_array($cid['username'],$config['operator_extensions'])) {
 		$number = sim_background($AGI, "please-enter-the&number&for&your&wakeup-call&then-press-pound","0123456789",$config['extensionlength']);
 
-		if(empty($number) || strlen($number) < $config['extensionlength']) {
+		if(empty($number) || strlen($number) > $config['extensionlength']) {
 			sim_playback($AGI, "goodbye");
 			$AGI->hangup();
 		}
@@ -76,54 +76,76 @@ function wakeupMenu($AGI, $number) {
 function wakeupAdd($AGI, $number) {
 	$lang = $AGI->request['agi_language'];
 	if($lang == 'ja') {
-		$time = sim_background($AGI, "wakeup-call&jp-no&time&please-enter-the","0123456789",4);
+		$time = sim_background($AGI, "wakeup-call&jp-no&time&please-enter-the","0123456789",3);
 	}
 	else {
-		$time = sim_background($AGI, "please-enter-the&time&for&your&wakeup-call","0123456789",4);
+		$time = sim_background($AGI, "please-enter-the&time&for&your&wakeup-call","0123456789",3);
 	}
-	if($time < 1300) { // Allow 12 hour entry
-		$td = sim_background($AGI, "1-for-am-2-for-pm","12",1);
-		switch($td) {
-			case 1:
-				if($time > 1159) {
-					$time -= 1200;
-				}
-			break;
-			case 2:
-				if($time < 1159) {
-					$time += 1200;
-				}
-			break;
-			default:
-				sim_playback($AGI,"an-error-has-occurred");
-				$AGI->hangup();
-			break;
+	if(strlen($time) > 1) {
+		$last = '';
+		if(strlen($time) < 4) {
+			$ret = $AGI->wait_for_digit(1000);
+			$last = chr($ret['result']);
+			$last = $last != '#' ? $last : '';
 		}
-		$w = getdate();
-		$time_wakeup = mktime( substr( $time, 0, 2 ), substr( $time, 2, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+		$times = (string)($time.$last);
+		$time = (int)($time.$last);
+	}
 
-		$time_now = time();
-		if ($time_wakeup <= $time_now) {
-			$time_wakeup += 86400; // Add One Day on
-		}
-		FreePBX::Hotelwakeup()->addWakeup($number,$time_wakeup,$lang);
-		sim_playback($AGI,"wakeup-call&added");
-		wakeupMenu($AGI, $number);
-	} elseif($time > 2400) { // Fail on invalid times
+	$times = trim($times);
+	$type = (strlen($times) == 4) ? 24 : 12;
+
+	if($time > 2400) {
 		sim_playback($AGI,"an-error-has-occurred");
 		wakeupMenu($AGI, $number);
-	} elseif($time >= 1300) { // Allow 24 hour entry
-		$w = getdate();
-		$time_wakeup = mktime( substr( $time, 0, 2 ), substr( $time, 2, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
-
-		$time_now = time();
-		if ($time_wakeup <= $time_now) {
-			$time_wakeup += 86400; // Add One Day on
-		}
-		FreePBX::Hotelwakeup()->addWakeup($number,$time_wakeup,$lang);
-		sim_playback($AGI,"wakeup-call&added");
-		wakeupMenu($AGI, $number);
 	}
+
+	switch($type) {
+		case 12:
+			$td = sim_background($AGI, "1-for-am-2-for-pm","12",1);
+			switch($td) {
+				case 1:
+					if($time > 1159) {
+						$time -= 1200;
+					}
+				break;
+				case 2:
+					if($time < 1159) {
+						$time += 1200;
+					}
+				break;
+				default:
+					sim_playback($AGI,"an-error-has-occurred");
+					$AGI->hangup();
+					return false;
+				break;
+			}
+		break;
+		case 24:
+		break;
+	}
+
+	$time_wakeup = hotelwakeup_convert_time($time);
+	if($time_wakeup === false) {
+		sim_playback($AGI,"an-error-has-occurred");
+		$AGI->hangup();
+		return false;
+	}
+
+	$time_now = time();
+	if ($time_wakeup <= $time_now) {
+		$time_wakeup += 86400; // Add One Day on
+	}
+	FreePBX::Hotelwakeup()->addWakeup($number,$time_wakeup,$lang);
+	sim_playback($AGI,"wakeup-call&added&digits/at");
+	$time = $time_wakeup;
+	if($lang == 'ja') {
+		$AGI->exec("SayUnixTime \"$time,,BdApIM\"");
+	}
+	else {
+		$AGI->exec("SayUnixTime \"$time,,IMpABd\"");
+	}
+	wakeupMenu($AGI, $number);
 }
 
 /**
@@ -254,4 +276,18 @@ function sim_background($AGI, $file,$digits='',$length='1',$escape='#',$timeout=
 	}
 	$number = trim($number);
 	return $number;
+}
+
+function hotelwakeup_convert_time($time) {
+	$w = getdate();
+	if(strlen($time) == 4) { //0130
+		$time_wakeup = mktime( substr( $time, 0, 2 ), substr( $time, 2, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+	} elseif(strlen($time) == 3) { //130
+		$time_wakeup = mktime( substr( $time, 0, 1 ), substr( $time, 1, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+	} elseif(strlen($time) == 2) { //30. EG 0030
+		$time_wakeup = mktime( 0, substr( $time, 0, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+	} else {
+		return false;
+	}
+	return $time_wakeup;
 }

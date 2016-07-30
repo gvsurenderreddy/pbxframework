@@ -361,12 +361,7 @@ function queues_get_config($engine) {
 									$ext->add($c, $exten_pat, '', new ext_setvar('QUEUEUSER','${EXTEN:'."$que_code_len:$dev_len".'}'));
 									$ext->add($c, $exten_pat, '', new ext_goto('start','s','app-queue-toggle'));
 									$ext->addHint($c, $exten_pat, "Custom:QUEUE".'${EXTEN:'."$que_code_len}");
-									/*
-									$ext->add($c, $que_code.$device['id'].'*'.$exten, '', new ext_setvar('QUEUENO',$exten));
-									$ext->add($c, $que_code.$device['id'].'*'.$exten, '', new ext_setvar('QUEUEUSER',$device['id']));
-									$ext->add($c, $que_code.$device['id'].'*'.$exten, '', new ext_goto('start','s','app-queue-toggle'));
-									$ext->addHint($c, $que_code.$device['id'].'*'.$exten, "Custom:QUEUE".$device['id'].'*'.$exten);
-									 */
+									//TODO: dynamic hints
 							}
 						}
 					}
@@ -432,26 +427,17 @@ function queues_get_config($engine) {
 					$ext->addExec($c,$amp_conf['AMPBIN'].'/generate_queue_hints.php '.$que_code);
 				} else {
 					$que_code_len = strlen($que_code);
+					$hlist = '';
 					foreach ($device_list as $device) {
+						$astman->database_del("AMPUSER/".$device['id'],"queuehint"); //cleanup
 						if ($device['tech'] == 'sip' || $device['tech'] == 'iax2' || $device['tech'] == 'pjsip') {
-
-							$dev_len = strlen($device['id']);
-							$dev_len_tmp = str_repeat('X', $dev_len);
-							$exten_pat = "_$que_code*$dev_len_tmp";
-							if (!in_array($exten_pat, $hint_hash)) {
-								$hint_hash[] = $exten_pat;
-								$ext->add($c, $exten_pat, '', new ext_goto('start','s','app-all-queue-toggle'));
-							}
-							//$ext->add($c, $que_code . '*' . $device['id'], '', new ext_goto('start','s','app-all-queue-toggle'));
-
-							// TODO: to make this a pattern we'll have to store the state info in AstDB since each device can be different
-							//
 							if ($device['user'] != '' &&  isset($qc[$device['user']])) {
 								$hlist = 'Custom:QUEUE' . $device['id'] . '*' . implode('&Custom:QUEUE' . $device['id'] . '*', $qc[$device['user']]);
-								$ext->addHint($c, $que_code . '*' . $device['id'], $hlist);
+								$astman->database_put("AMPUSER/".$device['id'],"queuehint",$hlist);
 							}
 						}
 					}
+					$ext->addHint($c, '_'.$que_code . '*' . 'X.', '${DB(AMPUSER/${EXTEN:'.strlen($que_code.'*').'}/queuehint)}');
 				}
 			}
 
@@ -477,11 +463,12 @@ function queues_get_config($engine) {
 				$ext->add($c, '_' . $que_pause_code . '*X.', '', new ext_goto('1','s','app-all-queue-pause-toggle'));
 
 				// TODO: There's a bug here $q_pause_Local isn't initialized and shoudl be something.
-				//       Currently this can't be made into a pattern since it's the $device['user']] but the hint has the device
+				//       Currently this can't be made into a pattern since it's the $device['user'] but the hint has the device
 				//
 				$q_pause_len = strlen($que_pause_code);
 				$device_list = (isset($device_list) && is_array($device_list))?$device_list:array();
 				foreach ($device_list as $device) {
+					$astman->database_del("AMPUSER/".$device['id'],"pausequeuehint");
 					if ($device['user'] != '') {
 						$pause_all_hints = array();
 						if (isset($qc[$device['user']])) foreach($qc[$device['user']] as $q) {
@@ -522,19 +509,14 @@ function queues_get_config($engine) {
 								$ext->add($c, $que_pause_code . '*' . $device['id'] . '*' . $q, '', new ext_gosub('1','s','app-queue-pause-toggle',$q.','.$device['id']));
 							}
 						}
-						$dev_len = strlen($device['id']);
-						$dev_len_tmp = str_repeat('X', $dev_len);
-						$exten_pat = "_$que_pause_code*$dev_len_tmp";
-						if (!in_array($exten_pat, $hint_hash)) {
-							$hint_hash[] = $exten_pat;
-							$ext->add($c, $exten_pat, '', new ext_goto('1','s','app-all-queue-pause-toggle'));
-						}
+
 						//$ext->add($c, $que_pause_code . '*' . $device['id'], '', new ext_goto('1','s','app-all-queue-pause-toggle'));
 						if (!empty($pause_all_hints)) {
-							$ext->addHint($c, $que_pause_code . '*' . $device['id'], implode('&', $pause_all_hints));
+							$astman->database_put("AMPUSER/".$device['id'],"pausequeuehint",implode('&', $pause_all_hints));
 						}
 					}
 				}
+				$ext->addHint($c, '_'.$que_pause_code . '*X.', '${DB(AMPUSER/${EXTEN:'.strlen($que_pause_code . '*').'}/pausequeuehint)}');
 			}
 			// Create *47 codes/hints
 			//
@@ -560,98 +542,6 @@ function queues_get_config($engine) {
 				$ext->add($id, 's', '', new ext_saynumber('${COUNT}'));
 				$ext->add($id, 's', '', new ext_playback('queue-quantity2'));
 				$ext->add($id, 's', '', new ext_return());
-
-
-				$userQueues = array();
-				if (FreePBX::Modules()->checkStatus("cos") && FreePBX::Cos()->isLicensed()) {
-					$cos = FreePBX::Create()->Cos;
-				} else if (function_exists('cos_islicenced') && cos_islicenced()) {
-					$cos = Cos::create();
-				} else {
-					$cos = false;
-				}
-
-				if ($cos) {
-					$allCos = $cos->getAllCos();
-					$allCos = is_array($allCos)?$allCos:array();
-					foreach ($allCos as $cos_name) {
-						$all = $cos->getAll($cos_name);
-						$all['members'] = is_array($all['members'])?$all['members']:array();
-						foreach ($all['members'] as $key => $val) {
-							$userQueues[$key] = ($userQueues[$key] ? $userQueues[$key] + $all['queuesallow'] : $all['queuesallow']);
-						}
-					}
-				}
-				$device_list = is_array($device_list)?$device_list:array();
-				foreach ($device_list as $device) {
-					if ($device['user'] != '') {
-						$callers_all = array();
-						$callers_all_hints = array();
-						$qlist = is_array($qlist)?$qlist:array();
-						foreach ($qlist as $item) {
-							if (count($userQueues) > 1 && (!isset($userQueues[$device['user']]) || !isset($userQueues[$device['user']][$item[0]]))) {
-								continue;
-							}
-
-							if (isset($qc[$device['user']]) && in_array($item[0], $qc[$device['user']], true)) {
-								$callers_all[] = $item[0];
-
-								// TODO: do we pair this down too?
-								//
-								//$ext->add($c, $que_callers_code . '*' . $device['id'] . '*' . $item[0], '', new ext_gosub('1', 's', 'app-queue-caller-count', $item[0]));
-								//$ext->add($c, $que_callers_code . '*' . $device['id'] . '*' . $item[0], '', new ext_hangup());
-
-								/*
-								if ($ast_ge_11 && !$amp_conf['DYNAMICHINTS'] && ($device['tech'] == 'pjsip' || $device['tech'] == 'sip' || $device['tech'] == 'iax2')) {
-									$hint = "Queue:$item[0]";
-									$ext->addHint($c, $que_callers_code . '*' . $device['id'] . '*' . $item[0], $hint);
-									$callers_all_hints[] = $hint;
-								}
-								 */
-								if ($ast_ge_11 && !$amp_conf['DYNAMICHINTS'] && ($device['tech'] == 'pjsip' || $device['tech'] == 'sip' || $device['tech'] == 'iax2')) {
-									$hint = "Queue:$item[0]";
-									$callers_all_hints[] = $hint;
-
-									$qcode_len = strlen($que_callers_code); // this should be pulled out
-									$device_len = strlen($device['id']);
-									$device_tmp = str_repeat('X', $device_len);
-									$item_len = strlen($item[0]);
-									$item_tmp = str_repeat('X', $item_len);
-
-									$exten_pat = "_$que_callers_code*$device_tmp*$item_tmp";
-									if (!in_array($exten_pat, $hint_hash)) {
-										$hint_hash[] = $exten_pat;
-										$ext->add($c, $exten_pat, '', new ext_gosub('1', 's', 'app-queue-caller-count', '${EXTEN:' .($qcode_len+$device_len+3). '}'));
-										$ext->add($c, $exten_pat, '', new ext_hangup());
-										$ext->addHint($c, $exten_pat, 'Queue:${EXTEN:' . ($qcode_len+$device_len+2) .'}');
-										//$ext->addHint($c, $que_callers_code . '*' . $device['id'] . '*' . $item[0], $hint);
-									}
-								}
-							}
-						}
-
-						if (!empty($callers_all_hints)) {
-
-							$qcode_len = strlen($que_callers_code); // this should be pulled out
-							$device_len = strlen($device['id']);
-							$device_tmp = str_repeat('X', $device_len);
-							$exten_pat = "_$que_callers_code*$device_tmp";
-							$exten_pat = "_$que_callers_code*$device_tmp*$item_tmp";
-							if (!in_array($exten_pat, $hint_hash)) {
-								$hint_hash[] = $exten_pat;
-								$ext->add($c, $exten_pat, '', new ext_gosub('1', 's', 'app-queue-caller-count', implode('&', $callers_all)));
-								$ext->add($c, $exten_pat, '', new ext_hangup());
-								$ext->addHint($c, $exten_pat, implode('&', $callers_all_hints));
-							}
-
-							/*
-							$ext->add($c, $que_callers_code . '*' . $device['id'], '', new ext_gosub('1', 's', 'app-queue-caller-count', implode('&', $callers_all)));
-							$ext->add($c, $que_callers_code . '*' . $device['id'], '', new ext_hangup());
-							$ext->addHint($c, $que_callers_code . '*' . $device['id'], implode('&', $callers_all_hints));
-							 */
-						}
-					}
-				}
 			}
 
 			// We need to have a hangup here, if call is ended by the caller during Playback it will end in the
@@ -664,36 +554,53 @@ function queues_get_config($engine) {
 			// or indirectly through from-queue-exten-only to trap extension calls and avoid their follow-me, etc.
 			//
 			$ext->add('from-queue', '_.', '', new ext_setvar('QAGENT','${EXTEN}'));
+			$ext->add('from-queue', '_.', '', new ext_setvar('__FROMQ','true')); //see below comments
 			$ext->add('from-queue', '_.', '', new ext_goto('1','${NODEST}'));
 
+			//http://issues.freepbx.org/browse/FREEPBX-11871
+			//Because of local channel changes in Asterisk 12+ we end up losing track of our recording file
+			//This effectively "gives" back the recording file to the channel that answered the queue
+			if($ast_ge_12) {
+				$ext->splice('macro-auto-blkvm', 's', 1, new ext_execif('$["${FROMQ}" = "true" & "${CALLFILENAME}" != "" & "${CDR(recordingfile)}" = ""]', 'Set', 'CDR(recordingfile)=${CALLFILENAME}.${MON_FMT}'));
+			}
+
+			$ext->addInclude($from_queue_exten_only.'-x','from-internal');
+			$ext->add($from_queue_exten_only.'-x', 'foo', '', new ext_noop('bar'));
+
 			$ext->addInclude($from_queue_exten_internal,$from_queue_exten_only);
+			$ext->addInclude($from_queue_exten_internal,$from_queue_exten_only.'-x');
 			$ext->addInclude($from_queue_exten_internal,'from-internal');
 			$ext->add($from_queue_exten_internal, 'foo', '', new ext_noop('bar'));
 
 			/* create a context, from-queue-exten-only, that can be used for queues that want behavir similar to
 			 * ringgroup where only the agent's phone will be rung, no follow-me will be pursued.
 			 */
-			$userlist = core_users_list();
-			if (is_array($userlist)) {
-				foreach($userlist as $item) {
-					$ext->add($from_queue_exten_only, $item[0], '', new ext_set('RingGroupMethod', 'none'));
+			$sql = "SELECT LENGTH(extension) as len FROM users GROUP BY len";
+			$sth = FreePBX::Database()->prepare($sql);
+			$sth->execute();
+			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+			foreach($rows as $row) {
+				//make sure exten exists
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_gotoif('$[${DB_EXISTS(AMPUSER/${EXTEN}/cidnum)} = 0]', $from_queue_exten_only.'-x,${EXTEN},1'));
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_set('RingGroupMethod', 'none'));
 
-					$ext->add($from_queue_exten_only, $item[0], '', new ext_set('QDOPTS', '${IF($["${CALLER_DEST}"!=""]?g)}${IF($["${AGENT_DEST}"!=""]?F(${AGENT_DEST}))}'));
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_set('QDOPTS', '${IF($["${CALLER_DEST}"!=""]?g)}${IF($["${AGENT_DEST}"!=""]?F(${AGENT_DEST}))}'));
 
-					$ext->add($from_queue_exten_only, $item[0], 'checkrecord', new ext_set('CALLTYPE_OVERRIDE', 'external')); // Make sure the call is tagged as external
-					// This means:
-					// If (!$fromexten) { if (!$nodest) { $fromexten = 'external' } else { $fromexten = $nodest } }
-					$ext->add($from_queue_exten_only, $item[0], '', new ext_execif('$[!${LEN(${FROMEXTEN})}]', 'Set', 'FROMEXTEN=${IF(${LEN(${NODEST})}?${NODEST}:external)}')); // Make sure the call is tagged as external
-					$ext->add($from_queue_exten_only, $item[0], '', new ext_gosub('1','s','sub-record-check',"exten,".$item[0].","));
-					if ($has_extension_state) {
-						$ext->add($from_queue_exten_only, $item[0], '', new ext_macro('dial-one',',${DIAL_OPTIONS}${QDOPTS},'.$item[0]));
-					} else {
-						$ext->add($from_queue_exten_only, $item[0], '', new ext_macro('dial',',${DIAL_OPTIONS}${QDOPTS},'.$item[0]));
-					}
-					$ext->add($from_queue_exten_only, $item[0], '', new ext_gotoif('$["${CALLER_DEST}"!=""]','${CUT(CALLER_DEST,^,1)},${CUT(CALLER_DEST,^,2)},${CUT(CALLER_DEST,^,3)}'));
- 					$ext->add($from_queue_exten_only, $item[0], '', new ext_hangup());
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), 'checkrecord', new ext_set('CALLTYPE_OVERRIDE', 'external')); // Make sure the call is tagged as external
+				// This means:
+				// If (!$fromexten) { if (!$nodest) { $fromexten = 'external' } else { $fromexten = $nodest } }
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_execif('$[!${LEN(${FROMEXTEN})}]', 'Set', 'FROMEXTEN=${IF(${LEN(${NODEST})}?${NODEST}:external)}')); // Make sure the call is tagged as external
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_gosub('1','s','sub-record-check','exten,${EXTEN},'));
+				if ($has_extension_state) {
+					$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_macro('dial-one',',${DIAL_OPTIONS}${QDOPTS},${EXTEN}'));
+				} else {
+					$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_macro('dial',',${DIAL_OPTIONS}${QDOPTS},${EXTEN}'));
 				}
- 				$ext->add($from_queue_exten_only, 'h', '', new ext_macro('hangupcall'));
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_gotoif('$["${CALLER_DEST}"!=""&&"${DIALSTATUS}"="ANSWER"]','${CUT(CALLER_DEST,^,1)},${CUT(CALLER_DEST,^,2)},${CUT(CALLER_DEST,^,3)}'));
+				$ext->add($from_queue_exten_only, '_'.str_repeat('X',$row['len']), '', new ext_hangup());
+			}
+			if(!empty($rows)) {
+				$ext->add($from_queue_exten_only, 'h', '', new ext_macro('hangupcall'));
 			}
 
 			/*
@@ -705,7 +612,7 @@ function queues_get_config($engine) {
 
 			$c = 'macro-agent-add';
 			// for i18n playback in multiple languages
-			$ext->add($c, 'lang-playback', '', new ext_gosubif('$[${DIALPLAN_EXISTS('.$id.',${CHANNEL(language)})}]', $id.',${CHANNEL(language)},${ARG1}', $id.',en,${ARG1}'));
+			$ext->add($c, 'lang-playback', '', new ext_gosubif('$[${DIALPLAN_EXISTS('.$c.',${CHANNEL(language)})}]', $c.',${CHANNEL(language)},${ARG1}', $c.',en,${ARG1}'));
 			$ext->add($c, 'lang-playback', '', new ext_return());
 			$exten = 's';
 
@@ -737,7 +644,7 @@ function queues_get_config($engine) {
 			$ext->add($c, $exten, '', new ext_execif('$[${DB_EXISTS(AMPUSER/${CALLBACKNUM}/cidname)} = 0]', 'AddQueueMember', '${QUEUENO},Local/${CALLBACKNUM}@from-queue/n,${DB(QPENALTY/${QUEUENO}/agents/${CALLBACKNUM})}'));
 			$ext->add($c, $exten, '', new ext_userevent('Agentlogin', 'Agent: ${CALLBACKNUM}'));
 			$ext->add($c, $exten, '', new ext_wait(1));
-			$ext->add($c, $exten, '', new ext_gosub('1', 'lang-playback', $id, 'hook_0'));
+			$ext->add($c, $exten, '', new ext_gosub('1', 'lang-playback', $c, 'hook_0'));
 			$ext->add($c, $exten, '', new ext_hangup());
 			$ext->add($c, $exten, '', new ext_macroexit());
 			$ext->add($c, $exten, 'invalid', new ext_playback('pbx-invalid'));
@@ -957,5 +864,3 @@ function queue_agent_del_toggle() {
 	$ext->add($id, $c, '', new ext_queuelog('${QUEUENO}','MANAGER','${IF($[${LEN(${QUEUEUSERCIDNAME})}>0]?${QUEUEUSERCIDNAME}:${QUEUEUSER})}','REMOVEMEMBER'));
 	$ext->add($id, $c, '', new ext_macroexit());
 }
-
-?>

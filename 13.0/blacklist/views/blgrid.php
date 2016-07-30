@@ -8,7 +8,7 @@
 						<th data-checkbox="true" data-formatter="cbFormatter"></th>
             <th data-field="number"><?php echo _("Number")?></th>
             <th data-field="description" data-formatter="descFormatter"><?php echo _("Description")?></th>
-            <th data-field="number" data-formatter="linkFormatter"><?php echo _("Actions")?></th>
+            <th data-formatter="linkFormatter"><?php echo _("Actions")?></th>
         </tr>
     </thead>
 </table>
@@ -21,9 +21,9 @@
 	}
 
 	function linkFormatter(value,row,idx){
-		var html = '<a href="#" data-toggle="modal" data-target="#addNumber" data-number="'+value+'" data-description="'+row['description']+'" ><i class="fa fa-pencil"></i></a>';
-		html += '&nbsp;<a href="#" id="del'+value+'" data-idx="'+idx+'" data-number="'+value+'" class="delAction"><i class="fa fa-trash"></i></a>';
-		html += '&nbsp;<a href="#" id="report'+value+'" data-number="'+value+'"><i class="fa fa-area-chart"></i></a>';
+		var html = '<a href="#" data-toggle="modal" data-target="#addNumber" data-number="'+row['number']+'" data-description="'+row['description']+'" ><i class="fa fa-pencil"></i></a>';
+		html += '&nbsp;<a href="#" id="del'+row['number']+'" data-idx="'+idx+'" data-number="'+row['number']+'" class="delAction"><i class="fa fa-trash"></i></a>';
+		html += '&nbsp;<a href="#" id="report'+row['number']+'" data-number="'+row['number']+'"><i class="fa fa-area-chart"></i></a>';
 		return html;
 	}
 	function descFormatter(value){
@@ -33,23 +33,4 @@
 			return value;
 		}
 	}
-	$("#blkDelete").click(function(e){
-		e.preventDefault();
-		if(confirm(_("Are you sure you want to remove the selected item(s) from the blacklist?"))){
-			$('input[name="btSelectItem"]:checked').each(function(){
-				var ro = $('#blGrid').bootstrapTable('getData');
-				console.log($(this).data());
-				var num = ro[$(this).data("index")].number;
-				$.post("ajax.php?module=blacklist",
-					{
-						command : "del",
-						number : num,
-					}
-				);
-			});
-			setTimeout(function(){
-				$('#blGrid').bootstrapTable('refresh',{silent: true});
-			}, 2000);
-		}
-	});
 </script>

@@ -2,7 +2,7 @@
   <rawname>queueprio</rawname>
   <repo>extended</repo>
   <name>Queue Priorities</name>
-  <version>13.0.2</version>
+  <version>13.0.2.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -19,6 +19,7 @@
     </queueprio>
   </popovers>
 	<changelog>
+		*13.0.2.1* Ringfree branch
 		*13.0.2* Version bump Beta
 			*13.0.1alpha1* Visual updates
   		*2.11.0.2* Add license file
@@ -32,8 +33,8 @@
   <depends>
     <version>2.5.0alpha1</version>
   </depends>
-  <location>release/13.0/queueprio-13.0.2.tgz</location>
-  <md5sum>19531e47c541a7c84673d0cf69524be7</md5sum>
+  <location>release/13.0/queueprio-13.0.2.1.tgz</location>
+  <md5sum></md5sum>
   <supported>
     <version>13.0</version>
   </supported>

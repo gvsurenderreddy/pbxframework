@@ -245,7 +245,7 @@ if(DB::IsError($check)) {
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("fatal error"));
-		die_freepbx($result->getDebugInfo());
+		return false;
 	} else {
 		out(_("added"));
 	}
@@ -262,7 +262,7 @@ if(DB::IsError($check)) {
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("fatal error"));
-		die_freepbx($result->getDebugInfo());
+		return false;
 	} else {
 		out(_("added"));
 	}
@@ -278,7 +278,7 @@ if(DB::IsError($check)) {
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("fatal error"));
-		die_freepbx($result->getDebugInfo());
+		return false;
 	} else {
 		out(_("added"));
 	}
@@ -329,7 +329,7 @@ function __migrate_trunks_to_table() {
 			//echo ("already exists\n");
 			return false;
 		} else {
-			die_freepbx($check->getDebugInfo());
+			return false;
 		}
 	}
 
@@ -449,6 +449,17 @@ function __migrate_trunks_to_table() {
 	return $trunkinfo;
 }
 
+out(_("Migrating pickup groups to named pickup groups"));
+$sql = "update sip set keyword = 'namedpickupgroup' where keyword = 'pickupgroup'";
+sql($sql);
+$sql = "update dahdi set keyword = 'namedpickupgroup' where keyword = 'pickupgroup'";
+sql($sql);
+out(_("Migrating call groups to named call groups"));
+$sql = "update sip set keyword = 'namedcallgroup' where keyword = 'callgroup'";
+sql($sql);
+$sql = "update dahdi set keyword = 'namedcallgroup' where keyword = 'callgroup'";
+sql($sql);
+
 // __migrate_trunks_to_table will return false if the trunks table already exists and
 // no migration is needed
 //
@@ -501,7 +512,8 @@ $check = $db->query('SELECT pmmaxretries FROM incoming');
 if(DB::IsError($check)){
 	$result = $db->query('alter table incoming add pmmaxretries varchar(2), add pmminlength varchar(2);');
 	if(DB::IsError($result)) {
-		die_freepbx($result->getDebugInfo().'fatal error adding fields to incoming table');
+		out(_('fatal error adding fields to incoming table'));
+		return false;
 	} else {
 	  out(_("Added pmmaxretries and pmminlength"));
   }
@@ -522,7 +534,9 @@ foreach ($new_cols as $col) {
     // add new field
     $sql = "ALTER TABLE `users` ADD `$col` VARCHAR( 20 ) DEFAULT '';";
     $result = $db->query($sql);
-    if(DB::IsError($result)) { die_freepbx($result->getDebugInfo()); }
+    if(DB::IsError($result)) {
+			return false;
+		}
     out(_("added"));
   } else {
     out(_("already exists"));
@@ -538,7 +552,9 @@ foreach ($new_cols as $col) {
     // add new field
     $sql = "ALTER TABLE `users` ADD `$col` VARCHAR( 255 ) DEFAULT '';";
     $result = $db->query($sql);
-    if(DB::IsError($result)) { die_freepbx($result->getDebugInfo()); }
+    if(DB::IsError($result)) {
+			return false;
+		}
     out(_("added"));
   } else {
     out(_("already exists"));
@@ -558,10 +574,10 @@ if (empty($check)) {
 	}
 }
 
-$sql = "SHOW KEYS FROM users WHERE Key_name='extensions'";
+$sql = "SHOW KEYS FROM users WHERE Key_name='extension'";
 $check = $db->getOne($sql);
 if (empty($check)) {
-	$sql = "ALTER TABLE users ADD KEY `extension` (`extension`), ADD KEY `extension` (`extension`)";
+	$sql = "ALTER TABLE users ADD KEY `extension` (`extension`)";
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("Unable to add index to extensions field in users"));
@@ -590,7 +606,7 @@ $globals_convert['MIXMON_POST'] = '';
 $globals_convert['MIXMON_FORMAT'] = 'wav';
 
 $globals_convert['DIAL_OPTIONS'] = 'Ttr';
-$globals_convert['TRUNK_OPTIONS'] = 'Tt';
+$globals_convert['TRUNK_OPTIONS'] = 'T';
 $globals_convert['RINGTIMER'] = '15';
 $globals_convert['TONEZONE'] = 'us';
 
@@ -782,7 +798,7 @@ $set['module'] = '';
 $set['category'] = 'Dialplan and Operational';
 $set['emptyok'] = 1;
 $set['name'] = 'Asterisk Dial Options';
-$set['description'] = "Options to be passed to the Asterisk Dial Command when making internal calls or for calls ringing internal phones. The options are documented in Asterisk documentation, a subset of which are described here. The default options T and t allow the calling and called users to transfer a call with ##. The r option allows Asterisk to generate ringing back to the calling phones which is needed by some phones and sometimes needed in complex dialplan features that may otherwise result in silence to the caller.";
+$set['description'] = "Options to be passed to the Asterisk Dial Command when making internal calls or for calls ringing internal phones. The options are documented in Asterisk documentation, a subset of which are described here. The default options T and t allow the calling and called users to transfer a call with ##. If 'Disallow transfer features for inbound callers' is set to 'Yes' the T option is removed for inbound callers. The r option allows Asterisk to generate ringing back to the calling phones which is needed by some phones and sometimes needed in complex dialplan features that may otherwise result in silence to the caller.";
 $set['type'] = CONF_TYPE_TEXT;
 $freepbx_conf->define_conf_setting('DIAL_OPTIONS',$set);
 
@@ -798,9 +814,25 @@ $set['module'] = '';
 $set['category'] = 'Dialplan and Operational';
 $set['emptyok'] = 1;
 $set['name'] = 'Asterisk Outbound Trunk Dial Options';
-$set['description'] = "Options to be passed to the Asterisk Dial Command when making outbound calls on your trunks when not part of an Intra-Company Route. The options are documented in Asterisk documentation, a subset of which are described here. The default options T and t allow the calling and called users to transfer a call with ##. It is HIGHLY DISCOURAGED to use the r option here as this will prevent early media from being delivered from the PSTN and can result in the inability to interact with some external IVRs";
+$set['description'] = "Options to be passed to the Asterisk Dial Command when making outbound calls on your trunks when not part of an Intra-Company Route. The options are documented in Asterisk documentation, a subset of which are described here. The default option T allows the calling user to transfer a call with ##. It is HIGHLY DISCOURAGED to use the r option here as this will prevent early media from being delivered from the PSTN and can result in the inability to interact with some external IVRs";
 $set['type'] = CONF_TYPE_TEXT;
 $freepbx_conf->define_conf_setting('TRUNK_OPTIONS',$set);
+
+// INBOUND_NOTRANS
+//
+$set['value'] = true;
+$set['defaultval'] =& $set['value'];
+$set['options'] = '';
+$set['readonly'] = 0;
+$set['hidden'] = 0;
+$set['level'] = 0;
+$set['module'] = '';
+$set['category'] = 'Dialplan and Operational';
+$set['emptyok'] = 0;
+$set['name'] = 'Disallow transfer features for inbound callers';
+$set['description'] = "Disallow transfer features (Normally ## and *2) for callers who passthrough inbound routes (Such as external callers)";
+$set['type'] = CONF_TYPE_BOOL;
+$freepbx_conf->define_conf_setting('INBOUND_NOTRANS',$set);
 
 // RINGTIMER
 $opts = array();
@@ -851,7 +883,7 @@ $sql_where = " FROM globals WHERE `variable` IN ('".implode("','",array_keys($gl
 $sql .= $sql_where;
 $globals = $db->getAll($sql,DB_FETCHMODE_ASSOC);
 if(DB::IsError($globals)) {
-  die_freepbx($globals->getMessage());
+  return false;
 }
 outn(_("Checking for General Setting migrations.."));
 if (count($globals)) {
@@ -954,7 +986,7 @@ if(DB::IsError($check)) {
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("fatal error trying to add field"));
-		die_freepbx($result->getDebugInfo());
+		return false;
 	} else {
 		out(_("added"));
 	}
@@ -970,7 +1002,7 @@ if(DB::IsError($check)) {
 	$result = $db->query($sql);
 	if(DB::IsError($result)) {
 		out(_("fatal error trying to add field"));
-		die_freepbx($result->getDebugInfo());
+		return false;
 	} else {
 		out(_("added"));
 	}
@@ -1106,7 +1138,7 @@ $sql = "CREATE TABLE IF NOT EXISTS `pjsip` (
   `data` varchar(255) NOT NULL,
   `flags` int(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`,`keyword`)
-) ENGINE=MyISAM;";
+);";
 	$db->query($sql);
 
 //FREEPBX-11259 On previous versions of Core quick create would set emergency_cid to the description. This may be a bad thing.
@@ -1121,28 +1153,28 @@ foreach ($curnotif as $notif) {
 		$nt->delete('core', $notif['id']);
 	}
 }
-outn(_("checking possibly for invalid emergency caller id fields"));
+outn(_("Checking for possibly invalid emergency caller id fields.."));
 $sql = "select a.id, a.description from devices as a, devices as b where a.description = b.emergency_cid AND concat('',b.emergency_cid * 1) != b.emergency_cid";
 $devices = $db->getAll($sql,DB_FETCHMODE_ASSOC);
-if(DB::IsError($devices)) {
-  die_freepbx($devices->getMessage());
+if (DB::IsError($devices)) {
+	return false;
 }
 if (count($devices)) {
 	$rawname = 'core';
-  outn(_("Found what appear to be invalid emergency callerid entries."));
+	outn("\n\t");
+	out(_("Found what appear to be invalid emergency callerid entries."));
 	$badcids = array();
-  foreach ($devices as $dev) {
+	foreach ($devices as $dev) {
 		$badcids[] = sprintf(_("Device %s (%s) had an invalid emergency callerid and we set it to blank"),$dev['description'],$dev['id']);
-  }
+	}
 	$uid = 'core_bad_ecid';
 	if(!$nt->exists($rawname, $uid)) {
 		$nt->add_critical($rawname, $uid, _("Emergency CID set to blank for one or more extensions"),implode(PHP_EOL, $badcids), $link="?display=extensions", true, true);
 	}
 	$sql = "update devices a, devices b SET b.emergency_cid = '' WHERE a.description = b.emergency_cid AND concat('',b.emergency_cid * 1) != b.emergency_cid;";
 	$db->query($sql);
-
 } else {
-  outn(_("No invalid callerid entries found"));
+	out(_("none found"));
 }
 
 
@@ -1163,7 +1195,8 @@ function _core_create_update_tonezones($tz = 'us', $commit = true) {
 	$compiled = $db->prepare('REPLACE INTO `indications_zonelist` (`name`, `iso`, `conf`) values (?,?,?)');
 	$result = $db->executeMultiple($compiled,$zonelist);
 	if(DB::IsError($result)) {
-		die_freepbx($result->getDebugInfo()."<br><br>".'error initializing indications_zonelist');
+		out("error initializing indications_zonelist");
+		return false;
 	}
 
 	// Now get what ever we have and update it in the FreePBX Settings choices in case the DB has been modified
@@ -1296,7 +1329,7 @@ $set['value'] = '::';
 $set['defaultval'] =& $set['value'];
 $set['options'] = '';
 $set['name'] = 'HTTP Bind Address';
-$set['description'] = 'Address to bind to. Default is 0.0.0.0';
+$set['description'] = 'Address to bind to. Default is ::';
 $set['emptyok'] = 0;
 $set['type'] = CONF_TYPE_TEXT;
 $set['level'] = 2;
@@ -1347,7 +1380,7 @@ $set['value'] = '::';
 $set['defaultval'] =& $set['value'];
 $set['options'] = '';
 $set['name'] = 'HTTPS Bind Address';
-$set['description'] = 'Address to bind to. Default is 0.0.0.0';
+$set['description'] = 'Address to bind to. Default is ::';
 $set['emptyok'] = 0;
 $set['type'] = CONF_TYPE_TEXT;
 $set['level'] = 4;
@@ -1443,6 +1476,60 @@ if($httpupdate) {
 	}
 }
 
+// HTTPBINDADDRESS
+$set['value'] = '';
+$set['defaultval'] =& $set['value'];
+$set['name'] = 'Session Limit';
+$set['description'] = 'Specifies the maximum number of http sessions that will be allowed to exist at any given time.';
+$set['emptyok'] = 1;
+$set['options'] = array(10,65536);
+$set['type'] = CONF_TYPE_INT;
+$set['level'] = 4;
+$set['readonly'] = 0;
+$freepbx_conf->define_conf_setting('HTTPSESSIONLIMIT',$set);
+
+// HTTPBINDADDRESS
+$set['value'] = 30000;
+$set['defaultval'] =& $set['value'];
+$set['name'] = 'Session Inactivity ';
+$set['description'] = 'Specifies the number of milliseconds to wait for more data over the HTTP connection before closing it.';
+$set['emptyok'] = 1;
+$set['options'] = array(0,65536);
+$set['type'] = CONF_TYPE_INT;
+$set['level'] = 4;
+$set['readonly'] = 0;
+$freepbx_conf->define_conf_setting('HTTPSESSIONINACTIVITY',$set);
+
+// HTTPBINDADDRESS
+$set['value'] = 15000;
+$set['defaultval'] =& $set['value'];
+$set['name'] = 'Session Keep Alive';
+$set['description'] = 'Specifies the number of milliseconds to wait for the next HTTP request over a persistent connection. Set to 0 to disable persistent HTTP connections.';
+$set['emptyok'] = 1;
+$set['options'] = array(0,65536);
+$set['type'] = CONF_TYPE_INT;
+$set['level'] = 4;
+$set['readonly'] = 0;
+$freepbx_conf->define_conf_setting('HTTPSESSIONKEEPALIVE',$set);
+$freepbx_conf->commit_conf_settings();
+
+$migrate = array("sessionlimit" => "HTTPSESSIONLIMIT","session_inactivity" => "HTTPSESSIONINACTIVITY","session_keep_alive" => "HTTPSESSIONKEEPALIVE");
+if(file_exists($amp_conf['ASTETCDIR'].'/http_custom.conf')) {
+	$data = FreePBX::LoadConfig()->getConfig('http_custom.conf');
+	$contents = file_get_contents($amp_conf['ASTETCDIR'].'/http_custom.conf');
+	if(!empty($data['HEADER']) && is_array($data['HEADER'])) {
+		foreach($data['HEADER'] as $key => $value) {
+			if(!isset($migrate[$key])) {
+				continue;
+			}
+			outn(sprintf(_("Migrating http setting '%s' to Advanced Settings..."),$key));
+			$contents = preg_replace('/'.$key.'\s*=\s*'.$value.'.*\n/','',$contents);
+			$freepbx_conf->update($migrate[$key],$value);
+			out(_("Done"));
+		}
+	}
+	file_put_contents($amp_conf['ASTETCDIR'].'/http_custom.conf',$contents);
+}
 //
 // CATEGORY: GUI Behavior
 //
@@ -1543,27 +1630,27 @@ if (is_link('/etc/localtime')) {
 	// timezone in /usr/share/zoneinfo.
 	$filename = readlink('/etc/localtime');
 	if (strpos($filename, '/usr/share/zoneinfo/') === 0) {
-		$timezone = substr($filename, 20);
+		$timezone = trim(substr($filename, 20));
 	}
 } elseif (file_exists('/etc/timezone')) {
 	// Ubuntu / Debian.
 	$data = file_get_contents('/etc/timezone');
-	if ($data) {
-		$timezone = $data;
+	if (!empty($data)) {
+		$timezone = trim($data);
 	}
 } elseif (file_exists('/etc/sysconfig/clock')) {
 	// RHEL / CentOS
 	$data = @parse_ini_file('/etc/sysconfig/clock');
 	if (!empty($data['ZONE'])) {
-		$timezone = $data['ZONE'];
+		$timezone = trim($data['ZONE']);
 	}
 }
 
 $set['category'] = 'System Setup';
-$set['value'] = $timezone;
+$set['value'] = !empty($timezone) ? $timezone : "UTC";
 $set['defaultval'] = 'UTC';
 $set['name'] = 'PHP Timezone';
-$set['description'] = "Timezone that should be used by PHP. Empty value will use PHP defaults";
+$set['description'] = "Timezone that should be used by PHP. Empty value will use PHP defaults. List of value Timezones: <a href='http://php.net/manual/en/timezones.php'>http://php.net/manual/en/timezones.php</a>";
 $set['hidden'] = 0;
 $set['emptyok'] = 1;
 $set['readonly'] = 0;
@@ -1573,3 +1660,15 @@ $set['module'] = '';
 $set['type'] = CONF_TYPE_CSELECT;
 $freepbx_conf->define_conf_setting('PHPTIMEZONE',$set);
 $freepbx_conf->commit_conf_settings();
+
+$mf = \module_functions::create();
+$info = $mf->getinfo("core");
+if(!empty($info['core']['dbversion']) && version_compare_freepbx($info['core']['dbversion'], "13.0.45" , "<=")) {
+	outn(_("Migrating force_rport to the right default value..."));
+	$res = $db->query("UPDATE sip SET data = 'yes' WHERE keyword = 'force_rport'");
+	if (!DB::IsError($res)) {
+		out(_("done"));
+	} else {
+		out(_("error occured"));
+	}
+}

@@ -765,7 +765,7 @@ function bind_dests_double_selects() {
 
 		$("[data-id=" + id + "].destdropdown2").addClass("hidden");
 		dd2 = $("#" + dest + id + ".destdropdown2");
-		cur_val = dd2.removeClass("hidden").val();
+		cur_val = dd2.removeClass("hidden").prop("disabled", false).val();
 
 		// This was added because a cancel can leave dd2 cur_val to popover
 		// even when there are other choices so we force it to 'none'
@@ -799,18 +799,27 @@ function bind_dests_double_selects() {
 						$("body").scrollTop(0).css({ overflow: "hidden" });
 					},
 					close: function(e) {
-						//cheating by puttin a data-id on the modal box
-						var id = $(this).data("id");
-						//dropdown 1
-						var par = $("#goto" + id).data("last");
-						$("#goto" + id).val(par).change();
-						if (par !== "") { //Get dropdown2
-							var par_id = par.concat(id);
-							$("#" + par_id).val($("#" + par_id).data("last")).change();
+						if(!runningPopOverActions) {
+							//cheating by puttin a data-id on the modal box
+							var id = $(this).data("id");
+							//dropdown 1
+							var par = $("#goto" + id).data("last");
+							//reset the original option to the first in the list *if* it wasn't
+							//previously selected. This is so we dont get random 'white' (empty)
+							//options selected when coming back from a canceled popover
+							var name = $("#goto"+id).val();
+							if(par !== name) {
+								$("#"+name+id)[0].selectedIndex = 0;
+							}
+							$("#goto" + id).val(par).change();
+							if (par !== "") { //Get dropdown2
+								var par_id = par.concat(id);
+								$("#" + par_id).val($("#" + par_id).data("last")).change();
+							}
+							$("#popover-frame").contents().find("body").remove();
+							$("#popover-box-id").html("");
+							$("body").css({ overflow: "inherit" });
 						}
-						$("#popover-frame").contents().find("body").remove();
-						$("#popover-box-id").html("");
-						$("body").css({ overflow: "inherit" });
 						$(e.target).dialog("destroy").remove();
 					},
 					buttons: [
@@ -868,7 +877,9 @@ $('form').on('reset', function() {
  * Close Popover Window
  * @param {string} drawselects The draw select to replace with new data
  */
+var runningPopOverActions = false;
 function closePopOver(drawselects) {
+	runningPopOverActions = true;
 	var options = $("." + popover_box_class + " option", $("<div>" + drawselects + "</div>"));
 	$("." + popover_box_class).each(function() {
 		if (this.id == popover_select_id) {
@@ -899,7 +910,8 @@ function closePopOver(drawselects) {
 
 	$("body").css({ overflow: "inherit" });
 	$("#popover-box-id").html("");
-	popover_box.dialog("destroy");
+	popover_box.dialog("close");
+	runningPopOverActions = false;
 }
 
 /**
@@ -1219,9 +1231,12 @@ function resizeRightNav() {
 }
 
 $(document).ready(function() {
+	if($("#fpbxsearch").hasClass("in")) {
+		$("#fpbxsearch input").blur();
+	}
 	//when clicking the magnifying glass on the search bar focus on the search input
 	$("#fpbxsearch .fa-search").click(function() {
-		$("#fpbxsearch .typeahead").focus();
+		$("#fpbxsearch input").focus();
 	});
 	$("#fpbxsearch input").blur(function() {
 		$("#fpbxsearch").removeClass("in");
@@ -1770,7 +1785,7 @@ $(document).ready(function(){
 		$(this).after('<span class="input-group-addon" id="basic-addon-'+curid+'">'+curl+'/'+maxl+'</span>');
 	});
 	//Enable textarea autosizer
-	$('textarea.autosize').autosize();
+	autosize($('textarea.autosize'));
 
 	//enable bootstrap multiselect
 	$('select[multiple].bsmultiselect').multiselect({
@@ -2035,3 +2050,23 @@ function fpbxToast(message,title,level){
 
 	}
 }
+
+/**
+ * https://github.com/CSS-Tricks/Relevant-Dropdowns
+ */
+yepnope({
+	test : (!Modernizr.input.list),
+	yep : [
+		'assets/js/jquery.relevant-dropdown.js',
+		'assets/js/load-fallbacks.js'
+	]
+});
+
+// Add class that sets an input to readonly until the user clicks on it. This should prevent autofilling of things like passwords and usernames.
+$( document ).ready(function() {
+	$('.clicktoedit').prop('readonly',true);
+});
+$(document).on('click','.clicktoedit',function(){
+	$(this).prop('readonly',false);
+	$(this).focus();
+});

@@ -37,32 +37,51 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FreePBX 2.10.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-23 12:50-0400\n"
-"PO-Revision-Date: 2014-02-19 04:41+0200\n"
-"Last-Translator: Kenichi Fukaumi <k.fukaumi@qloog.com>\n"
-"Language-Team: Japanese <http://example.com/projects/freepbx/miscdests/ja/>\n"
+"POT-Creation-Date: 2016-06-06 15:54-0700\n"
+"PO-Revision-Date: 2015-07-03 08:18+0200\n"
+"Last-Translator: Kevin <kevin@qloog.com>\n"
+"Language-Team: Japanese <http://weblate.freepbx.org/projects/freepbx/"
+"miscdests/ja_JP/>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ja\n"
+"Language: ja_JP\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 1.8\n"
+"X-Generator: Weblate 2.2-dev\n"
 
-#: views/grid.php:27
+#: views/grid.php:13
 msgid "Actions"
-msgstr ""
+msgstr "アクション"
 
-#: page.miscdests.php:17 views/bootnav.php:2 views/grid.php:22
+#: page.miscdests.php:17 views/bootnav.php:3 views/grid.php:8
 msgid "Add Misc Destination"
 msgstr "その他宛先を追加"
 
+#: miscdests.i18n.php:8
+msgid ""
+"Allows creating destinations that dial any local number (extensions, feature "
+"codes, outside phone numbers) that can be used by other modules (eg, IVR, "
+"time conditions) as a call destination."
+msgstr ""
+"任意のローカル番号(内線、キーコード、外部の番号)をダイヤルする宛先作成を許可"
+"します、これはコールの宛先として他のモジュール(例: IVR、時間条件)によって使用"
+"することが可能です。"
+
+#: miscdests.i18n.php:6 miscdests.i18n.php:12
+msgid "Applications"
+msgstr "アプリケーション"
+
 #: Miscdests.class.php:79
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
 #: views/form.php:38
 msgid "Description:"
 msgstr "説明:"
+
+#: views/grid.php:12
+msgid "Destination"
+msgstr ""
 
 #: views/form.php:60
 msgid "Dial:"
@@ -84,6 +103,10 @@ msgstr ""
 "ングすると、発信者が内部の電話からこの番号をダイヤルしたかのように動作しま"
 "す。"
 
+#: views/bootnav.php:8
+msgid "Extension"
+msgstr ""
+
 #: views/form.php:50
 msgid "Give this Misc Destination a brief name to help you identify it."
 msgstr "その他宛先を識別するための簡潔な名前をつけます。"
@@ -96,21 +119,21 @@ msgid ""
 "configured such a destination, it will still work but the Feature Code short "
 "cuts select list is not longer provided.<br/><br/>"
 msgstr ""
+"*98 (ボイスメール) や タイムコンディションなどの機能コードをアクセスしたい場"
+"合は、Feature Code Adminの宛先一覧から利用できます。アップグレードの際の整合"
+"性を保つために、過去にこのような宛先をこちらで設定した場合はそのまま使えます"
+"が、機能コードのショートカットを選択するリストは表示されません。<br/><br/>"
 
-#: views/grid.php:26
-msgid "Language"
-msgstr ""
-
-#: views/bootnav.php:1
+#: views/bootnav.php:2
 msgid "List Misc Destinations"
-msgstr ""
+msgstr "カスタム宛先を表示"
 
-#: Miscdests.class.php:132 functions.inc.php:37
+#: Miscdests.class.php:132 functions.inc.php:38
 #, php-format
 msgid "Misc Destination: %s"
 msgstr "その他宛先： %s"
 
-#: page.miscdests.php:8
+#: miscdests.i18n.php:4 miscdests.i18n.php:10 page.miscdests.php:8
 msgid "Misc Destinations"
 msgstr "その他宛先"
 
@@ -136,41 +159,26 @@ msgstr "有効な文字列を入力してください。"
 
 #: Miscdests.class.php:22
 msgid "Removing Settings table"
-msgstr ""
+msgstr "設定のテーブルを削除中"
 
 #: Miscdests.class.php:84
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: Miscdests.class.php:89
 msgid "Submit"
-msgstr ""
+msgstr "送信"
 
 #: assets/js/miscdests.js:55
 msgid ""
 "This destination is in use. Deleting it may cause things to not work properly"
-msgstr ""
+msgstr "この宛先は使用中です。削除すると、問題が起こる可能性があります"
 
-#~ msgid ""
-#~ "Allows creating destinations that dial any local number (extensions, "
-#~ "feature codes, outside phone numbers) that can be used by other modules "
-#~ "(eg, IVR, time conditions) as a call destination."
-#~ msgstr ""
-#~ "任意のローカル番号(内線、キーコード、外部の番号)をダイヤルする宛先作成を許"
-#~ "可します、これはコールの宛先として他のモジュール(例: IVR、時間条件)によっ"
-#~ "て使用することが可能です。"
+#~ msgid "Language"
+#~ msgstr "言語"
 
-#~ msgid "Applications"
-#~ msgstr "アプリケーション"
-
-#~ msgid "Misc Destination:"
-#~ msgstr "その他宛先："
-
-#~ msgid "Misc Destination"
-#~ msgstr "その他宛先"
-
-#~ msgid "deleted"
-#~ msgstr "削除されました"
+#~ msgid "Delete Misc Destination %s"
+#~ msgstr "その他宛先を削除 %s"
 
 #~ msgid ""
 #~ "If you need access to a Feature Code, such as *98 to dial voicemail or a "
@@ -185,8 +193,14 @@ msgstr ""
 #~ "をした場合、今はまだ動作していますがキーコードショートカットの選択リストは"
 #~ "長くは提供されないでしょう。"
 
-#~ msgid "Delete Misc Destination %s"
-#~ msgstr "その他宛先を削除 %s"
+#~ msgid "Misc Destination"
+#~ msgstr "その他宛先"
+
+#~ msgid "Misc Destination:"
+#~ msgstr "その他宛先："
 
 #~ msgid "Submit Changes"
 #~ msgstr "変更を適用"
+
+#~ msgid "deleted"
+#~ msgstr "削除されました"

@@ -37,10 +37,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FreePBX 2.10.0.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-23 11:32-0800\n"
+"POT-Creation-Date: 2016-07-17 17:51-0700\n"
 "PO-Revision-Date: 2015-02-21 11:10+0200\n"
 "Last-Translator: Kevin <kevin@qloog.com>\n"
-"Language-Team: Japanese <http://weblate.freepbx.org/projects/freepbx/conferences/ja_JP/>\n"
+"Language-Team: Japanese <http://weblate.freepbx.org/projects/freepbx/"
+"conferences/ja_JP/>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -56,27 +57,26 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: Conferences.class.php:115
-msgid "Adding language column"
-msgstr ""
-
-#: views/form.php:202
+#: views/form.php:204
 msgid "Admin PIN"
 msgstr ""
 
-#: views/form.php:477
+#: views/form.php:481
 msgid "Allow Menu"
 msgstr ""
 
 #: conferences.i18n.php:8
-msgid "Allow creation of conference rooms where multiple people can talk together"
+msgid ""
+"Allow creation of conference rooms where multiple people can talk together"
 msgstr ""
 
-#: views/form.php:437
-msgid "Announce user join/leave. If enabled this will require the user to record their name before joining the conference"
+#: views/form.php:441
+msgid ""
+"Announce user join/leave. If enabled this will require the user to record "
+"their name before joining the conference"
 msgstr ""
 
-#: views/form.php:410
+#: views/form.php:414
 msgid "Announce user(s) count on joining conference"
 msgstr "カンファレンスに参加しているユーザーの数をアナウンスします"
 
@@ -84,43 +84,43 @@ msgstr "カンファレンスに参加しているユーザーの数をアナウ
 msgid "Applications"
 msgstr "アプリケーション"
 
-#: Conferences.class.php:101 Conferences.class.php:343 views/grid.php:32
+#: Conferences.class.php:101 Conferences.class.php:398 views/grid.php:32
 #: views/rnav.php:25
 msgid "Conference"
 msgstr "音声会議"
 
-#: views/form.php:154
+#: views/form.php:156
 msgid "Conference Name"
 msgstr ""
 
-#: views/form.php:130
+#: views/form.php:132
 msgid "Conference Number"
 msgstr ""
 
-#: functions.inc.php:187
+#: functions.inc.php:172
 #, php-format
 msgid "Conference Room %s : %s"
 msgstr "音声会議室 %s ： %s"
 
-#: functions.inc.php:423
+#: functions.inc.php:408
 msgid "Conference: "
 msgstr "音声会議： "
 
-#: functions.inc.php:206
+#: functions.inc.php:191
 #, php-format
 msgid "Conference: %s"
 msgstr "音声会議： %s"
 
-#: Conferences.class.php:341 conferences.i18n.php:4 conferences.i18n.php:10
+#: Conferences.class.php:396 conferences.i18n.php:4 conferences.i18n.php:10
 #: page.conferences.php:10
 msgid "Conferences"
 msgstr "音声会議"
 
-#: views/form.php:112
+#: views/form.php:114
 msgid "Conflicting Extensions"
 msgstr "内線の競合"
 
-#: Conferences.class.php:326
+#: Conferences.class.php:380
 msgid "Delete"
 msgstr ""
 
@@ -132,39 +132,42 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: views/form.php:464
+#: views/form.php:468
 msgid "Enable Music On Hold when the conference has a single caller"
 msgstr "カンファレンスの参加者が一人の場合は保留音を有効にします"
 
-#: views/form.php:214
-msgid "Enter a PIN number for the admin user.<br><br>This setting is optional unless the 'leader wait' option is in use, then this PIN will identify the leader.<br>This pin should be different than the user pin."
+#: views/form.php:216
+msgid ""
+"Enter a PIN number for the admin user.<br><br>This setting is optional "
+"unless the 'leader wait' option is in use, then this PIN will identify the "
+"leader.<br>This pin should be different than the user pin."
 msgstr ""
 
-#: Conferences.class.php:344
+#: Conferences.class.php:399
 msgid "Extension"
 msgstr ""
 
-#: views/form.php:166
+#: views/form.php:168
 msgid "Give this conference a brief name to help you identify it."
 msgstr "認識しやすいように、このカンファレンスに簡潔な名前を付けます。"
 
-#: views/form.php:232
+#: views/form.php:234
 msgid "Inherit"
 msgstr ""
 
-#: views/form.php:45
+#: views/form.php:47
 msgid "Join Message"
 msgstr ""
 
-#: views/form.php:226
+#: views/form.php:228
 msgid "Language"
 msgstr ""
 
-#: views/form.php:287
+#: views/form.php:291
 msgid "Leader Leave"
 msgstr ""
 
-#: views/form.php:260
+#: views/form.php:264
 msgid "Leader Wait"
 msgstr ""
 
@@ -172,49 +175,61 @@ msgstr ""
 msgid "List Conferences"
 msgstr ""
 
-#: views/form.php:543
+#: views/form.php:547
 msgid "Maximum Number of users allowed to join this conference."
 msgstr "このカンファレンスに参加が許可される最大ユーザー数。"
 
-#: views/form.php:531
+#: views/form.php:535
 msgid "Maximum Participants"
 msgstr ""
 
-#: views/form.php:59
-msgid "Message to be played to the caller before joining the conference.<br><br>To add additional recordings please use the \"System Recordings\" MENU above"
+#: views/form.php:61
+msgid ""
+"Message to be played to the caller before joining the conference.<br><br>To "
+"add additional recordings please use the \"System Recordings\" MENU above"
 msgstr ""
 
-#: views/form.php:102
-msgid "Music (or Commercial) played to the caller while they wait in line for the conference to start. Choose \"inherit\" if you want the MoH class to be what is currently selected, such as by the inbound route.<br><br>  This music is defined in the \"Music on Hold\" above."
+#: views/form.php:104
+msgid ""
+"Music (or Commercial) played to the caller while they wait in line for the "
+"conference to start. Choose \"inherit\" if you want the MoH class to be what "
+"is currently selected, such as by the inbound route.<br><br>  This music is "
+"defined in the \"Music on Hold\" above."
 msgstr ""
 
-#: views/form.php:449
+#: views/form.php:453
 msgid "Music on Hold"
 msgstr ""
 
-#: views/form.php:88
+#: views/form.php:90
 msgid "Music on Hold Class"
 msgstr ""
 
-#: views/form.php:570
-msgid "Mute everyone when they initially join the conference. Please note that if you do not have 'Leader Wait' set to yes you must have 'Allow Menu' set to Yes to unmute yourself"
-msgstr "初めてカンファレンスに参加された人をミュートにします。'リーダー待ち'を'はい'に設定しない場合、'メニュー許可' を必ず'はい'に設定し、ミュートを解除してください"
+#: views/form.php:574
+msgid ""
+"Mute everyone when they initially join the conference. Please note that if "
+"you do not have 'Leader Wait' set to yes you must have 'Allow Menu' set to "
+"Yes to unmute yourself"
+msgstr ""
+"初めてカンファレンスに参加された人をミュートにします。'リーダー待ち'を'は"
+"い'に設定しない場合、'メニュー許可' を必ず'はい'に設定し、ミュートを解除して"
+"ください"
 
-#: views/form.php:555
+#: views/form.php:559
 msgid "Mute on Join"
 msgstr ""
 
-#: views/form.php:267 views/form.php:294 views/form.php:321 views/form.php:348
-#: views/form.php:375 views/form.php:402 views/form.php:429 views/form.php:456
-#: views/form.php:484 views/form.php:511 views/form.php:562
+#: views/form.php:271 views/form.php:298 views/form.php:325 views/form.php:352
+#: views/form.php:379 views/form.php:406 views/form.php:433 views/form.php:460
+#: views/form.php:488 views/form.php:515 views/form.php:566
 msgid "No"
 msgstr "いいえ"
 
-#: views/form.php:535
+#: views/form.php:539
 msgid "No Limit"
 msgstr "無制限"
 
-#: views/form.php:31
+#: views/form.php:33
 msgid "None"
 msgstr "なし"
 
@@ -226,109 +241,140 @@ msgstr "正しいカンファレンス名を入力してください"
 msgid "Please enter a valid Conference Number"
 msgstr "正しいカンファレンス番号を入力してください"
 
-#: views/form.php:492
+#: views/form.php:496
 msgid "Present Menu (user or admin) when '*' is received ('send' to menu)"
-msgstr "'*'が押された際に(ユーザーor管理者)メニューを流します。(メニューに'送る')"
+msgstr ""
+"'*'が押された際に(ユーザーor管理者)メニューを流します。(メニューに'送る')"
 
-#: views/form.php:368
+#: views/form.php:372
 msgid "Quiet Mode"
 msgstr ""
 
-#: views/form.php:383
+#: views/form.php:387
 msgid "Quiet mode (do not play enter/leave sounds)"
 msgstr "サイレントモード(入室/退出音を再生しない)"
 
-#: views/form.php:504
+#: views/form.php:508
 msgid "Record Conference"
 msgstr ""
 
-#: views/form.php:519
+#: views/form.php:523
 msgid "Record the conference call"
 msgstr "カンファレンス通話を録音します"
 
-#: Conferences.class.php:321
+#: Conferences.class.php:375
 msgid "Reset"
 msgstr ""
 
-#: views/form.php:356
-msgid "Sets talker detection. Asterisk will send events on the manager interface identifying the channel that is talking. The talker will also be identified on the output of the conference list CLI command. Note: If Conferences Pro is installed and licensed this will always be enabled"
+#: views/form.php:360
+msgid ""
+"Sets talker detection. Asterisk will send events on the manager interface "
+"identifying the channel that is talking. The talker will also be identified "
+"on the output of the conference list CLI command. Note: If Conferences Pro "
+"is installed and licensed this will always be enabled"
 msgstr ""
 
-#: Conferences.class.php:316
+#: Conferences.class.php:370
 msgid "Submit"
 msgstr ""
 
-#: views/form.php:341
+#: views/form.php:345
 msgid "Talker Detection"
 msgstr ""
 
-#: views/form.php:314
+#: views/form.php:318
 msgid "Talker Optimization"
 msgstr ""
 
-#: views/form.php:247
-msgid "The language for the conference. If set to inherit or blank the language will be inherited from the first person who joins the conference esentially making the language of this conference dynamic. After the first person has joined the language can not be changed until all users have left the conference. If you set a value here the langauge will be forced irregardless of what language users have set"
+#: views/form.php:251
+msgid ""
+"The language for the conference. If set to inherit or blank the language "
+"will be inherited from the first person who joins the conference esentially "
+"making the language of this conference dynamic. After the first person has "
+"joined the language can not be changed until all users have left the "
+"conference. If you set a value here the langauge will be forced irregardless "
+"of what language users have set"
 msgstr ""
 
 #: assets/js/conferences.js:23
 msgid "The user and admin can not have the same pin code."
 msgstr "ユーザーと管理者に同じPINコードを設定できません。"
 
-#: views/form.php:329
-msgid "Turns on talker optimization. With talker optimization, Asterisk treats talkers who are not speaking as being muted, meaning that no encoding is done on transmission and that received audio that is not registered as talking is omitted, causing no buildup in background noise."
+#: views/form.php:333
+msgid ""
+"Turns on talker optimization. With talker optimization, Asterisk treats "
+"talkers who are not speaking as being muted, meaning that no encoding is "
+"done on transmission and that received audio that is not registered as "
+"talking is omitted, causing no buildup in background noise."
 msgstr ""
 
-#: views/form.php:142
+#: views/form.php:144
 msgid "Use this number to dial into the conference."
 msgstr "カンファレンスにダイヤルインするのにこの番号を使用します。"
 
-#: views/form.php:395
+#: views/form.php:399
 msgid "User Count"
 msgstr ""
 
-#: views/form.php:178
+#: views/form.php:180
 msgid "User PIN"
 msgstr ""
 
-#: views/form.php:422
+#: views/form.php:426
 msgid "User join/leave"
 msgstr ""
 
-#: views/form.php:275
-msgid "Wait until the conference leader (admin user) arrives before starting the conference"
+#: views/form.php:279
+msgid ""
+"Wait until the conference leader (admin user) arrives before starting the "
+"conference"
 msgstr "リーダー(管理ユーザー)が参加する迄、カンファレンス開始を待ちます"
 
 #: Conferences.class.php:29
 msgid "Warning! Extension"
 msgstr "警告! 内線"
 
-#: views/form.php:302
-msgid "When the conference leader (admin user) leaves all users will be kicked from the conference"
+#: views/form.php:306
+msgid ""
+"When the conference leader (admin user) leaves all users will be kicked from "
+"the conference"
 msgstr ""
 
-#: views/form.php:265 views/form.php:292 views/form.php:319 views/form.php:346
-#: views/form.php:373 views/form.php:400 views/form.php:427 views/form.php:454
-#: views/form.php:482 views/form.php:509 views/form.php:560
+#: views/form.php:269 views/form.php:296 views/form.php:323 views/form.php:350
+#: views/form.php:377 views/form.php:404 views/form.php:431 views/form.php:458
+#: views/form.php:486 views/form.php:513 views/form.php:564
 msgid "Yes"
 msgstr "はい"
 
-#: views/form.php:190
-msgid "You can require callers to enter a password before they can enter this conference.<br><br>This setting is optional.<br><br>If either PIN is entered, the user will be prompted to enter a PIN.<br> This pin should be different than the Admin pin"
+#: views/form.php:192
+msgid ""
+"You can require callers to enter a password before they can enter this "
+"conference.<br><br>This setting is optional.<br><br>If either PIN is "
+"entered, the user will be prompted to enter a PIN.<br> This pin should be "
+"different than the Admin pin"
 msgstr ""
 
 #: assets/js/conferences.js:22
-msgid "You must set Allow Menu to Yes when not using a Leader or Admin in your conference, otherwise you will be unable to unmute yourself"
-msgstr "リーダーまたは管理者が使用していない時、メニューの許可は必ず'はい'に設定しなければ、ミュートを解除することができません"
+msgid ""
+"You must set Allow Menu to Yes when not using a Leader or Admin in your "
+"conference, otherwise you will be unable to unmute yourself"
+msgstr ""
+"リーダーまたは管理者が使用していない時、メニューの許可は必ず'はい'に設定しな"
+"ければ、ミュートを解除することができません"
 
 #: assets/js/conferences.js:21
-msgid "You must set an admin PIN for the Conference Leader when selecting the leader wait option"
-msgstr "リーダー待ちをオプションに選択した場合は、カンファレンスリーダー用の管理者PINの設定が必須です"
+msgid ""
+"You must set an admin PIN for the Conference Leader when selecting the "
+"leader wait option"
+msgstr ""
+"リーダー待ちをオプションに選択した場合は、カンファレンスリーダー用の管理者PIN"
+"の設定が必須です"
 
-#: views/form.php:76
+#: views/form.php:78
 msgid "default"
 msgstr "デフォルト"
 
-#: views/form.php:75
+#: views/form.php:77
 msgid "inherit"
 msgstr "継承"
 
@@ -351,8 +397,12 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgid "Allow Menu:"
 #~ msgstr "メニューを許可："
 
-#~ msgid "Allow creation of conference rooms (meet-me) where multiple people can talk together."
-#~ msgstr "複数の人々が一緒に会話ができるカンファレンスルーム(meet-me)の作成を許可する。"
+#~ msgid ""
+#~ "Allow creation of conference rooms (meet-me) where multiple people can "
+#~ "talk together."
+#~ msgstr ""
+#~ "複数の人々が一緒に会話ができるカンファレンスルーム(meet-me)の作成を許可す"
+#~ "る。"
 
 #~ msgid "Checking if music field present.."
 #~ msgstr "musicフィールドが存在しているかどうかチェック.."
@@ -378,8 +428,14 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgid "Edit Conference"
 #~ msgstr "カンファレンスの編集"
 
-#~ msgid "Enter a PIN number for the admin user.<br><br>This setting is optional unless the 'leader wait' option is in use, then this PIN will identify the leader."
-#~ msgstr "管理者ユーザー用のPIN番号を入力します。<br><br>'リーダー待ち'オプションが使用中でなければ、この設定はオプションです。その際、このPINによってリーダーかどうかを識別します。"
+#~ msgid ""
+#~ "Enter a PIN number for the admin user.<br><br>This setting is optional "
+#~ "unless the 'leader wait' option is in use, then this PIN will identify "
+#~ "the leader."
+#~ msgstr ""
+#~ "管理者ユーザー用のPIN番号を入力します。<br><br>'リーダー待ち'オプションが"
+#~ "使用中でなければ、この設定はオプションです。その際、このPINによってリー"
+#~ "ダーかどうかを識別します。"
 
 #~ msgid "FATAL error"
 #~ msgstr "致命的なエラー"
@@ -393,14 +449,33 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgid "Maximum Participants:"
 #~ msgstr "最大参加者数："
 
-#~ msgid "Message to be played to the caller before joining the conference.<br><br>To add additional recordings please use the \"System Recordings\" MENU to the left"
-#~ msgstr "発信者がカンファレンスに参加する前に再生されるメッセージ。<br><br>録音を追加するには、左側にある\"システム録音\"メニューを使用してください"
+#~ msgid ""
+#~ "Message to be played to the caller before joining the conference."
+#~ "<br><br>To add additional recordings please use the \"System Recordings\" "
+#~ "MENU to the left"
+#~ msgstr ""
+#~ "発信者がカンファレンスに参加する前に再生されるメッセージ。<br><br>録音を追"
+#~ "加するには、左側にある\"システム録音\"メニューを使用してください"
 
-#~ msgid "Message to be played to the caller before joining the conference.<br><br>You must install and enable the \"Systems Recordings\" Module to edit this option"
-#~ msgstr "カンファレンスに参加する前に発信者に再生されるメッセージ。<br><br>このオプションを編集するには\"システム録音\"モジュールをインストールし有効にしなければなりません"
+#~ msgid ""
+#~ "Message to be played to the caller before joining the conference."
+#~ "<br><br>You must install and enable the \"Systems Recordings\" Module to "
+#~ "edit this option"
+#~ msgstr ""
+#~ "カンファレンスに参加する前に発信者に再生されるメッセージ。<br><br>このオプ"
+#~ "ションを編集するには\"システム録音\"モジュールをインストールし有効にしなけ"
+#~ "ればなりません"
 
-#~ msgid "Music (or Commercial) played to the caller while they wait in line for the conference to start. Choose \"inherit\" if you want the MoH class to be what is currently selected, such as by the inbound route.<br><br>  This music is defined in the \"Music on Hold\" to the left."
-#~ msgstr "カンファレンスがスタートするまで待っている間に、発信者に再生される音楽(やコマーシャル)です。着信ルート経由など、MoHクラスを現在選択されているものにしたい場合は\"継承\"を選択してください。<br><br>この音楽は左側の\"保留音\"に定義されています。"
+#~ msgid ""
+#~ "Music (or Commercial) played to the caller while they wait in line for "
+#~ "the conference to start. Choose \"inherit\" if you want the MoH class to "
+#~ "be what is currently selected, such as by the inbound route.<br><br>  "
+#~ "This music is defined in the \"Music on Hold\" to the left."
+#~ msgstr ""
+#~ "カンファレンスがスタートするまで待っている間に、発信者に再生される音楽(や"
+#~ "コマーシャル)です。着信ルート経由など、MoHクラスを現在選択されているものに"
+#~ "したい場合は\"継承\"を選択してください。<br><br>この音楽は左側の\"保留音"
+#~ "\"に定義されています。"
 
 #~ msgid "Music on Hold Class:"
 #~ msgstr "保留クラス音："
@@ -418,16 +493,28 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgstr "カンファレンスを録音："
 
 #~ msgid ""
-#~ "Sets talker detection. Asterisk will sends events on the Manager Interface identifying\n"
-#~ "the channel that is talking. The talker will also be identified on the output of\n"
-#~ "the conference list CLI command. Note: If Conferences Pro is installed and licensed this will always be enabled"
-#~ msgstr "話者の検知を設定します。AMI経由で音声会議で話中のチャネルを特定するイベントを送信します。また、Asteriskのコマンドラインからも conference list を実行すると話者を特定できます。注意: カンファレンスプロがインストールされている場合はこの設定は常に有効になっています。"
+#~ "Sets talker detection. Asterisk will sends events on the Manager "
+#~ "Interface identifying\n"
+#~ "the channel that is talking. The talker will also be identified on the "
+#~ "output of\n"
+#~ "the conference list CLI command. Note: If Conferences Pro is installed "
+#~ "and licensed this will always be enabled"
+#~ msgstr ""
+#~ "話者の検知を設定します。AMI経由で音声会議で話中のチャネルを特定するイベン"
+#~ "トを送信します。また、Asteriskのコマンドラインからも conference list を実"
+#~ "行すると話者を特定できます。注意: カンファレンスプロがインストールされてい"
+#~ "る場合はこの設定は常に有効になっています。"
 
 #~ msgid ""
-#~ "Sets talker detection. Asterisk will sends events on the Manager Interface identifying\n"
-#~ "the channel that is talking. The talker will also be identified on the output of\n"
+#~ "Sets talker detection. Asterisk will sends events on the Manager "
+#~ "Interface identifying\n"
+#~ "the channel that is talking. The talker will also be identified on the "
+#~ "output of\n"
 #~ "the meetme list CLI command."
-#~ msgstr "話者検知をセットします。Asteriskは会話中のチャネルを識別してマネージャーインターフェイスにイベントを送信します。meetmeリストCLIコマンドの出力によっても話者は識別されます。"
+#~ msgstr ""
+#~ "話者検知をセットします。Asteriskは会話中のチャネルを識別してマネージャーイ"
+#~ "ンターフェイスにイベントを送信します。meetmeリストCLIコマンドの出力によっ"
+#~ "ても話者は識別されます。"
 
 #~ msgid "Submit Changes"
 #~ msgstr "変更を適用"
@@ -442,11 +529,18 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgstr "入力された会議室の名前が長すぎます。"
 
 #~ msgid ""
-#~ "Turns on talker optimization. With talker optimization, Asterisk treats talkers who\n"
-#~ "are not speaking as being muted, meaning that no encoding is done on transmission\n"
-#~ "and that received audio that is not registered as talking is omitted, causing no\n"
+#~ "Turns on talker optimization. With talker optimization, Asterisk treats "
+#~ "talkers who\n"
+#~ "are not speaking as being muted, meaning that no encoding is done on "
+#~ "transmission\n"
+#~ "and that received audio that is not registered as talking is omitted, "
+#~ "causing no\n"
 #~ "buildup in background noise."
-#~ msgstr "話者最適化をオンにします。話者最適化をすることにより、Asteriskは話をしていない話者をミュートと同じ扱いをします、つまり、送信の際にエンコード処理が発生せず、話として登録されていない受信音声は省略され、バックグラウンドノイズが発生しません。"
+#~ msgstr ""
+#~ "話者最適化をオンにします。話者最適化をすることにより、Asteriskは話をしてい"
+#~ "ない話者をミュートと同じ扱いをします、つまり、送信の際にエンコード処理が発"
+#~ "生せず、話として登録されていない受信音声は省略され、バックグラウンドノイズ"
+#~ "が発生しません。"
 
 #~ msgid "User Count:"
 #~ msgstr "ユーザー数カウント："
@@ -457,8 +551,14 @@ msgstr "は、あなたのアカウントには権限がありません。"
 #~ msgid "User join/leave:"
 #~ msgstr "ユーザー参加/退出："
 
-#~ msgid "You can require callers to enter a password before they can enter this conference.<br><br>This setting is optional.<br><br>If either PIN is entered, the user will be prompted to enter a PIN."
-#~ msgstr "発信者に対して、このカンファレンスに入室する前にパスワードの入力を要求することができます。<br><br>この設定はオプションです。<br><br>どちらかのPINが入力された場合、ユーザーにはPINの入力プロンプトが表示されます。"
+#~ msgid ""
+#~ "You can require callers to enter a password before they can enter this "
+#~ "conference.<br><br>This setting is optional.<br><br>If either PIN is "
+#~ "entered, the user will be prompted to enter a PIN."
+#~ msgstr ""
+#~ "発信者に対して、このカンファレンスに入室する前にパスワードの入力を要求する"
+#~ "ことができます。<br><br>この設定はオプションです。<br><br>どちらかのPINが"
+#~ "入力された場合、ユーザーにはPINの入力プロンプトが表示されます。"
 
 #~ msgid "adding joinmsg_id field.."
 #~ msgstr "joinmsg_id フィールドの追加中.."

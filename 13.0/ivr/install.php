@@ -1,59 +1,34 @@
 <?php
 if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
 require_once dirname(__FILE__)."/functions.inc.php";
-
+$dbh = \FreePBX::Database();
 global $db;
 global $amp_conf;
 
-if($amp_conf["AMPDBENGINE"] == "sqlite3")  {
-	sql("CREATE TABLE IF NOT EXISTS `ivr_details` (
-		`id` int(11) NOT NULL PRIMARY KEY AUTOINCREMENT,
-		`name` varchar(50) default NULL,
-		`description` varchar(150) default NULL,
-		`announcement` int(11) default NULL,
-		`directdial` varchar(50) default NULL,
-		`invalid_loops` varchar(10) default NULL,
-		`invalid_retry_recording` varchar(25) default NULL,
-		`invalid_destination` varchar(50) default NULL,
-		`timeout_enabled` varchar(50) default NULL,
-		`invalid_recording` varchar(25) default NULL,
-		`retvm` varchar(8) default NULL,
-		`timeout_time` int(11) default NULL,
-		`timeout_recording` varchar(25) default NULL,
-		`timeout_retry_recording` varchar(25) default NULL,
-		`timeout_destination` varchar(50) default NULL,
-		`timeout_loops` varchar(10) default NULL,
-		`timeout_append_announce` tinyint(1) NOT NULL default '1',
-		`invalid_append_announce` tinyint(1) NOT NULL default '1',
-		`timeout_ivr_ret` tinyint(1) NOT NULL default '0',
-		`invalid_ivr_ret` tinyint(1) NOT NULL default '0')"
-	);
-} else {
-	sql("CREATE TABLE IF NOT EXISTS `ivr_details` (
-		`id` int(11) NOT NULL auto_increment,
-		`name` varchar(50) default NULL,
-		`description` varchar(150) default NULL,
-		`announcement` int(11) default NULL,
-		`directdial` varchar(50) default NULL,
-		`invalid_loops` varchar(10) default NULL,
-		`invalid_retry_recording` varchar(25) default NULL,
-		`invalid_destination` varchar(50) default NULL,
-		`timeout_enabled` varchar(50) default NULL,
-		`invalid_recording` varchar(25) default NULL,
-		`retvm` varchar(8) default NULL,
-		`timeout_time` int(11) default NULL,
-		`timeout_recording` varchar(25) default NULL,
-		`timeout_retry_recording` varchar(25) default NULL,
-		`timeout_destination` varchar(50) default NULL,
-		`timeout_loops` varchar(10) default NULL,
-		`timeout_append_announce` tinyint(1) NOT NULL default '1',
-		`invalid_append_announce` tinyint(1) NOT NULL default '1',
-		`timeout_ivr_ret` tinyint(1) NOT NULL default '0',
-		`invalid_ivr_ret` tinyint(1) NOT NULL default '0',
-		PRIMARY KEY  (`id`))"
-	);
-}
-
+sql("CREATE TABLE IF NOT EXISTS `ivr_details` (
+	`id` int(11) NOT NULL auto_increment,
+	`name` varchar(50) default NULL,
+	`description` varchar(150) default NULL,
+	`alertinfo` varchar(150) default NULL,
+	`announcement` int(11) default NULL,
+	`directdial` varchar(50) default NULL,
+	`invalid_loops` varchar(10) default NULL,
+	`invalid_retry_recording` varchar(25) default NULL,
+	`invalid_destination` varchar(50) default NULL,
+	`timeout_enabled` varchar(50) default NULL,
+	`invalid_recording` varchar(25) default NULL,
+	`retvm` varchar(8) default NULL,
+	`timeout_time` int(11) default NULL,
+	`timeout_recording` varchar(25) default NULL,
+	`timeout_retry_recording` varchar(25) default NULL,
+	`timeout_destination` varchar(50) default NULL,
+	`timeout_loops` varchar(10) default NULL,
+	`timeout_append_announce` tinyint(1) NOT NULL default '1',
+	`invalid_append_announce` tinyint(1) NOT NULL default '1',
+	`timeout_ivr_ret` tinyint(1) NOT NULL default '0',
+	`invalid_ivr_ret` tinyint(1) NOT NULL default '0',
+	PRIMARY KEY  (`id`))"
+);
 
 $ivr_modcurrentvers = modules_getversion('ivr');
 
@@ -529,4 +504,22 @@ if($info['type'] !== "varchar(200)") {
 	if (DB::IsError($result)) {
 		die_freepbx($result->getDebugInfo());
 	}
+}
+//`alertinfo` varchar(150) default NULL,
+
+\outn(_("Adding Alertinfo:  "));
+$sql = "ALTER TABLE ivr_details ADD `alertinfo` varchar(150) default NULL;";
+$stmt = $dbh->prepare($sql);
+try {
+    $stmt->execute();
+    \out(_("ok"));
+} catch (\PDOException $e) {
+    //We are ok with 42S21 because we are trying to add a column and it says that column is present.
+    if($e->getCode() == '42S21'){
+        \out(_("Column present"));
+    }else{
+        //All other exceptions are bad.
+        \out($e->getMessage());
+        throw $e;
+    }
 }

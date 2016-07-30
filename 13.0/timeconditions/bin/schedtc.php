@@ -1,69 +1,94 @@
-#!/usr/bin/php -q
+#!/usr/bin/env php
 <?php
 
 //include bootstrap
-$restrict_mods = true;
+$restrict_mods = array('timeconditions' => true);
 $bootstrap_settings['freepbx_auth'] = false;
 if (!@include_once(getenv('FREEPBX_CONF') ? getenv('FREEPBX_CONF') : '/etc/freepbx.conf')) {
     include_once('/etc/asterisk/freepbx.conf');
 }
-
-$tmp = $amp_conf['ASTSPOOLDIR'] . '/tmp';
-
-if (isset($argv[1]) && ctype_digit($argv[1])) {
-    $time_offset = $argv[1];
-} else {
-    $time_offset = 60;
+$tc = \FreePBX::Timeconditions();
+$conditions = $tc->listTimeconditions();
+$groups = $tc->listTimeGroups();
+$debug = false;
+if(isset($argv[1]) && $argv[1] == "--debug") {
+	$debug = true;
+	print_r("Time Now:" . date("H:i|D|j|M|e")."\n\n");
 }
+foreach($conditions as $item){
+	tcout($debug, "==Working with TimeCondition:".$item['displayname']."==");
+	if(!$item['invert_hint']) {
+		$not_inuse = 'NOT_INUSE'; //true && deactivated
+		$inuse = 'INUSE'; //false && activated
+		tcout($debug, "INVERTED BLF: false (NOT_INUSE = ".$not_inuse." & INUSE = ".$inuse.")");
+	} else {
+		$not_inuse = 'INUSE'; //true && deactivated
+		$inuse = 'NOT_INUSE'; //false && activated
+		tcout($debug, "INVERTED BLF: true (NOT_INUSE = ".$not_inuse." & INUSE = ".$inuse.")");
+	}
+	$tco = $astman->database_get("TC",$item['timeconditions_id']);
+	$sticky = false;
+	switch($tco) {
+		case "true_sticky":
+			$sticky = true;
+		case "true":
+			$override = true;
+			tcout($debug, "OVERRIDE MODE: True (".$not_inuse.")");
+		break;
+		case "false_sticky":
+			$sticky = true;
+		case "false":
+			$override = false;
+			tcout($debug, "OVERRIDE MODE: False (".$inuse.")");
+		break;
+		default:
+			$override = null;
+			tcout($debug, "OVERRIDE MODE: not set");
+		break;
+	}
+	$tctimes = timeconditions_timegroups_get_times($item['time'],null,$item['timeconditions_id']);
+	$timeMatch = false;
+	foreach($tctimes as $tctime){
+		if($tc->checkTime($tctime[1])){
+			$timeMatch = true;
+      if(!$debug) {
+        //no need to check other times if we matched
+        //if debug is true run through all of them
+        break;
+      }
+			tcout($debug, "=>".$tctime[1]. " is now");
+		} else {
+			tcout($debug, "=>".$tctime[1]. " is not now");
+		}
+	}
+  tcout($debug, "TIME MATCHED: ".(($timeMatch)?"True":"False")." (".(($timeMatch)?$not_inuse:$inuse).")");
 
-if (isset($argv[2]) && is_dir($argv[2])) {
-    $call_spool = $argv[2];
-} else {
-    $call_spool = $amp_conf['ASTSPOOLDIR'] . '/outgoing';
+	if(!is_null($override)) {
+		if($sticky || ($timeMatch !== $override)) {
+			tcout($debug, "BLF MODE: Overridden to ".(($override)?"True":"False")." (".(($override)?$not_inuse:$inuse).")");
+		} else {
+      tcout($debug, "BLF MODE: ".(($timeMatch)?"True":"False")." [Reset Override as time match is the same as override mode]");
+      $astman->database_put("TC",$item['timeconditions_id'],"");
+    }
+		$timeMatch = $override;
+	} elseif($timeMatch) {
+		tcout($debug, "BLF MODE: True (".$not_inuse.")");
+	} else {
+		tcout($debug, "BLF MODE: False (".$inuse.")");
+	}
+	if($timeMatch) {
+		$response = $astman->send_request('Command',array('Command'=>"devstate change Custom:TC".$item['timeconditions_id']." ".$not_inuse));
+	} else {
+		$response = $astman->send_request('Command',array('Command'=>"devstate change Custom:TC".$item['timeconditions_id']." ".$inuse));
+	}
+	tcout($debug, $response['data']);
+	tcout($debug, "");
 }
-
-if (isset($argv[3]) && ($argv[3] == '0' || $argv[3] == '1')) {
-    $file_index = $argv[3];
-    $next_index = $file_index ? '0' : '1';
-} else {
-    $file_index = 0;
-    $next_index = 1;
-}
-
-$call_file = "schedtc.$file_index.call";
-
-$now = time();
-$next_time = $now+$time_offset;
-
-// Now try to have the call file go off 'on the minute'
-//
-$remainder = $next_time % 60;
-if ($remainder < 30) {
-    $next_time -= $remainder;
-} else {
-    $next_time += 60 - $remainder;
-}
-if ($next_time < ($now + 30)) {
-    $next_time += 60;
-}
-
-
-// Pass in the file index not being used into the CID field to be used by the dialplan when launching
-// the next call file. You can't just use the same name over, even changing the modificaiton time since
-// as soon as the call file is processed it is deleted
-//
-$sched_script = "Channel: Local/s@tc-maint\nCallerID: \"$next_index\" <$next_index>\nApplication: NoCDR\n";
-
-if (file_put_contents("$tmp/$call_file", $sched_script) === false) {
-    error_log("FATAL: FreePBX Time Conditions {$argv[0]} failed to create temporary file: $tmp/$call_file");
-    exit(1);
-}
-if (touch("$tmp/$call_file",$next_time, $next_time) === false) {
-    error_log("ERROR: FreePBX Time Conditions {$argv[0]} failed to set time on temporary file: $tmp/$call_file");
-    exit(1);
-}
-if (rename("$tmp/$call_file","$call_spool/$call_file") === false) {
-    error_log("FATAL: FreePBX Time Conditions {$argv[0]} failed to install call file: $call_spool/$call_file");
-    exit(1);
+$tc->updateCron();
+function tcout($debug, $message) {
+	if($debug) {
+		print_r($message);
+		print_r("\n");
+	}
 }
 exit(0);

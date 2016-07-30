@@ -19,7 +19,6 @@ function framework_print_errors($src, $dst, $errors) {
 }
 
 global $amp_conf;
-global $asterisk_conf;
 
 // default php will check local path, or should we add that in?
 //include "libfreepbx.install.php";
@@ -77,7 +76,7 @@ if (is_link("$wr/admin/images/notify_security.png")) {
 
 	$htdocs_dest = $amp_conf['AMPWEBROOT'];
 	$bin_dest    = isset($amp_conf['AMPBIN']) ? $amp_conf['AMPBIN'] : '/var/lib/asterisk/bin';
-	$agibin_dest = isset($asterisk_conf['astagidir']) ? $asterisk_conf['astagidir']:'/var/lib/asterisk/agi-bin';
+	$agibin_dest = isset($amp_conf['ASTAGIDIR']) ? $amp_conf['ASTAGIDIR']:'/var/lib/asterisk/agi-bin';
 
 	$msg = _("installing files to %s..");
 
@@ -99,6 +98,7 @@ if (is_link("$wr/admin/images/notify_security.png")) {
 		framework_print_errors($bin_source, $bin_dest, $out);
 		out(_("done, see errors below"));
 	} else {
+		exec("chmod +x $bin_dest/*");
 		out(_("done"));
 	}
 
@@ -109,6 +109,7 @@ if (is_link("$wr/admin/images/notify_security.png")) {
 		framework_print_errors($agibin_source, $agibin_dest, $out);
 		out(_("done, see errors below"));
 	} else {
+		exec("chmod +x $agibin_dest/*");
 		out(_("done"));
 	}
 
@@ -210,3 +211,11 @@ if (is_link("$wr/admin/images/notify_security.png")) {
 if(function_exists("sql")) {
 	sql("DELETE FROM module_xml WHERE id = 'modules'");
 }
+
+// Make sure our GPG keys are up to date
+try {
+	\FreePBX::GPG()->refreshKeys();
+} catch (\Exception $e) {
+	out(sprintf(_("Error updating GPG Keys: %s"), $e->getMessage()));
+}
+

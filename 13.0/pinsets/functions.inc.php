@@ -3,6 +3,7 @@ if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
 //	License for all code of this FreePBX module can be found in the license file inside the module directory
 //	Copyright 2013 Schmooze Com Inc.
 //
+
 // a class for generating passwdfile
 class pinsets_conf {
 	// return an array of filenames to write
@@ -48,7 +49,6 @@ class pinsets_conf {
  */
 function pinsets_get_config($engine) {
 	global $ext;  // is this the best way to pass this?
-	global $asterisk_conf;
 
 	$pinsets_conf = pinsets_conf::create();
 
@@ -63,11 +63,10 @@ function pinsets_get_config($engine) {
 
 		// write out a macro that handles the authenticate
 		$ext->add('macro-pinsets', 's', '', new ext_gotoif('${ARG2} = 1','cdr,1'));
-		$ext->add('macro-pinsets', 's', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'Authenticate',$astetcdir.'/pinset_${ARG1}'));
-		$ext->add('macro-pinsets', 's', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'ResetCDR'));
+		$ext->add('macro-pinsets', 's', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'ResetCDR','v'));
 		// authenticate with the CDR option (a)
 		$ext->add('macro-pinsets', 'cdr', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'Authenticate',$astetcdir.'/pinset_${ARG1},a'));
-		$ext->add('macro-pinsets', 'cdr', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'ResetCDR'));
+		$ext->add('macro-pinsets', 'cdr', '', new ext_execif('$["${DB(AMPUSER/${AMPUSER}/pinless)}" != "NOPASSWD"]', 'ResetCDR','v'));
 	}
 
 	$usage_list = pinsets_list_usage('routing');
@@ -90,20 +89,16 @@ function pinsets_get_config($engine) {
 }
 
 function pinsets_list_usage($dispname=true) {
-  $sql = 'SELECT * FROM `pinset_usage`';
-  if ($dispname !== true) {
-    $sql .= " WHERE `dispname` = '$dispname'";
-  }
-  return sql($sql,'getAll',DB_FETCHMODE_ASSOC);
+	$sql = 'SELECT * FROM `pinset_usage`';
+	if ($dispname !== true) {
+		$sql .= " WHERE `dispname` = '$dispname'";
+	}
+	return sql($sql,'getAll',DB_FETCHMODE_ASSOC);
 }
 
 //get the existing meetme extensions
 function pinsets_list() {
-	$results = sql("SELECT * FROM pinsets","getAll",DB_FETCHMODE_ASSOC);
-	if(is_array($results)){
-		return $results;
-	}
-	return null;
+	return \FreePBX::Pinsets()->listPinsets();
 }
 
 function pinsets_get($id){
@@ -142,7 +137,6 @@ function pinsets_edit($id,$post){
 
 // clean and remove duplicates
 function pinsets_clean($passwords) {
-
 	$passwords = explode("\n",$passwords);
 
 	if (!$passwords) {
@@ -156,17 +150,20 @@ function pinsets_clean($passwords) {
 		// remove invalid chars
 		$passwords[$key] = preg_replace("/[^0-9#*]/", "", $passwords[$key]);
 
-		// remove blanks
-		if ($passwords[$key] == "") unset($passwords[$key]);
+		// remove empty passwords
+		if ($passwords[$key] == "") {
+			unset($passwords[$key]);
+		}
 	}
 
 	// check for duplicates, and re-sequence
 	$passwords = array_values(array_unique($passwords));
 
-	if (is_array($passwords))
+	if (is_array($passwords)) {
 		return implode($passwords,"\n");
-	else
+	} else {
 		return "";
+	}
 }
 
 // ensures post vars is valid
@@ -176,97 +173,97 @@ function pinsets_chk($post){
 
 //removes a pinset from a route and shifts priority for all outbound routing pinsets
 function pinsets_adjustroute($route_id,$action,$routepinset='') {
-  global $db;
-  $dispname = 'routing';
-  $route_id = $db->escapeSimple($route_id);
-  $routepinset = $db->escapeSimple($routepinset);
+	global $db;
+	$dispname = 'routing';
+	$route_id = $db->escapeSimple($route_id);
+	$routepinset = $db->escapeSimple($routepinset);
 
-  switch ($action) {
-  case 'delroute':
-    sql('DELETE FROM pinset_usage WHERE foreign_id ='.q($route_id)." AND dispname = '$dispname'");
-    break;
-  case 'addroute';
-    if ($routepinset != '') {
-      // we don't have the route_id yet, it hasn't been inserted yet :(, put it in the session
-      // and when returned it will be available on the redirect_standard
-      $_SESSION['pinsetsAddRoute'] = $routepinset;
-    }
-    break;
-  case 'delayed_insert_route';
-    if ($routepinset != '') {
-		sql("INSERT INTO pinset_usage (pinsets_id, dispname, foreign_id) VALUES ($routepinset, '$dispname', '$route_id')");
-    }
-    break;
-  case 'editroute';
-    if ($routepinset != '') {
-      sql("REPLACE INTO pinset_usage (pinsets_id, dispname, foreign_id) VALUES ($routepinset, '$dispname', '$route_id')");
-    } else {
-      sql('DELETE FROM pinset_usage WHERE foreign_id ='.q($route_id)." AND dispname = '$dispname'");
-    }
-    break;
-  }
+	switch ($action) {
+	case 'delroute':
+		sql('DELETE FROM pinset_usage WHERE foreign_id ='.q($route_id)." AND dispname = '$dispname'");
+		break;
+	case 'addroute';
+		if ($routepinset != '') {
+			// we don't have the route_id yet, it hasn't been inserted yet :(, put it in the session
+			// and when returned it will be available on the redirect_standard
+			$_SESSION['pinsetsAddRoute'] = $routepinset;
+		}
+		break;
+	case 'delayed_insert_route';
+		if ($routepinset != '') {
+			sql("INSERT INTO pinset_usage (pinsets_id, dispname, foreign_id) VALUES ($routepinset, '$dispname', '$route_id')");
+		}
+		break;
+	case 'editroute';
+		if ($routepinset != '') {
+			sql("REPLACE INTO pinset_usage (pinsets_id, dispname, foreign_id) VALUES ($routepinset, '$dispname', '$route_id')");
+		} else {
+			sql('DELETE FROM pinset_usage WHERE foreign_id ='.q($route_id)." AND dispname = '$dispname'");
+		}
+		break;
+	}
 }
 
 // provide hook for routing
 function pinsets_hook_core($viewing_itemid, $target_menuid) {
 	global $db;
 	switch ($target_menuid) {
-		case 'routing':
-			//create a selection of available pinsets
-			$pinsets = pinsets_list();
-			if ($viewing_itemid == '') {
-				$selected_pinset = '';
+	case 'routing':
+		//create a selection of available pinsets
+		$pinsets = pinsets_list();
+		if ($viewing_itemid == '') {
+			$selected_pinset = '';
+		} else {
+			// if this is set, we just added it so get it out of the session
+			if (isset($_SESSION['pinsetsAddRoute']) && $_SESSION['pinsetsAddRoute'] != '') {
+				$selected_pinset = $_SESSION['pinsetsAddRoute'];
 			} else {
-				// if this is set, we just added it so get it out of the session
-				if (isset($_SESSION['pinsetsAddRoute']) && $_SESSION['pinsetsAddRoute'] != '') {
-					$selected_pinset = $_SESSION['pinsetsAddRoute'];
-				} else {
-					$selected_pinset = $db->getOne("SELECT pinsets_id FROM pinset_usage WHERE dispname='routing' AND foreign_id='".$db->escapeSimple($viewing_itemid)."'");
-					if(DB::IsError($selected_pinset)) {
-						die_freepbx($selected_pinset->getMessage());
-					}
+				$selected_pinset = $db->getOne("SELECT pinsets_id FROM pinset_usage WHERE dispname='routing' AND foreign_id='".$db->escapeSimple($viewing_itemid)."'");
+				if(DB::IsError($selected_pinset)) {
+					die_freepbx($selected_pinset->getMessage());
 				}
 			}
+		}
 
-			$hookhtml = '
-				<!--PINSET HOOK-->
-				<div class="element-container">
-					<div class="row">
-						<div class="col-md-12">
-							<div class="row">
-								<div class="form-group">
-									<div class="col-md-3">
-										<label class="control-label" for="pinsets">'. _("PIN Set").'</label>
-										<i class="fa fa-question-circle fpbx-help-icon" data-for="pinsets"></i>
-									</div>
-									<div class="col-md-9">
-										<select name="pinsets" class="form-control">
-											<option value="">'._('None').'</option>';
-			if (is_array($pinsets)) {
-				foreach($pinsets as $item) {
-					$selected = $selected_pinset == $item['pinsets_id'] ? 'selected' : '';
-					$hookhtml .= "<option value={$item['pinsets_id']} ".$selected.">{$item['description']}</option>";
-				}
+		$hookhtml = '
+			<!--PINSET HOOK-->
+			<div class="element-container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="row">
+							<div class="form-group">
+								<div class="col-md-3">
+									<label class="control-label" for="pinsets">'. _("PIN Set").'</label>
+									<i class="fa fa-question-circle fpbx-help-icon" data-for="pinsets"></i>
+								</div>
+								<div class="col-md-9">
+									<select name="pinsets" class="form-control">
+										<option value="">'._('None').'</option>';
+		if (is_array($pinsets)) {
+			foreach($pinsets as $item) {
+				$selected = $selected_pinset == $item['pinsets_id'] ? 'selected' : '';
+				$hookhtml .= "<option value={$item['pinsets_id']} ".$selected.">{$item['description']}</option>";
 			}
+		}
 
-			$hookhtml .= '				</select>
-									</div>
+		$hookhtml .= '				</select>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col-md-12">
-							<span id="pinsets-help" class="help-block fpbx-help-block">'._('Optional: Select a PIN set to use. If using this option, leave the Route Password field blank.').'</span>
-						</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<span id="pinsets-help" class="help-block fpbx-help-block">'._('Optional: Select a PIN set to use. If using this option, leave the Route Password field blank.').'</span>
 					</div>
 				</div>
-				<!--END PINSETHOOK-->
-				';
-			return $hookhtml;
+			</div>
+			<!--END PINSETHOOK-->
+			';
+		return $hookhtml;
 		break;
-		default:
-			return false;
+	default:
+		return false;
 		break;
 	}
 }
@@ -280,22 +277,22 @@ function pinsets_hookProcess_core($viewing_itemid, $request) {
 	// this is really a crappy way to store things.
 	// Any module that is hooked by pinsets when submitted will result in all the "used_by" fields being re-written
 	switch ($request['display']) {
-  case 'routing':
-    $action = (isset($request['action']))?$request['action']:null;
-    $route_id = $viewing_itemid;
-    if (isset($request['Submit']) ) {
-      $action = (isset($action))?$action:'editroute';
-    }
+	case 'routing':
+		$action = (isset($request['action']))?$request['action']:null;
+		$route_id = $viewing_itemid;
+		if (isset($request['Submit']) ) {
+			$action = (isset($action))?$action:'editroute';
+		}
 
-    // $action won't be set on the redirect but pinsetsAddRoute will be in the session
-    //
-    if (!$action && isset($_SESSION['pinsetsAddRoute']) && $_SESSION['pinsetsAddRoute'] != '') {
-      pinsets_adjustroute($route_id,'delayed_insert_route',$_SESSION['pinsetsAddRoute']);
-      unset($_SESSION['pinsetsAddRoute']);
-    } elseif ($action){
-      pinsets_adjustroute($route_id,$action,$request['pinsets']);
-    }
-    break;
+		// $action won't be set on the redirect but pinsetsAddRoute will be in the session
+		//
+		if (!$action && isset($_SESSION['pinsetsAddRoute']) && $_SESSION['pinsetsAddRoute'] != '') {
+			pinsets_adjustroute($route_id,'delayed_insert_route',$_SESSION['pinsetsAddRoute']);
+			unset($_SESSION['pinsetsAddRoute']);
+		} elseif ($action) {
+			pinsets_adjustroute($route_id,$action,$request['pinsets']);
+		}
+		break;
 	}
 }
 ?>

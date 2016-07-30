@@ -5,6 +5,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 			throw new Exception("Not given a FreePBX Object");
 		}
 		$this->FreePBX = $freepbx;
+		$this->astman = $freepbx->astman;
 		$this->db = $freepbx->Database;
 		$this->userman = $freepbx->Userman;
 	}
@@ -42,6 +43,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 				$extdisplay=isset($_REQUEST['extdisplay'])?$_REQUEST['extdisplay']:'';
 				$enabled=isset($_REQUEST['faxenabled'])?$_REQUEST['faxenabled']:'false';
 				$detection=isset($_REQUEST['faxdetection'])?$_REQUEST['faxdetection']:'';
+				$ring=isset($_REQUEST['faxring'])?$_REQUEST['faxring']:'';
 				$detectionwait=isset($_REQUEST['faxdetectionwait'])?$_REQUEST['faxdetectionwait']:'';
 				$dest=(isset($_REQUEST['gotoFAX'])?$_REQUEST['gotoFAX'].'FAX':null);
 				$dest=isset($_REQUEST[$dest])?$_REQUEST[$dest]:'';
@@ -57,7 +59,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 					//fall through to next level on purpose
 					case "addIncoming":
 						if($enabled != 'false') {
-							fax_save_incoming($cidnum,$extension,$enabled,$detection,$detectionwait,$dest,$legacy_email);
+							fax_save_incoming($cidnum,$extension,$enabled,$detection,$detectionwait,$dest,$legacy_email,$ring);
 						}
 					break;
 					case "delIncoming":
@@ -119,7 +121,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 			$enabled = $this->userman->getCombinedModuleSettingByID($user, 'fax', 'enabled');
 			$attachformat = $this->userman->getCombinedModuleSettingByID($user, 'fax', 'attachformat');
 			$userData = $this->userman->getUserByID($user);
-			if(!empty($userData) && $display == "userman") {
+			if(!empty($userData)) {
 				$this->saveUser($userData['id'],($enabled ? "true" : "false"),$userData['email'],$attachformat);
 			}
 		}
@@ -147,7 +149,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 			$enabled = $this->userman->getCombinedModuleSettingByID($user, 'fax', 'enabled');
 			$attachformat = $this->userman->getCombinedModuleSettingByID($user, 'fax', 'attachformat');
 			$userData = $this->userman->getUserByID($user);
-			if(!empty($userData) && $display == "userman") {
+			if(!empty($userData)) {
 				$this->saveUser($userData['id'],($enabled ? "true" : "false"),$userData['email'],$attachformat);
 			}
 		}
@@ -186,7 +188,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 		$enabled = $this->userman->getCombinedModuleSettingByID($id, 'fax', 'enabled');
 		$attachformat = $this->userman->getCombinedModuleSettingByID($id, 'fax', 'attachformat');
 		$user = $this->FreePBX->Userman->getUserByID($id);
-		if(!empty($user) && $display == "userman" && isset($_POST['faxenabled'])) {
+		if(!empty($user)) {
 			$this->saveUser($id,($enabled ? "true" : "false"),$user['email'],$attachformat);
 		}
 	}
@@ -215,7 +217,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 		$attachformat = $this->userman->getCombinedModuleSettingByID($id, 'fax', 'attachformat');
 
 		$user = $this->FreePBX->Userman->getUserByID($id);
-		if(!empty($user) && $display == "userman" && isset($_POST['faxenabled'])) {
+		if(!empty($user)) {
 			$this->saveUser($id,($enabled ? "true" : "false"),$user['email'],$attachformat);
 		}
 	}
@@ -279,6 +281,8 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 		$sth = $this->db->prepare('REPLACE INTO fax_users (user, faxenabled, faxemail, faxattachformat) VALUES (?, ?, ?, ?)');
 		try {
 			$sth->execute(array($faxext, $faxenabled, $faxemail, $faxattachformat));
+			$this->astman->database_put("FAX/".$faxext,"attachformat",$faxattachformat);
+			$this->astman->database_put("FAX/".$faxext,"email",$faxemail);
 		} catch(\Exception $e) {
 			return false;
 		}
@@ -502,6 +506,35 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 				</div>
 				<!--END Fax Detection type-->
 				';
+				$html .='
+				<!--Fax Play Tones-->
+				<div class="element-container '.($faxing?'':"hidden").'" id="fdring">
+					<div class="row">
+						<div class="col-md-12">
+							<div class="row">
+								<div class="form-group">
+									<div class="col-md-3">
+										<label class="control-label" for="faxring">'._("Fax Ring").'</label>
+										<i class="fa fa-question-circle fpbx-help-icon" data-for="faxring"></i>
+									</div>
+									<div class="col-md-9 radioset">
+										<input type="radio" name="faxring" id="faxringyes" value="yes" '. ($fax['ring'] == "yes"?"CHECKED":"").'>
+										<label for="faxringyes">'. _("Yes").'</label>
+										<input type="radio" name="faxring" id="faxringno" value="no" '. (empty($fax['ring']) || ($fax['ring'] == "no")?"CHECKED":"").'>
+										<label for="faxringno">'. _("No").'</label>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<span id="faxring-help" class="help-block fpbx-help-block">'._('Whether to ring while attempting to detect fax. If set to no silence will be heard').'</span>
+						</div>
+					</div>
+				</div>
+				<!--END Fax Play Tones-->
+				';
 				if(!$fax['detectionwait']){$fax['detectionwait']=4;}//default wait time is 4 second
 				$fdthelp = _('How long to wait and try to detect fax. Please note that callers to a Dahdi channel will hear ringing for this amount of time (i.e. the system wont "answer" the call, it will just play ringing).');
 				$html .='
@@ -540,7 +573,7 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 								<div class="row">
 									<div class="form-group">
 										<div class="col-md-3">
-											<label class="control-label" for="legacy_email"><?php echo _("Fax Email Destination") ?></label>
+											<label class="control-label" for="legacy_email">'._("Fax Email Destination").'</label>
 											<i class="fa fa-question-circle fpbx-help-icon" data-for="legacy_email"></i>
 										</div>
 										<div class="col-md-9">
@@ -592,10 +625,12 @@ class Fax extends \FreePBX_Helpers implements \BMO {
 						$("#fdtype").removeClass("hidden");
 						$("#fdtime").removeClass("hidden");
 						$("#fddest").removeClass("hidden");
+						$("#fdring").removeClass("hidden");
 					}else{
 						$("#fdtype").addClass("hidden");
 						$("#fdtime").addClass("hidden");
 						$("#fddest").addClass("hidden");
+						$("#fdring").addClass("hidden");
 					}
 				});
 				</script>
