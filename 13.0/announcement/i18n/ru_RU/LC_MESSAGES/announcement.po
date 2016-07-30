@@ -22,7 +22,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
 "PO-Revision-Date: 2015-04-22 20:24+0200\n"
 "Last-Translator: Yuriy <alliancesko@gmail.com>\n"
 "Language-Team: Russian <http://weblate.freepbx.org/projects/freepbx/"
@@ -37,23 +37,23 @@ msgstr ""
 
 #: page.announcement.php:15
 msgid ": Add"
-msgstr ""
+msgstr ": Добавить"
 
 #: page.announcement.php:13
 msgid ": Edit"
-msgstr ""
+msgstr ": Редактировать"
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
-msgstr ""
+msgstr "Действия"
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
-msgstr ""
+msgstr "Добавить"
 
 #: views/rnav.php:3
 msgid "Add Announcements"
-msgstr ""
+msgstr "Добавить приветствие"
 
 #: views/form.php:153
 msgid "Allow Skip"
@@ -61,36 +61,44 @@ msgstr "Разрешить пропустить"
 
 #: page.announcement.php:7
 msgid "Announcement"
-msgstr ""
+msgstr "Приветствие"
 
 #: functions.inc.php:31 functions.inc.php:51 functions.inc.php:226
 #, php-format
 msgid "Announcement: %s"
 msgstr "Приветствия: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Приветствия"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr "Приложения"
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Проверка нуждаются ли записи в перемещении.."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Удалить"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Описание"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
-msgstr ""
+msgstr "Куда звонил"
 
 #: views/form.php:234
 msgid "Destination after Playback"
-msgstr ""
+msgstr "Направление после проигрывания"
 
 #: views/rnav.php:8
 msgid "Destinations"
-msgstr ""
+msgstr "Направления"
 
 #: views/form.php:72
 msgid "Disable"
@@ -117,8 +125,16 @@ msgid ""
 "calls this announcement and this box is checked, it will return to that IVR "
 "which may not be the expected behavior."
 msgstr ""
+"Если голосовое приветствие вызывается из голосового меню и эта опция "
+"установлена в \"да\" , назначение ,указанное ниже , будут проигнорировано и "
+"будет осуществлен возврат в голосовое меню. В противном случае вызов пойдет "
+"по указанному направлению. Оставляйте эту опцию отключенной , если не "
+"используете этот режим. Имейте ввиду , что если в цепочке обработки вызова "
+"имеется несколько вложенных голосовых меню , и данная опция отмечена , то "
+"вызов может вернуться  в последнее голосовое меню в цепочке , что может "
+"являться непредсказуемым поведением."
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Указано неверное описание"
 
@@ -134,21 +150,35 @@ msgstr ""
 
 #: views/rnav.php:2
 msgid "List Announcements"
-msgstr ""
+msgstr "Список приветствий"
 
 #: views/form.php:59
 msgid ""
 "Message to be played.<br>To add additional recordings use the \"System "
 "Recordings\" MENU above"
 msgstr ""
+"Сообщение , которое будет проиграно. Для добавления других записей "
+"используйте пунк меню \"Системные записи\""
 
 #: views/form.php:160 views/form.php:187 views/form.php:214
 msgid "No"
+msgstr "Нет"
+
+#: assets/js/announcement.js:33
+msgid "No Destination"
 msgstr ""
 
 #: views/form.php:32
 msgid "None"
 msgstr "Нет"
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
+msgstr ""
+"Воспроизводится одна из системных аудиозаписей (опцуионально можно разрешить "
+"абоненту пропускать её) и затем вызов направляется по назначению."
 
 #: views/form.php:45
 msgid "Recording"
@@ -158,11 +188,11 @@ msgstr "Запись"
 msgid "Repeat"
 msgstr "Повторить"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
-msgstr ""
+msgstr "Сброс"
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Вернуться в 'Интерактивное меню'"
 
@@ -175,22 +205,29 @@ msgid ""
 "using an announcement from an IVR or other sources that have already "
 "answered the channel, that 1 second delay may not be desired."
 msgstr ""
+"Установите в \"да\"  для предотвращения явного ответа в канале. Когда эта "
+"опция отмечена , сообщение будет проиграно , и если канал не получил "
+"ответа ,  сообщение будет доставлено как Early Media если канал поддерживает "
+"эту возможность. Когда опция не отмечена , канал получит ответ через 1 "
+"секунду. Когда используется приветствие из голосового меню или другого "
+"источника  , то канал уже получает ответ , так что задержка в 1 секунду "
+"может быть нежелательной."
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
-msgstr ""
+msgstr "Подтвердить"
 
 #: views/form.php:114
 msgid "The name of this announcement."
-msgstr ""
+msgstr "Имя приветствия."
 
 #: views/form.php:246
 msgid "Where to send the caller after the announcement is played."
-msgstr ""
+msgstr "Дальнейший пункт обработки вызова после проигрывания приветствия."
 
 #: views/form.php:158 views/form.php:185 views/form.php:212
 msgid "Yes"
-msgstr ""
+msgstr "Да"
 
 #: install.php:97
 msgid "adding recording_id field.."
@@ -231,12 +268,6 @@ msgstr "ok"
 
 #~ msgid "Add Announcement"
 #~ msgstr "Добавить приветствие"
-
-#~ msgid "Announcements"
-#~ msgstr "Приветствия"
-
-#~ msgid "Applications"
-#~ msgstr "Приложения"
 
 #~ msgid ""
 #~ "Check this to keep the channel from explicitly being answered. When "
@@ -288,14 +319,6 @@ msgstr "ok"
 #~ msgstr ""
 #~ "Сообщение, которое будет воспроизведено.<br>Для создания сообщения "
 #~ "воспользуйтесь разделом \"Запись сообщений\" в меню слева"
-
-#~ msgid ""
-#~ "Plays back one of the system recordings (optionally allowing the user to "
-#~ "skip it) and then goes to another destination."
-#~ msgstr ""
-#~ "Воспроизводится одна из системных аудиозаписей (опцуионально можно "
-#~ "разрешить абоненту пропускать её) и затем вызов направляется по "
-#~ "назначению."
 
 #~ msgid "Submit Changes"
 #~ msgstr "Применить изменения"

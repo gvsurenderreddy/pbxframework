@@ -85,8 +85,8 @@
 														<?php
 															foreach ($engine_list as $e)
 															{
-																if ($e['name'] == $e) {
-																	echo '<option value="' . $e['name'] . '" selected=1>' . $e['name'] . '</option>';
+																if ($e['name'] == $engine) {
+																	echo '<option value="' . $e['name'] . '" selected>' . $e['name'] . '</option>';
 																} else {
 																	echo '<option value="' . $e['name'] . '">' . $e['name'] . '</option>';
 																}
@@ -113,7 +113,7 @@
 									<div class="row">
 										<div class="form-group">
 											<div class="col-md-3">
-												<label class="control-label" for="goto"><?php echo _("Desintation"); ?></label>
+												<label class="control-label" for="goto"><?php echo _("Destintation"); ?></label>
 												<i class="fa fa-question-circle fpbx-help-icon" data-for="goto"></i>
 											</div>
 											<div class="col-md-9">

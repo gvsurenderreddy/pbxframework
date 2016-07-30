@@ -50,23 +50,18 @@ function timeconditions_get_config($engine) {
 	global $ext;  // is this the best way to pass this?
 	global $conferences_conf;
 	global $amp_conf;
+	global $astman;
 
 	switch($engine) {
 		case "asterisk":
 			$DEVSTATE = $amp_conf['AST_FUNC_DEVICE_STATE'];
 			$timelist = timeconditions_list(true);
+
 			if(is_array($timelist)) {
 				$context = 'timeconditions';
 				$fc_context = 'timeconditions-toggles';
 				$got_code_autoreset = false;
 				$need_maint = false;
-				$interval = isset($amp_conf['TCINTERVAL']) && ctype_digit($amp_conf['TCINTERVAL']) ? $amp_conf['TCINTERVAL'] : '60';
-
-				if ($amp_conf['TCMAINT']) {
-					$maint_context = 'tc-maint';
-					$ext->add($maint_context, 's', '', new ext_nocdr(''));
-					$ext->add($maint_context, 's', '', new ext_set("TCMAINT",'RETURN'));
-				}
 
 				foreach($timelist as $item) {
 					// add dialplan
@@ -92,9 +87,8 @@ function timeconditions_get_config($engine) {
 					$ext->add($context, $time_id, $skip_dest, new ext_set("$DEVSTATE(Custom:TC$time_id)",($invert_hint)?"NOT_INUSE":"INUSE"));
 					//End USEDEVSTATE case
 					//end modifications by namezero111111
-					$ext->add($context, $time_id, '', new ext_execif('$["${DB(TC/'.$time_id.')}" = "false_sticky"]','Set',$DEVSTATE.'(Custom:TCSTICKY${ARG1})='.($invert_hint)?"NOT_INUSE":"INUSE"));
-					$skip_dest = '';
-					$ext->add($context, $time_id, $skip_dest, new ext_gotoif('$["${TCMAINT}"!="RETURN"]',$item['falsegoto']));
+					$ext->add($context, $time_id, '', new ext_execif('$["${DB(TC/'.$time_id.')}" = "false_sticky"]','Set',$DEVSTATE.'(Custom:TCSTICKY${ARG1})='.(($invert_hint)?"NOT_INUSE":"INUSE")));
+					$ext->add($context, $time_id, '', new ext_gotoif('$["${TCRETURN}"!="RETURN"]',$item['falsegoto']));
 					$ext->add($context, $time_id, '', new ext_set("TCSTATE",'false'));
 					$ext->add($context, $time_id, '', new ext_set("TCOVERRIDE",'${IF($["${DB(TC/'.$time_id.'):0:5}" = "false"]?true:false)}'));
 					$ext->add($context, $time_id, '', new ext_return(''));
@@ -107,9 +101,8 @@ function timeconditions_get_config($engine) {
 					$ext->add($context, $time_id, $skip_dest, new ext_set("$DEVSTATE(Custom:TC$time_id)",($invert_hint)?"INUSE":"NOT_INUSE"));
 					//End USEDEVSTATE case
 					//end modifications by namezero111111
-					$ext->add($context, $time_id, '', new ext_execif('$["${DB(TC/'.$time_id.')}" = "true_sticky"]','Set',$DEVSTATE.'(Custom:TCSTICKY${ARG1})='.($invert_hint)?"NOT_INUSE":"INUSE"));
-					$skip_dest = '';
-					$ext->add($context, $time_id, $skip_dest, new ext_gotoif('$["${TCMAINT}"!="RETURN"]',$item['truegoto']));
+					$ext->add($context, $time_id, '', new ext_execif('$["${DB(TC/'.$time_id.')}" = "true_sticky"]','Set',$DEVSTATE.'(Custom:TCSTICKY${ARG1})='.(($invert_hint)?"NOT_INUSE":"INUSE")));
+					$ext->add($context, $time_id, '', new ext_gotoif('$["${TCRETURN}"!="RETURN"]',$item['truegoto']));
 					$ext->add($context, $time_id, '', new ext_set("TCSTATE",'true'));
 					$ext->add($context, $time_id, '', new ext_set("TCOVERRIDE",'${IF($["${DB(TC/'.$time_id.'):0:4}" = "true"]?true:false)}'));
 					$ext->add($context, $time_id, '', new ext_return(''));
@@ -123,7 +116,7 @@ function timeconditions_get_config($engine) {
 						$ext->addHint($fc_context, $c, 'Custom:TC'.$time_id);
 						//End USEDEVSTATE
 						//Modifications by namezero111111 follow (FREEPBX-6415)
-						$fcccode_macro_call = (strlen($fcc_password)>0) ? (','.$fcc_password) : '';
+						$fcccode_macro_call = (!empty($fcc_password)) ? ','.$fcc_password:'';
 						$ext->add($fc_context, $c, '', new ext_macro('user-callerid'));
 						$ext->add($fc_context, $c, '', new ext_macro('toggle-tc', $time_id.$fcccode_macro_call));
 						//end modifications by namezero111111
@@ -136,7 +129,6 @@ function timeconditions_get_config($engine) {
 						//
 						if ($amp_conf['TCMAINT'] && is_array($times) && count($times)) {
 							$need_maint = true;
-							$ext->add($maint_context, 's', '', new ext_gosub('1', $time_id, $context));
 						}
 
 					}
@@ -148,63 +140,7 @@ function timeconditions_get_config($engine) {
 				if ($c) {
 					$ext->add($fc_context, $c, '', new ext_macro('user-callerid'));
 					$ext->add($fc_context, $c, '', new ext_goto($fc_context.',${EXTEN}*${AMPUSER},1'));
-
-					$userFCs = array();
-					if ($bmo && $bmo->Cos && $bmo->Cos->isLicensed()) {
-						$cos = $bmo->Cos;
-					} else if (function_exists('cos_islicenced') && cos_islicenced()) {
-						$cos = Cos::create();
-					}
-
-					if ($cos) {
-						$allCos = $cos->getAllCos();
-						foreach ($allCos as $cos_name) {
-							$all = $cos->getAll($cos_name);
-
-							foreach ($all['members'] as $key => $val) {
-								$userFCs[$key] = array_merge(($userFCs[$key] ? $userFCs[$key] : array()), $all['fcallow']);
-							}
-						}
-					}
-
-					$users = core_users_list();
-					foreach ($users as $user) {
-						$exten = $user[0];
-
-						$indexes = '';
-						$hint = '';
-						foreach ($timelist as $item) {
-							$time_id = $item['timeconditions_id'];
-
-							if (count($userFCs) > 1 && (!isset($userFCs[$exten]) || !isset($userFCs[$exten]['toggle-mode-' . $time_id]))) {
-								continue;
-							}
-							$indexes.= '&' . $time_id;
-							$hint.= '&Custom:TC' . $time_id;
-						}
-						$indexes = ltrim($indexes, '&');
-						$hint = ltrim($hint, '&');
-
-						$ext->addHint($fc_context, $c . '*' . $exten, $hint);
-
-						if (strlen($indexes) == 0) {
-							$ext->add($fc_context, $c . '*' . $exten, '', new ext_hangup(''));
-							continue;
-						}
-
-						$ext->add($fc_context, $c . '*' . $exten, '', new ext_macro('toggle-tc', $indexes));
-					}
-				}
-
-				if ($amp_conf['TCMAINT']) {
-
-					// If we didn't have any maintenance to do, then don't reschedule the call file
-					//
-					if ($need_maint) {
-						$ext->add($maint_context, 's', '', new ext_system($amp_conf['ASTVARLIBDIR']."/bin/schedtc.php $interval ".$amp_conf['ASTSPOOLDIR'].'/outgoing ${CALLERID(number)}'));
-					}
-					$ext->add($maint_context, 's', '', new ext_answer());
-					$ext->add($maint_context, 's', '', new ext_hangup());
+					//TODO: technically a hint could be here
 				}
 
 				if ($got_code_autoreset) {
@@ -215,20 +151,17 @@ function timeconditions_get_config($engine) {
 					// for i18n playback in multiple languages
 					$ext->add($m_context, 'lang-playback', '', new ext_gosubif('$[${DIALPLAN_EXISTS('.$m_context.',${CHANNEL(language)})}]', $m_context.',${CHANNEL(language)},${ARG1}', $m_context.',en,${ARG1}'));
 					$ext->add($m_context, 'lang-playback', '', new ext_return());
-					//Modifications by namezero111111 follow (FREEPBX-6415)
-					if('' != $fcc_password) {
-						$ext->add($m_context, 's', '', new ext_authenticate('${ARG2}'));
-					}
-					//end
 
-					$ext->add($m_context, 's', '', new ext_setvar('INDEXES', '${ARG1}'));
-					$ext->add($m_context, 's', '', new ext_setvar('TCMAINT','RETURN'));
+					$ext->add($m_context, 's', '', new ext_gotoif('$[${ARG2} > 0]', 'hasauth','toggle'));
+					$ext->add($m_context, 's', 'hasauth', new ext_authenticate('${ARG2}'));
+
+
+					$ext->add($m_context, 's', 'toggle', new ext_setvar('INDEXES', '${ARG1}'));
+					$ext->add($m_context, 's', '', new ext_setvar('TCRETURN','RETURN'));
 					$ext->add($m_context, 's', '', new ext_setvar('TCSTATE', 'false'));
 
-					//Modifications by namezero111111 follow (FREEPBX-6415)
 					$ext->add($m_context, 's', '', new ext_set("TCINUSE",'${DB(TC/${ARG1}/INUSESTATE)}'));
 					$ext->add($m_context, 's', '', new ext_set("TCNOTINUSE",'${DB(TC/${ARG1}/NOT_INUSESTATE)}'));
-					//end
 
 					$ext->add($m_context, 's', '', new ext_setvar('LOOPCNT', '${FIELDQTY(INDEXES,&)}'));
 					$ext->add($m_context, 's', '', new ext_setvar('ITER', '1'));
@@ -251,11 +184,6 @@ function timeconditions_get_config($engine) {
 					$ext->add($m_context, 's', 'end2', new ext_setvar('ITER', '$[${ITER} + 1]'));
 					$ext->add($m_context, 's', '', new ext_gotoif('$[${ITER} <= ${LOOPCNT}]', 'begin2'));
 
-					if ($amp_conf['TCMAINT']) {
-						$ext->add($m_context, 's', '', new ext_gotoif('$["${STAT(e,'.$amp_conf['ASTSPOOLDIR'].'/outgoing/schedtc.0.call)}"="1" | "${STAT(e,'.$amp_conf['ASTSPOOLDIR'].'/outgoing/schedtc.1.call)}"="1"]','playback'));
-						$ext->add($m_context, 's', '', new ext_system($amp_conf['ASTVARLIBDIR']."/bin/schedtc.php $interval ".$amp_conf['ASTSPOOLDIR'].'/outgoing 0'));
-					}
-
 					if ($amp_conf['FCBEEPONLY']) {
 						$ext->add($m_context, 's', 'playback', new ext_playback('beep'));
 					} else {
@@ -266,25 +194,8 @@ function timeconditions_get_config($engine) {
 					$lang = 'ja'; //Japanese
 					$ext->add($m_context, $lang, 'hook_0', new ext_playback('beep&silence/1&time-change&${IF($["${TCSTATE}" = "true"]?de-activated:activated)}'));
 				}
-				if ($need_maint) {
-					/* Now we have to make sure there is an active call file and if not kick one off.
-					Enabling the feature code will also do this, but this makes sure that if you
-					are using hints, that the hints are kept up. (Thus if not using hints, this is not
-					run until a feature code requires it).
 
-					If need_maint is false, then we don't have any updating to do so don't start
-					*/
-					if ($amp_conf['TCMAINT']) {
-						$cf_0 = $amp_conf['ASTSPOOLDIR'].'/outgoing/schedtc.0.call';
-						$cf_1 = $amp_conf['ASTSPOOLDIR'].'/outgoing/schedtc.1.call';
-						if (!file_exists($cf_0) && !file_exists($cf_1)) {
-							exec($amp_conf['ASTVARLIBDIR'] . '/bin/schedtc.php 60 ' . $amp_conf['ASTSPOOLDIR'] . '/outgoing 0',$output,$ret_code);
-							if ($ret_code != 0) {
-								error(_("Unable to initiate Time Conditions call file with schedtc.php: $ret_code"));
-							}
-						}
-					}
-				}
+				\FreePBX::Timeconditions()->updateCron();
 			}
 		break;
 	}
@@ -343,38 +254,13 @@ function timeconditions_list($getall=false) {
 }
 
 function timeconditions_get($id){
-  global $astman;
-	//get all the variables for the timecondition
-	$results = sql("SELECT * FROM timeconditions WHERE timeconditions_id = '$id'","getRow",DB_FETCHMODE_ASSOC);
-
-  $fcc = new featurecode('timeconditions', 'toggle-mode-'.$id);
-  $c = $fcc->getCodeActive();
-  $results['tcval'] = $fcc->getCode();
-  unset($fcc);
-  if ($c == '') {
-    $results['tcstate'] = false;
-    $results['tccode'] = false;
-  } else {
-    $results['tccode'] = $c;
-		if ($astman != null) {
-			$results['tcstate'] = timeconditions_get_state($id);
-		} else {
-			die_freepbx("No manager connection, can't get Time Condition State");
-		}
-  }
-	return $results;
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->getTimeCondition($id);
 }
 
 function timeconditions_del($id){
-  global $astnam;
-	$results = sql("DELETE FROM timeconditions WHERE timeconditions_id = \"$id\"","query");
-
-	$fcc = new featurecode('timeconditions', 'toggle-mode-'.$id);
-	$fcc->delete();
-	unset($fcc);
-  if ($astman != null) {
-    $astman->database_del("TC",$id);
-  }
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->delTimeCondition($id);
 }
 
 //obsolete handled in timegroups module
@@ -390,7 +276,7 @@ function timeconditions_get_time( $hour_start, $minute_start, $hour_finish, $min
 	if ($minute_finish == '-') {
 		$time_minute_finish = "*";
 	} else {
- 		$time_minute_finish = sprintf("%02d",$minute_finish);
+		$time_minute_finish = sprintf("%02d",$minute_finish);
 	}
 	if ($hour_start == '-') {
 		$time_hour_start = '*';
@@ -466,134 +352,28 @@ function timeconditions_get_time( $hour_start, $minute_start, $hour_finish, $min
 }
 
 function timeconditions_get_state($id) {
-	global $astman;
-
-	return $astman->database_get("TC", $id);
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->getState($id);
 }
 
 function timeconditions_set_state($id, $state,$invert=false) {
-	global $astman;
-	global $amp_conf;
-
-	if ($astman != null) {
-		switch ($state) {
-		case 'auto':
-		case '':
-			$state = '';
-			$blf = ($invert)?'INUSE':'NOT_INUSE';
-			$sticky = ($invert)?'INUSE':'NOT_INUSE';
-			break;
-		case 'true':
-			$blf = 'NOT_INUSE';
-			$sticky = 'NOT_INUSE';
-			break;
-		case 'true_sticky':
-			$blf = 'NOT_INUSE';
-			$sticky = 'INUSE';
-			break;
-		case 'false':
-			$blf = 'INUSE';
-			$sticky = 'NOT_INUSE';
-			break;
-		case 'false_sticky':
-			$blf = 'INUSE';
-			$sticky = 'INUSE';
-			break;
-		default:
-			$state = false;
-			break;
-		}
-
-		if ($state !== false) {
-			$astman->database_put("TC", $id, $state);
-
-			$DEVSTATE = $amp_conf['AST_FUNC_DEVICE_STATE'];
-			if ($DEVSTATE) {
-				$astman->set_global($DEVSTATE . "(Custom:TC" . $id . ")", $blf);
-				$astman->set_global($DEVSTATE . "(Custom:TCSTICKY" . $id . ")", $sticky);
-			}
-		}
-	} else {
-		die_freepbx("No manager connection, can't update Time Condition State");
-	}
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->setState($id, $state,$invert);
 }
 
-  /*
-  */
 function timeconditions_create_fc($id, $displayname='') {
-	$fcc = new featurecode('timeconditions', 'toggle-mode-'.$id);
-	if ($displayname) {
-		$fcc->setDescription("$id: $displayname");
-	} else {
-		$fcc->setDescription($id._(": Time Condition Override"));
-	}
-	$fcc->setDefault('*27'.$id);
-	$fcc->setProvideDest();
-	$fcc->update();
-	unset($fcc);
-
-	timeconditions_set_state($id, '');
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->createFeatureCode($id, $displayname);
 }
 
 function timeconditions_add($post){
-  global $db;
-  global $amp_conf;
-  $displayname = $db->escapeSimple($post['displayname']);
-  $time = $db->escapeSimple($post['time']);
-  $timezone = $db->escapeSimple($post['timezone']);
-  $falsegoto = $db->escapeSimple($post[$post['goto1'].'1']);
-  $truegoto = $db->escapeSimple($post[$post['goto0'].'0']);
-  $invert_hint = ($post['invert_hint'] == '1') ? '1' : '0';
-  $fcc_password = $db->escapeSimple($post['fcc_password']);
-  $deptname = $db->escapeSimple($post['deptname']);
-  $generate_hint = '1';
-	if($displayname == '') {
-	 	$displayname = "unnamed";
-	}
-	$results = sql("INSERT INTO timeconditions (displayname,time,truegoto,falsegoto,deptname,generate_hint,fcc_password,invert_hint,timezone) values (\"$displayname\",\"$time\",\"$truegoto\",\"$falsegoto\",\"$deptname\",\"$generate_hint\",\"$fcc_password\",\"$invert_hint\",\"$timezone\")");
-	if(method_exists($db,'insert_id')) {
-		$id = $db->insert_id();
-	} else {
-		$id = $amp_conf["AMPDBENGINE"] == "sqlite3" ? sqlite_last_insert_rowid($db->connection) : mysql_insert_id($db->connection);
-	}
-  timeconditions_create_fc($id, $displayname);
-  return $id;
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->addTimeCondition($post);
 }
 
 function timeconditions_edit($id,$post){
-  global $db;
-
-  $id = $db->escapeSimple($id);
-  $displayname = $db->escapeSimple($post['displayname']);
-  $time = $db->escapeSimple($post['time']);
-  $timezone = $db->escapeSimple($post['timezone']);
-  $falsegoto = $db->escapeSimple($post[$post['goto1'].'1']);
-  $truegoto = $db->escapeSimple($post[$post['goto0'].'0']);
-  $invert_hint = ($post['invert_hint'] == '1') ? '1' : '0';
-  $fcc_password = $db->escapeSimple($post['fcc_password']);
-  $deptname = $db->escapeSimple($post['deptname']);
-  $generate_hint = '1';
-
-	$old = timeconditions_get($id);
-	if(empty($displayname)) {
-		$displayname = "unnamed";
-	}
-	$results = sql("UPDATE timeconditions SET displayname = \"$displayname\", time = \"$time\", truegoto = \"$truegoto\", falsegoto = \"$falsegoto\", deptname = \"$deptname\", generate_hint = \"$generate_hint\", invert_hint = \"$invert_hint\", fcc_password = \"$fcc_password\", timezone = \"$timezone\" WHERE timeconditions_id = \"$id\"");
-
-	//If invert was switched we need to update the asterisk DB
-	$post['tcstate_new'] = (($old['invert_hint'] != $invert_hint) && $post['tcstate_new'] == 'unchanged') ? timeconditions_get_state($id) : $post['tcstate_new'];
-	if (isset($post['tcstate_new']) && $post['tcstate_new'] != 'unchanged') {
-		timeconditions_set_state($id, $post['tcstate_new'],!empty($invert_hint));
-	}
-
-	$fcc = new featurecode('timeconditions', 'toggle-mode-'.$id);
-	if ($displayname) {
-		$fcc->setDescription("$id: $displayname");
-	} else {
-		$fcc->setDescription($id._(": Time Condition Override"));
-	}
-	$fcc->update();
-	unset($fcc);
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->editTimeCondition($id,$post);
 }
 
 function timeconditions_timegroups_usage($group_id) {
@@ -604,7 +384,7 @@ function timeconditions_timegroups_usage($group_id) {
 	} else {
 		foreach ($results as $result) {
 			$usage_arr[] = array(
-				"url_query" => "display=timeconditions&itemid=".$result['timeconditions_id'],
+				"url_query" => "config.php?display=timeconditions&view=form&itemid=".$result['timeconditions_id'],
 				"description" => $result['displayname'],
 			);
 		}
@@ -629,157 +409,43 @@ function timeconditions_timegroups_list_usage($timegroup_id) {
 	return $full_usage_arr;
 }
 
-/*
-The following functions are available to other modules.
 
-function timeconditions_timegroups_add_group($description,$times=null) return the inserted id
-	expects an array of times, each an associative array
-	Array ( [0] => Array ( [hour_start] => - [minute_start] => - [hour_finish] => -
-	[minute_finish] => - [wday_start] => - [wday_finish] => - [mday_start] => -
-	[mday_finish] => - [month_start] => - [month_finish] => - ) )
-
-function timeconditions_timegroups_add_group_timestrings($description,$times=null) return the inserted id
-	alternative to above. expects an array of time strings instead of associative array of hours minutes etc.
-
-function timeconditions_timegroups_list_groups()
-	returns an array of id and descriptions for any time groups defined by the user
-	the array contains inidces 0 and 1 for the rnav and associative value and text for select boxes
-
-function timeconditions_timegroups_get_times($timegroup)
-	returns an array of id and time string of the users time selections for the selected timegroup
-
-function timeconditions_timegroups_buildtime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish)
-	should never be needed by another module, as this module should be the only place creating the time string, as it returns the string to other modules.
-
-function timeconditions_timegroups_drawtimeselects($name, $time)
-	should never be needed by another module, as this module should be the only place drawing the time selects
-*/
-
-//lists any time groups defined by the user
 function timeconditions_timegroups_list_groups() {
+	_timeconditions_backtrace();
 	return \FreePBX::Timeconditions()->listTimegroups();
 }
-/*
-//---------------------------------------------
-
-//timegroups page helper
-//we are using gui styles so there is very little on the page
-//the timegroups page is used to create time string
-//to be used by other modules for gotoif or includes or IFTIME func
-function timeconditions_timegroups_configpageinit($dispnum) {
-global $currentcomponent;
-
-	switch ($dispnum) {
-		case 'timegroups':
-			$currentcomponent->addguifunc('timeconditions_timegroups_configpageload');
-			$currentcomponent->addprocessfunc('timeconditions_timegroups_configprocess', 5);
-		break;
-	}
-}
-
-//actually render the timegroups page
-function timeconditions_timegroups_configpageload() {
-	global $currentcomponent;
-
-	$descerr = _("Description must be alpha-numeric, and may not be left blank");
-	$extdisplay = isset($_REQUEST['extdisplay'])?$_REQUEST['extdisplay']:null;
-	$action= isset($_REQUEST['action'])?$_REQUEST['action']:null;
-	if ($action == 'del') {
-		$currentcomponent->addguielem('_top', new gui_pageheading('title', _("Time Group").": $extdisplay"._(" deleted!"), false), 0);
-		unset($extdisplay);
-	}
-//need to get page name/type dynamically
-	$query = ($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'type=setup&display=timegroups&extdisplay='.$extdisplay;
-	$delURL = '?'.$query.'&action=del';
-	$info = '';
-	if (!$extdisplay) {
-		$currentcomponent->addguielem('_top', new gui_pageheading('title', _("Add Time Group"), false), 0);
-		$currentcomponent->addguielem(_("Time Group"), new gui_textbox('description', '', _("Description"), _("This will display as the name of this Time Group."), '!isAlphanumeric() || isWhitespace()', $descerr, false), 3);
-	} else {
-		$savedtimegroup= timeconditions_timegroups_get_group($extdisplay);
-		$timegroup = $savedtimegroup[0];
-		$description = $savedtimegroup[1];
-		$currentcomponent->addguielem('_top', new gui_hidden('extdisplay', $extdisplay));
-		$currentcomponent->addguielem('_top', new gui_pageheading('title', _("Edit Time Group").": $description", false), 0);
-		$tlabel = sprintf(_("Delete Time Group %s"),$extdisplay);
-		$label = '<span><img width="16" height="16" border="0" title="'.$tlabel.'" alt="" src="images/core_delete.png"/>&nbsp;'.$tlabel.'</span>';
-		$currentcomponent->addguielem('_top', new gui_link('del', $label, $delURL, true, false), 0);
-
-		$usage_list = timeconditions_timegroups_list_usage($extdisplay);
-		$count = 0;
-		foreach ($usage_list as $link) {
-			$label = '<span><img width="16" height="16" border="0" title="'.$link['description'].'" alt="" src="images/time_link.png"/>&nbsp;'.$link['description'].'</span>';
-			$timegroup_link = '?'.$link['url_query'];
-			$currentcomponent->addguielem(_("Used By"), new gui_link('link'.$count++, $label, $timegroup_link, true, false), 4);
-		}
 
 
-		$currentcomponent->addguielem(_("Time Group"), new gui_textbox('description', $description, _("Description"), _("This will display as the name of this Time Group."), '', '', false), 3);
-		$timelist = timeconditions_timegroups_get_times($extdisplay);
-		foreach ($timelist as $val) {
-			$timehtml = timeconditions_timegroups_drawtimeselects('times['.$val[0].']',$val[1]);
-			$timehtml = '<tr><td colspan="2"><table>'.$timehtml.'</table></td></tr>';
-      $timehtml .= '<tr><td colspan="2"><input type="button" class="remove_section" value="'._("Remove Section and Submit Current Settings").'"/></td></tr>';
-			$currentcomponent->addguielem($val[1], new guielement('dest0', $timehtml, ''),5);
-		}
-	}
-	$timehtml = timeconditions_timegroups_drawtimeselects('times[new]',null);
-	$timehtml = '<tr><td colspan="2"><table>'.$timehtml.'</table></td></tr>';
-	$currentcomponent->addguielem(_("New Time"), new guielement('dest0', $timehtml, ''),6);
-	$currentcomponent->addguielem('_top', new gui_hidden('action', ($extdisplay ? 'edit' : 'add')));
-}
-
-//handle timegroups page submit button
-function timeconditions_timegroups_configprocess() {
-	$action= isset($_REQUEST['action'])?$_REQUEST['action']:null;
-	$timegroup= isset($_REQUEST['extdisplay'])?$_REQUEST['extdisplay']:null;
-	$description= isset($_REQUEST['description'])?$_REQUEST['description']:null;
-	$times = isset($_REQUEST['times'])?$_REQUEST['times']:null;
-
-	switch ($action) {
-		case 'add':
-			timeconditions_timegroups_add_group($description,$times);
-			break;
-		case 'edit':
-			timeconditions_timegroups_edit_group($timegroup,$description);
-			timeconditions_timegroups_edit_times($timegroup,$times);
-			break;
-		case 'del':
-			timeconditions_timegroups_del_group($timegroup);
-			break;
-	}
-}
-*/
 //these are the users time selections for the current timegroup
 function timeconditions_timegroups_get_times($timegroup, $convert=false, $timecondition_id=null) {
 	global $db, $version;
 	$tmparray = array();
 
-  if ($convert && (!isset($version) || $version == '')) {
-    $engineinfo = engine_getinfo();
-    $version =  $engineinfo['version'];
-  }
-  if ($convert) {
-    $ast_ge_16 = version_compare($version,'1.6','ge');
-  }
+	if ($convert && (!isset($version) || $version == '')) {
+		$engineinfo = engine_getinfo();
+		$version =  $engineinfo['version'];
+	}
+	if ($convert) {
+		$ast_ge_16 = version_compare($version,'1.6','ge');
+	}
 	$sql = "SELECT id, time FROM timegroups_details WHERE timegroupid = $timegroup";
 	$results = $db->getAll($sql);
-	if(DB::IsError($results)) {
-		$results = null;
+	if(DB::IsError($results) || !is_array($results)) {
+		$results = array();
 	}
-        $tz='';
+	$tz='';
 	if ($timecondition_id>0) {
-					$systz = date_default_timezone_get();
-          $timezone = $db->getOne("SELECT timezone FROM timeconditions WHERE timeconditions_id = $timecondition_id");
-          //If timezone is empty or "drfault" we use the current system tz
-					$timezone = empty($timezone)?$systz:$timezone;
-					$timezone = ($timezone == 'default')?$systz:$timezone;
- 					$tz="|$timezone";
-        }
+		$systz = date_default_timezone_get();
+		$timezone = $db->getOne("SELECT timezone FROM timeconditions WHERE timeconditions_id = $timecondition_id");
+		//If timezone is empty or "drfault" we use the current system tz
+		$timezone = empty($timezone)?$systz:$timezone;
+		$timezone = ($timezone == 'default')?$systz:$timezone;
+		$tz="|$timezone";
+	}
 	foreach ($results as $val) {
-    $val[1].=$tz;
-    $times = ($convert && $ast_ge_16) ? strtr($val[1],'|',',') : $val[1];
-    $tmparray[] = array($val[0], $times);
+		$val[1].=$tz;
+		$times = ($convert && $ast_ge_16) ? strtr($val[1],'|',',') : $val[1];
+		$tmparray[] = array($val[0], $times);
 	}
 	return $tmparray;
 }
@@ -792,7 +458,7 @@ function timeconditions_timegroups_get_group($timegroup) {
 	$sql = "SELECT id, description FROM timegroups_groups WHERE id = $timegroup";
 	$results = $db->getAll($sql);
 	if(DB::IsError($results)) {
- 		$results = null;
+		$results = null;
 	}
 	$tmparray = array($results[0][0], $results[0][1]);
 	return $tmparray;
@@ -804,22 +470,8 @@ function timeconditions_timegroups_get_group($timegroup) {
 //[minute_finish] => - [wday_start] => - [wday_finish] => - [mday_start] => -
 //[mday_finish] => - [month_start] => - [month_finish] => - ) )
 function timeconditions_timegroups_add_group($description,$times=null) {
-	global $db;
-	global $amp_conf;
-
-	$description = $db->escapeSimple($description);
-	$sql = "INSERT timegroups_groups(description) VALUES ('$description')";
-	$db->query($sql);
-	if(method_exists($db,'insert_id')) {
-		$timegroup = $db->insert_id();
-	} else {
-		$timegroup = $amp_conf["AMPDBENGINE"] == "sqlite3" ? sqlite_last_insert_rowid($db->connection) : mysql_insert_id($db->connection);
-	}
-	if (isset($times)) {
-		timeconditions_timegroups_edit_times($timegroup,$times);
-	}
-	needreload();
-	return $timegroup;
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->addTimeGroup($description,$times);
 }
 
 function timeconditions_timegroups_add_group_timestrings($description,$timestrings) {
@@ -841,42 +493,20 @@ function timeconditions_timegroups_add_group_timestrings($description,$timestrin
 
 //delete a single timegroup from the timegroups page
 function timeconditions_timegroups_del_group($timegroup) {
-	global $db;
-
-	$timegroup = $db->escapeSimple($timegroup);
-	$sql = "delete from timegroups_details where timegroupid = $timegroup";
-	$db->query($sql);
-	$sql = "delete from timegroups_groups where id = $timegroup";
-	$db->query($sql);
-	needreload();
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->delTimeGroup($timegroup);
 }
 
 //update a single timegroup from the timegroups page
 function timeconditions_timegroups_edit_group($timegroup,$description) {
-	global $db;
-
-	$timegroup = $db->escapeSimple($timegroup);
-	$sql = "UPDATE timegroups_groups SET description = '$description' WHERE id = $timegroup";
-	$db->query($sql);
-	needreload();
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->editTimeGroup($timegroup,$description);
 }
 
 //update the timegroup_detail under a single timegroup from the timegroups page
 function timeconditions_timegroups_edit_times($timegroup,$times) {
-	global $db;
-
-	$timegroup = $db->escapeSimple($timegroup);
-	$sql = "DELETE FROM timegroups_details WHERE timegroupid = $timegroup";
-	$db->query($sql);
-	foreach ($times as $key=>$val) {
-		extract($val);
-		$time = timeconditions_timegroups_buildtime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish);
-		if (isset($time) && $time != '' && $time <> '*|*|*|*') {
-			$sql = "INSERT timegroups_details (timegroupid, time) VALUES ($timegroup, '$time')";
-			$db->query($sql);
-		}
-	}
-	needreload();
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->editTimes($timegroup,$times);
 }
 
 //update the timegroup_detail under a single timegroup
@@ -915,6 +545,10 @@ function timeconditions_timegroups_drawgroupselect($elemname, $currentvalue = ''
 
 		$output .= "\t\t\t\t<option value='$itemvalue' $itemselected>$itemtext</option>\n";
 	}
+	if(!isset($_REQUEST['fw_popover'])) {
+		$output .= "\t\t\t\t<option value='popover'>"._("Add New Time Group...")."</option>\n";
+	}
+
 	$output .= "\t\t\t</select>\n\t\t";
 	return $output;
 }
@@ -1199,121 +833,22 @@ function timeconditions_timegroups_drawtimeselects($name, $time) {
 }
 
 function timeconditions_timegroups_buildtime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish) {
-
-	//----- Time Hour Interval proccess ----
-	//
-	if ($minute_start == '-') {
-		$time_minute_start = "00";
-	} else {
-		$time_minute_start = sprintf("%02d",$minute_start);
-	}
-	if ($minute_finish == '-') {
-		$time_minute_finish = "00";
-	} else {
-		$time_minute_finish = sprintf("%02d",$minute_finish);
-	}
-	if ($hour_start == '-') {
-		$time_hour_start = '*';
-	} else {
-		$time_hour_start = sprintf("%02d",$hour_start) . ':' . $time_minute_start;
-	}
-	if ($hour_finish == '-') {
-		$time_hour_finish = '*';
-	} else {
-		$time_hour_finish = sprintf("%02d",$hour_finish) . ':' . $time_minute_finish;
-	}
-	if ($time_hour_start === '*') {
-		$time_hour_start = $time_hour_finish;
-	}
-	if ($time_hour_finish === '*') {$time_hour_finish = $time_hour_start;}
-	if ($time_hour_start == $time_hour_finish) {
-		$time_hour = $time_hour_start;
-	} else {
-		$time_hour = $time_hour_start . '-' . $time_hour_finish;
-	}
-
-	//----- Time Week Day Interval proccess -----
-	//
-	if ($wday_start == '-') {
-		$time_wday_start = '*';
-	} else {
-		$time_wday_start = $wday_start;
-	}
-	if ($wday_finish == '-') {
-		$time_wday_finish = '*';
-	} else {
-		$time_wday_finish = $wday_finish;
-	}
-	if ($time_wday_start === '*') {
-		$time_wday_start = $time_wday_finish;
-	}
-	if ($time_wday_finish === '*') {
-		$time_wday_finish = $time_wday_start;
-	}
-	if ($time_wday_start == $time_wday_finish) {
-		$time_wday = $time_wday_start;
-	} else {
-		$time_wday = $time_wday_start . '-' . $time_wday_finish;
-	}
-
-	//----- Time Month Day Interval proccess -----
-	//
-	if ($mday_start == '-') {
-		$time_mday_start = '*';
-	} else {
-		$time_mday_start = $mday_start;
-	}
-	if ($mday_finish == '-') {
-		$time_mday_finish = '*';
-	} else {
-		$time_mday_finish = $mday_finish;
-	}
-	if ($time_mday_start === '*') {
-		$time_mday_start = $time_mday_finish;
-	}
-	if ($time_mday_finish === '*') {
-		$time_mday_finish = $time_mday_start;
-	}
-	if ($time_mday_start == $time_mday_finish) {
-		$time_mday = $time_mday_start;
-	} else {
-		$time_mday = $time_mday_start . '-' . $time_mday_finish;
-	}
-
-	//----- Time Month Interval proccess -----
-	//
-	if ($month_start == '-') {
-		$time_month_start = '*';
-	} else {
-		$time_month_start = $month_start;
-	}
-	if ($month_finish == '-') {
-		$time_month_finish = '*';
-	} else {
-		$time_month_finish = $month_finish;
-	}
-	if ($time_month_start === '*') {
-		$time_month_start = $time_month_finish;
-	}
-	if ($time_month_finish === '*') {
-		$time_month_finish = $time_month_start;
-	}
-	if ($time_month_start == $time_month_finish) {
-		$time_month = $time_month_start;
-	} else {
-		$time_month = $time_month_start . '-' . $time_month_finish;
-	}
-	$time = $time_hour . '|' . $time_wday . '|' . $time_mday . '|' . $time_month;
-	return $time;
+	_timeconditions_backtrace();
+	return FreePBX::Timeconditions()->buildTime( $hour_start, $minute_start, $hour_finish, $minute_finish, $wday_start, $wday_finish, $mday_start, $mday_finish, $month_start, $month_finish);
 }
 
 //---------------------------end stolen from timeconditions-------------------------------------
 
 // AJAX Handler for jQuery UI AutoComplete Time Zone field on Time Conditions page
 if (isset($_REQUEST['term']) && strlen($_REQUEST['term'])>1) {
-  Header('Content-Type: text/json');
-  die(json_encode(array_values(preg_grep('*'.$_REQUEST['term'].'*i', DateTimeZone::listIdentifiers(DateTimeZone::ALL)))));
+	Header('Content-Type: text/json');
+	die(json_encode(array_values(preg_grep('*'.$_REQUEST['term'].'*i', DateTimeZone::listIdentifiers(DateTimeZone::ALL)))));
 }
 
-
-?>
+function _timeconditions_backtrace() {
+	$trace = debug_backtrace();
+	$function = $trace[1]['function'];
+	$line = $trace[1]['line'];
+	$file = $trace[1]['file'];
+	freepbx_log(FPBX_LOG_WARNING,'Depreciated Function '.$function.' detected in '.$file.' on line '.$line);
+}

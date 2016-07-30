@@ -21,6 +21,8 @@ $("[id^='qsagents']").on('change',function(){
 		$('#'+taelm).val(cval+"\n"+$(this).val());
 		$(this).children('option[value="'+$(this).val()+'"]').remove();
 	}
+	var ta = document.querySelector('textarea.autosize');
+	autosize.update(ta);
 });
 //FixedCID
 $("#changecid").change(function(){
@@ -53,7 +55,7 @@ $(document).ready(function(){
 	});
 });
 $(document).ready(function(){
-$("[id^='fmtoggle']").change(function(){
+$(document).on('change', "[id^='fmtoggle']",function(){
 	var fmstate = "";
 	var exten = $(this).data('for');
 	if($(this).val() == "CHECKED"){

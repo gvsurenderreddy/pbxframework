@@ -3,13 +3,13 @@
 # For licensing information, please see the file named LICENSE located in the module directory
 #
 # FreePBX language template for pinsets
-# Copyright (C) 2008-2015 Sangoma, Inc.
+# Copyright (C) 2008-2016 Sangoma, Inc.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-03 15:28-0800\n"
+"POT-Creation-Date: 2016-03-02 15:15-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,22 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: views/grid.php:24
+#: views/grid.php:26
 msgid "Actions"
 msgstr ""
 
 #: views/bootnav.php:2
-msgid "Add PIN Sets"
+#: views/grid.php:8
+msgid "Add Pinset"
 msgstr ""
 
-#: Pinsets.class.php:51
+#: pinsets.i18n.php:8
+msgid ""
+"Allow creation of lists of PINs (numbers for passwords) that can be used by "
+"other modules (eg, trunks)."
+msgstr ""
+
+#: Pinsets.class.php:61
 msgid "Delete"
 msgstr ""
 
@@ -37,10 +44,6 @@ msgstr ""
 msgid "Enter a list of one or more PINs.  One PIN per line."
 msgstr ""
 
-#: views/bootnav.php:1
-msgid "List PIN Sets"
-msgstr ""
-
 #: views/form.php:16
 msgid "New PIN Set"
 msgstr ""
@@ -49,11 +52,11 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: functions.inc.php:244
+#: functions.inc.php:241
 msgid "None"
 msgstr ""
 
-#: functions.inc.php:260
+#: functions.inc.php:257
 msgid ""
 "Optional: Select a PIN set to use. If using this option, leave the Route "
 "Password field blank."
@@ -63,13 +66,17 @@ msgstr ""
 msgid "PIN List"
 msgstr ""
 
-#: functions.inc.php:239
-#: views/grid.php:23
+#: functions.inc.php:236
 msgid "PIN Set"
 msgstr ""
 
 #: views/form.php:29
 msgid "PIN Set Description"
+msgstr ""
+
+#: pinsets.i18n.php:4
+#: pinsets.i18n.php:10
+msgid "PIN Sets"
 msgstr ""
 
 #: page.pinsets.php:6
@@ -81,6 +88,11 @@ msgstr ""
 
 #: page.pinsets.php:7
 msgid "Pin Sets"
+msgstr ""
+
+#: views/bootnav.php:8
+#: views/grid.php:25
+msgid "Pinset"
 msgstr ""
 
 #: views/form.php:41
@@ -95,7 +107,7 @@ msgstr ""
 msgid "Record In CDR"
 msgstr ""
 
-#: Pinsets.class.php:56
+#: Pinsets.class.php:66
 msgid "Reset"
 msgstr ""
 
@@ -105,12 +117,17 @@ msgid ""
 "when used"
 msgstr ""
 
-#: Pinsets.class.php:61
+#: pinsets.i18n.php:6
+#: pinsets.i18n.php:12
+msgid "Settings"
+msgstr ""
+
+#: Pinsets.class.php:71
 msgid "Submit"
 msgstr ""
 
-#: functions.inc.php:130
-#: functions.inc.php:139
+#: functions.inc.php:125
+#: functions.inc.php:134
 msgid "Unnamed"
 msgstr ""
 

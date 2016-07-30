@@ -2,7 +2,7 @@
 	<rawname>customappsreg</rawname>
 	<repo>standard</repo>
 	<name>Custom Applications</name>
-	<version>13.0.4.4</version>
+	<version>13.0.5.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -20,6 +20,8 @@
 		</customappsreg>
  	</popovers>
 	<changelog>
+		*13.0.5.1* Ringfree branch
+		*13.0.5* FREEPBX-11659 Custom Destination does not handle gosub args properly
 		*13.0.4.3* Add sliding bootnav
 		*13.0.4.3* FREEPBX-10209 htmlentities need to use UTF-8
 		*13.0.4.2* FREEPBX-9874 - fix variable names
@@ -38,9 +40,11 @@
   <depends>
     <version>12.0.54</version>
   </depends>
-  <location>release/13.0/customappsreg-13.0.4.4.tgz</location>
-  <md5sum>122a6b5bc0269042851af58e576363a0</md5sum>
+  <location/>
+  <md5sum/>
   <supported>
     <version>13.0</version>
   </supported>
+  <location>release/13.0/customappsreg-13.0.5.1.tgz</location>
+  <md5sum></md5sum>
 </module>

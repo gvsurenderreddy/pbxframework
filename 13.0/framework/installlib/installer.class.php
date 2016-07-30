@@ -205,7 +205,7 @@ class Installer {
 		include_once ($amp_conf['AMPWEBROOT'].'/admin/libraries/freepbx_conf.class.php');
 	}
 
-	$freepbx_conf =& \freepbx_conf::create();
+	$freepbx_conf = \freepbx_conf::create();
 
 
 	$category = 'Advanced Settings Details';
@@ -293,7 +293,7 @@ class Installer {
 	);
 
 	$settings[$category]['PHP_ERROR_HANDLER_OUTPUT'] = array(
-	'value' => 'dbug',
+	'value' => 'freepbxlog',
 	'options' => array('dbug','freepbxlog','off'),
 	'name' => 'PHP Error Log Output',
 	'description' => "Where to send PHP errors, warnings and notices by the FreePBX PHP error handler. Set to 'dbug', they will go to the Debug File regardless of whether dbug Loggin is disabled or not. Set to 'freepbxlog' will send them to the FreePBX Log. Set to 'off' and they will be ignored.",
@@ -468,7 +468,7 @@ class Installer {
 	);
 
 	$settings[$category]['BROWSER_STATS'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Browser Stats',
 	'description' => 'Setting this to true will allow the development team to use google analytics to anonymously analyze browser information to help make better development decisions.',
@@ -484,7 +484,7 @@ class Installer {
 	);
 
 	$settings[$category]['CRONMAN_UPDATES_CHECK'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'readonly' => 1,
 	'name' => 'Update Notifications',
@@ -493,7 +493,7 @@ class Installer {
 	);
 
 	$settings[$category]['SIGNATURECHECK'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Enable Module Signature Checking',
 	'description' => 'Checks to make sure modules and their files are validly signed. Will display a notice on any module page that is not correctly verified.',
@@ -501,7 +501,7 @@ class Installer {
 	);
 
 	$settings[$category]['SEND_UNSIGNED_EMAILS_NOTIFICATIONS'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Send unsigned module email notifications',
 	'description' => 'Whether or not to send unsigned module email notifications. If disabled unsigned module emails will never be sent',
@@ -537,7 +537,7 @@ class Installer {
 	);
 
 	$settings[$category]['FREEPBX_SYSTEM_IDENT'] = array(
-	'value' => 'Ringfree Phone Cloud',
+	'value' => 'VoIP Server',
 	'options' => '',
 	'readonly' => 0,
 	'hidden' => 0,
@@ -703,7 +703,7 @@ class Installer {
 	'value' => true,
 	'options' => '',
 	'name' => 'Only Use Last CID Prepend',
-	'description' => "Some modules allow the CNAM to be prepended. If a previous prepend was done, the default behavior is to remove the previous prepend and only use the most recent one. Setting this to false will turn that off allowing all prepends to be 'starcked' in front of one another.",
+	'description' => "Some modules allow the CNAM to be prepended. If a previous prepend was done, the default behavior is to remove the previous prepend and only use the most recent one. Setting this to false will turn that off allowing all prepends to be 'stacked' in front of one another.",
 	'type' => CONF_TYPE_BOOL,
 	);
 
@@ -884,7 +884,7 @@ class Installer {
 	);
 
 	$settings[$category]['AMPCGIBIN'] = array(
-	'value' => '/var/www/cgi-bin ',
+	'value' => '/var/www/cgi-bin',
 	'options' => '',
 	'name' => 'CGI Dir',
 	'description' => 'The path to Apache cgi-bin dir (leave off trailing slash).',
@@ -913,11 +913,21 @@ class Installer {
 	'level' => 4,
 	);
 
-
 	$category = 'GUI Behavior';
 
+	$settings[$category]['FPBXOPMODE'] = array(
+	'value' => 'advanced',
+	'options' => 'basic,advanced',
+	'name' => 'GUI Operation Mode',
+	'description' => 'Determines the mode to use while navigating the PBX. Defaults to "Advanced". If a module does not support "Basic" mode it will default to "Advanced"',
+	'sortorder' => -135,
+	'readonly' => 1,
+	'hidden' => 1,
+	'type' => CONF_TYPE_SELECT,
+	);
+
 	$settings[$category]['CHECKREFERER'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Check Server Referrer',
 	'description' => 'When set to the default value of true, all requests into FreePBX that might possibly add/edit/delete settings will be validated to assure the request is coming from the server. This will protect the system from CSRF (cross site request forgery) attacks. It will have the effect of preventing legitimately entering URLs that could modify settings which can be allowed by changing this field to false.',
@@ -929,6 +939,14 @@ class Installer {
 	'options' => '',
 	'name' => 'Use wget For Module Admin',
 	'description' => 'Module Admin normally tries to get its online information through direct file open type calls to URLs that go back to the freepbx.org server. If it fails, typically because of content filters in firewalls that do not like the way PHP formats the requests, the code will fall back and try a wget to pull the information. This will often solve the problem. However, in such environment there can be a significant timeout before the failed file open calls to the URLs return and there are often 2-3 of these that occur. Setting this value will force FreePBX to avoid the attempt to open the URL and go straight to the wget calls.',
+	'type' => CONF_TYPE_BOOL,
+	);
+
+	$settings[$category]['MODULEADMINEDGE'] = array(
+	'value' => false,
+	'options' => '',
+	'name' => 'Set Module Admin to Edge mode',
+	'description' => 'Setting module admin to edge mode allows you to vet new module releases before they are deemed stable. This process helps the developers so we encourage you to enable it. If you want a more stable system please leave this set to no. See http://wiki.freepbx.org/x/boi3Aw for more details',
 	'type' => CONF_TYPE_BOOL,
 	);
 
@@ -1067,7 +1085,7 @@ class Installer {
 	);
 
 	$settings[$category]['FPBXDBUGDISABLE'] = array(
-	'value' => false,
+	'value' => true,
 	'options' => '',
 	'name' => 'Disable FreePBX dbug Logging',
 	'description' => 'Set to true to stop all dbug() calls from writing to the Debug File (FPBXDBUGFILE)',
@@ -1085,7 +1103,7 @@ class Installer {
 	);
 
 	$settings[$category]['DIE_FREEPBX_VERBOSE'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Provide Verbose Tracebacks',
 	'description' => 'Provides a very verbose traceback when die_freepbx() is called including extensive object details if present in the traceback.',
@@ -1094,7 +1112,7 @@ class Installer {
 	);
 
 	$settings[$category]['DEVEL'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Developer Mode',
 	'description' => 'This enables several debug features geared towards developers, including some page load timing information, some debug information in Module Admin, use of original CSS files and other future capabilities will be enabled.',
@@ -1172,7 +1190,7 @@ class Installer {
 	);
 
 	$settings[$category]['DISABLE_CSS_AUTOGEN'] = array(
-	'value' => true,
+	'value' => false,
 	'options' => '',
 	'name' => 'Disable Mainstyle CSS Compression',
 	'description' => 'Stops the automatic generation of a stripped CSS file that replaces the primary sheet, usually mainstyle.css.',
@@ -1811,10 +1829,10 @@ class Installer {
 	);
 
 	$settings[$category]['DEVICE_SIP_SENDRPID'] = array(
-	'value' => 'no',
+	'value' => 'pai',
 	'options' => array('no', 'yes', 'pai'),
 	'name' => 'SIP sendrpid',
-	'description' => "Default setting for SIP sendrpid. A value of 'yes' is equivalent to 'rpid' and will send the 'Remote-Party-ID' header. A value of 'pai' is only valid starting with Asterisk 1.8 and will send the 'P-Asserted-Identity' header. See Asterisk documentation for details.",
+	'description' => "Default setting for SIP sendrpid. A value of 'yes' is equivalent to 'rpid' and will send the 'Remote-Party-ID' header. A value of 'pai' will send the 'P-Asserted-Identity' header. See Asterisk documentation for details.",
 	'type' => CONF_TYPE_SELECT,
 	'sortorder' => 40,
 	);
@@ -1910,7 +1928,7 @@ class Installer {
 	);
 
 	$settings[$category]['MODULE_REPO'] = array(
-	'value' => 'http://mirror1.ringfree.biz,http://mirror2.ringfree.biz',
+	'value' => 'http://mirror1.freepbx.org,http://mirror2.freepbx.org',
 	'options' => '',
 	'name' => 'Repo Server',
 	'description' => 'repo server',
@@ -2021,6 +2039,32 @@ class Installer {
 		'readonly' => 0,
 		'sortorder' => 4,
 		'type' => CONF_TYPE_TEXT,
+	);
+
+	$settings[$category]['DASHBOARD_OVERRIDE'] = array(
+		'description' => 'When no params specified, use this module',
+		'name' => 'DASHBOARD_OVERRIDE',
+		'value' => '',
+		'options' => '',
+		'readonly' => 1,
+		'hidden' => 1,
+		'level' => 10,
+		'emptyok' => 1,
+		'sortorder' => 180,
+		'type' => CONF_TYPE_TEXT
+	);
+
+	$settings[$category]['DASHBOARD_OVERRIDE_BASIC'] = array(
+		'description' => 'When no params specified, use this module in basic opmode',
+		'name' => 'DASHBOARD_OVERRIDE_BASIC',
+		'value' => '',
+		'options' => '',
+		'readonly' => 1,
+		'hidden' => 1,
+		'level' => 10,
+		'emptyok' => 1,
+		'sortorder' => 180,
+		'type' => CONF_TYPE_TEXT
 	);
 
 	// The following settings are used in various modules prior to 2.9. If they are found in amportal.conf then we

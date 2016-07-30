@@ -10,20 +10,6 @@ function frameworkPasswordCheck() {
   // what retrieve_conf would see running the CLI version of php
   //
 
-	// Check and increase php memory_limit if needed and if allowed on the system
-	//
-	$current_memory_limit = rtrim(ini_get('memory_limit'),'M');
-	$proper_memory_limit = '100';
-	if ($current_memory_limit < $proper_memory_limit) {
-		if (ini_set('memory_limit',$proper_memory_limit.'M') !== false) {
-			$nt->add_notice('core', 'MEMLIMIT', _("Memory Limit Changed"), sprintf(_("Your memory_limit, %sM, is set too low and has been increased to %sM. You may want to change this in you php.ini config file"),$current_memory_limit,$proper_memory_limit));
-		} else {
-			$nt->add_warning('core', 'MEMERR', _("Low Memory Limit"), sprintf(_("Your memory_limit, %sM, is set too low and may cause problems. FreePBX is not able to change this on your system. You should increase this to %sM in you php.ini config file"),$current_memory_limit,$proper_memory_limit),'http://wiki.freepbx.org/x/lgK3AQ');
-		}
-	} else {
-		$nt->delete('core', 'MEMLIMIT');
-	}
-
 	// send error if magic_quotes_gpc is enabled on this system as much of the code base assumes not
 	//
 	if(get_magic_quotes_gpc()) {
@@ -35,38 +21,8 @@ function frameworkPasswordCheck() {
 }
 
 // setup locale
-function set_language() {
-	global $amp_conf, $db;
-	$nt = notifications::create($db);
-	if (extension_loaded('gettext')) {
-		$nt->delete('core', 'GETTEXT');
-		if(php_sapi_name() !== 'cli') {
-			if (empty($_COOKIE['lang']) || !preg_match('/^[\w\._@-]+$/', $_COOKIE['lang'], $matches)) {
-				$lang = $amp_conf['UIDEFAULTLANG']?$amp_conf['UIDEFAULTLANG']:'en_US';
-				if (empty($_COOKIE['lang'])) {
-					setcookie("lang", $lang);
-				}
-			} else {
-				preg_match('/^([\w\._@-]+)$/', $_COOKIE['lang'], $matches);
-				$lang = !empty($matches[1])?$matches[1]:'en_US';
-			}
-			$_COOKIE['lang'] = $lang;
-		} else {
-			$lang = $amp_conf['UIDEFAULTLANG']?$amp_conf['UIDEFAULTLANG']:'en_US';
-		}
-		putenv('LC_ALL='.$lang);
-		putenv('LANG='.$lang);
-		putenv('LANGUAGE='.$lang);
-		setlocale(LC_ALL, $lang);
-
-		bindtextdomain('amp',$amp_conf['AMPWEBROOT'].'/admin/i18n');
-		bind_textdomain_codeset('amp', 'utf8');
-		textdomain('amp');
-		return $lang;
-	}
-	$nt->add_warning('core', 'GETTEXT', _("Gettext is not installed"), _("Please install gettext so that the PBX can properly translate itself"),'https://www.gnu.org/software/gettext/');
-
-	return 'en_US';
+function set_language($details=false) {
+	return \FreePBX::View()->setLanguage($details);
 }
 
 //

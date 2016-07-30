@@ -1,12 +1,13 @@
 <module>
 	<rawname>dundicheck</rawname>
-	<repo>unsupported</repo>
+	<repo>standard</repo>
 	<name>DUNDi Lookup Registry</name>
-	<version>13.0.2</version>
+	<version>13.0.2.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
+		*13.0.2.1* Ringfree branch
 		*13.0.2* Version bump Beta
 		*2.11.0.3* Include license file
 		*2.11.0.1* Label class can not be used in FreePBX 2.10
@@ -31,6 +32,6 @@
 		<version>2.10</version>
 	</supported>
 	<category>Admin</category>
-	<location>release/13.0/dundicheck-13.0.2.tgz</location>
-	<md5sum>c357b039b3f25b26abb7504c139879b6</md5sum>
+	<location>release/13.0/dundicheck-13.0.2.1.tgz</location>
+	<md5sum></md5sum>
 </module>

@@ -1,7 +1,7 @@
 <module>
 	<rawname>tts</rawname>
 	<name>Text To Speech</name>
-	<version>13.0.6</version>
+	<version>13.0.8.1</version>
 	<repo>extended</repo>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
@@ -15,10 +15,13 @@
 	<depends>
 		<engine>asterisk ge 1.6</engine>
 		<module>ttsengines</module>
-		<version>13.0.6</version>
+		<version>13.0.154</version>
 	</depends>
-	<location>release/13.0/tts-13.0.6.tgz</location>
+	<location>release/13.0/tts-13.0.8.1.tgz</location>
 	<changelog>
+		*13.0.8.1* Ringfree branch
+		*13.0.8* Fix select when editing to show correctly selected language, allow engines to detect sample rate on the fly
+		*13.0.7* FREEPBX-11558 Spelling fix
 		*13.0.6* Undefined variable
 		*13.0.5* Slideout menu
 		*13.0.4* FREEPBX-9940 Form Validation
@@ -48,5 +51,5 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<md5sum>1dc6a7a171f45dd1b5039a0e2825174f</md5sum>
+	<md5sum></md5sum>
 </module>

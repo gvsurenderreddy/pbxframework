@@ -2,7 +2,7 @@
 	<rawname>ivr</rawname>
 	<repo>standard</repo>
 	<name>IVR</name>
-	<version>13.0.14</version>
+	<version>13.0.25.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,18 @@
 		Creates Digital Receptionist (aka Auto-Attendant, aka Interactive Voice Response) menus. These can be used to send callers to different locations (eg, Press 1 for sales) and/or allow direct-dialing of extension numbers.
 	</description>
 	<changelog>
+		*13.0.25.1* Ringfree branch
+		*13.0.25* Add sound languages: it,fr,en_GB
+		*13.0.24* FREEPBX-12374 Regression, allow dialpatterns in ivr entries
+		*13.0.23* Allow additional destinations in simple mode
+		*13.0.22* FREEPBX-11776 Change IVR validation to allow * and #
+		*13.0.21* Dont allow 0 value recordings
+		*13.0.20* Hook more into system recordings
+		*13.0.19* Depend on framework for recordWorker
+		*13.0.18* FREEPBX-11188 Add alertinfo
+		*13.0.17* Require higher version of recordings module
+		*13.0.16* In browser recording for simple mode
+		*13.0.15* Add simple mode support
 		*13.0.14* FREEPBX-11148 return on invalid bug
 		*13.0.13* FREEPBX-10862. Fix defaults on add
 		*13.0.12* FREEPBX-9951 Japanese language prompts
@@ -28,14 +40,10 @@
 		*13.0.1alpha3* Add Spanish prompts
 		*13.0.1alpha2* Bugfix #9072,#8993, astman connection error catching
 		*13.0.1alpha1* Visual Changes
-		*2.11.0.6* Add license file
-		*2.10.0.0* rewrite!
-		*2.9.0.1* removed duplicate functions
-		*2.9.0.0* #1798, #4655
 	</changelog>
 	<depends>
-		<version>13.0.6</version>
-		<module>recordings</module>
+		<version>13.0.72</version>
+		<module>recordings ge 13.0.23</module>
 	</depends>
 	<menuitems>
 		<ivr>IVR</ivr>
@@ -50,6 +58,6 @@
  	<supported>
  		<version>13.0</version>
  	</supported>
-	<location>release/13.0/ivr-13.0.14.tgz</location>
-	<md5sum>a516aaff7dcac35fe08b9309ea91ae6a</md5sum>
+	<location>release/13.0/ivr-13.0.25.1.tgz</location>
+	<md5sum></md5sum>
 </module>

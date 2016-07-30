@@ -2,7 +2,7 @@
 	<rawname>asteriskinfo</rawname>
 	<repo>standard</repo>
 	<name>Asterisk Info</name>
-	<version>13.0.6</version>
+	<version>13.0.7.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -18,6 +18,8 @@
 		<version>2.5.0rc3</version>
 	</depends>
 	<changelog>
+		*13.0.7.1* Ringfree branch 
+		*13.0.7* FREEPBX-12153 fix mobile view
 		*13.0.6* FREEPBX-10254 Fix Queues html
 		*13.0.5* FREEPBX-10209 htmlentities need to use UTF-8
 		*13.0.4* FREEPBX-9757 asterisk info bad data
@@ -56,6 +58,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/asteriskinfo-13.0.6.tgz</location>
-	<md5sum>44a9331dc59b5b7ea4848e2febd59679</md5sum>
+	<location>release/13.0/asteriskinfo-13.0.7.1.tgz</location>
+	<md5sum></md5sum>
 </module>

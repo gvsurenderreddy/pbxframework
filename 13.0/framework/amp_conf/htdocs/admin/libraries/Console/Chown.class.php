@@ -12,27 +12,126 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 class Chown extends Command {
+	private $requireroot = true;
 	private $errors = array();
 	private $infos = array();
+	private $blacklist = array('files' => array(), 'dirs' => array());
 	private $quiet = false;
 	public $moduleName = '';
 	protected function configure(){
 		$this->setName('chown')
 		->setDescription(_('Change ownership of files'))
 		->setDefinition(array(
-			new InputArgument('args', InputArgument::IS_ARRAY, null, null),));
+			new InputOption('file', 'f', InputOption::VALUE_REQUIRED, _('Execute on only this file/dir')),
+			new InputArgument('args', InputArgument::IS_ARRAY, _('Set permissions on a specific module: <rawname>'), null),));
 		$this->fs = new Filesystem();
 		$this->modfiles = array();
 		$this->actions = new \SplQueue();
 		$this->actions->setIteratorMode(\SplDoublyLinkedList::IT_MODE_FIFO | \SplDoublyLinkedList::IT_MODE_DELETE);
+		$this->loadChownConf();
+	}
+	private function loadChownConf(){
+		$etcdir = \FreePBX::Config()->get('ASTETCDIR');
+		if(!file_exists($etcdir.'/freepbx_chown.conf')){
+			return;
+		}
+		$conf  = \FreePBX::LoadConfig()->getConfig("freepbx_chown.conf");
+		if(isset($conf['blacklist'])){
+			if(isset($conf['blacklist']['item'])){
+				$conf['blacklist']['item'] = is_array($conf['blacklist']['item'])?$conf['blacklist']['item']:array($conf['blacklist']['item']);
+				foreach ($conf['blacklist']['item'] as $item) {
+					$this->blacklist['files'][] = $item;
+				}
+			}
+			if(isset($conf['blacklist']['directory'])){
+				$conf['blacklist']['directory'] = is_array($conf['blacklist']['directory'])?$conf['blacklist']['directory']:array($conf['blacklist']['directory']);
+				foreach ($conf['blacklist']['directory'] as $dir) {
+					$dir = rtrim($dir, '/');
+					$this->blacklist['dirs'][] = $dir;
+				}
+			}
+		}
+		$this->modfiles['byconfig'] = array();
+		if(isset($conf['custom'])){
+			if(isset($conf['custom']['file'])){
+				$conf['custom']['file'] = is_array($conf['custom']['file'])?$conf['custom']['file']:array($conf['custom']['file']);
+				foreach (	$conf['custom']['file'] as $file) {
+					$file = $this->parse_conf_line($file);
+					if($file === false){continue;}
+					$this->modfiles['byconfig'][] = array('type' => 'file',
+							'path' => $file['path'],
+							'perms' => $file['perms'],
+							'owner' => $file['owner'],
+							'group' => $file['group']
+						);
+				}
+			}
+
+			if(isset($conf['custom']['dir'])){
+				$conf['custom']['dir'] = is_array($conf['custom']['dir'])?$conf['custom']['dir']:array($conf['custom']['dir']);
+				foreach (	$conf['custom']['dir']  as $dir) {
+					$dir = $this->parse_conf_line($dir);
+					if($dir === false){continue;}
+					$this->modfiles['byconfig'][] = array('type' => 'dir',
+							'path' => $dir['path'],
+							'perms' => $dir['perms'],
+							'owner' => $dir['owner'],
+							'group' => $dir['group'],
+							'always' => true
+						);
+				}
+			}
+			if(isset($conf['custom'][''])){
+				$conf['custom']['rdir'] = is_array($conf['custom']['rdir'])?$conf['custom']['rdir']:array($conf['custom']['rdir']);
+				foreach (	$conf['custom']['rdir']  as $rdir) {
+					$rdir = $this->parse_conf_line($rdir);
+					if($rdir === false){continue;}
+					$this->modfiles['byconfig'][] = array('type' => 'rdir',
+							'path' => $rdir['path'],
+							'perms' => $rdir['perms'],
+							'owner' => $rdir['owner'],
+							'group' => $rdir['group'],
+							'always' => true
+						);
+				}
+			}
+			if(isset($conf['custom'][''])){
+				$conf['custom']['execdir'] = is_array($conf['custom']['execdir'])?$conf['custom']['execdir']:array($conf['custom']['execdir']);
+				foreach (	$conf['custom']['execdir']  as $edir) {
+					$edir = $this->parse_conf_line($rdir);
+					if($edir === false){continue;}
+					$this->modfiles['byconfig'][] = array('type' => 'execdir',
+							'path' => $edir['path'],
+							'perms' => $edir['perms'],
+							'owner' => $edir['owner'],
+							'group' => $edir['group'],
+							'always' => true
+						);
+				}
+			}
+		}
+
+	}
+	private function parse_conf_line($line){
+		$line = explode(",", $line);
+		if(count($line) !== 4){
+			return false;
+		}
+		$ret = array('path' => $line[0], 'perms' => intval($line[1], 8), 'owner' => $line[2], 'group' => $line[3]);
+		return $ret;
 	}
 	protected function execute(InputInterface $input, OutputInterface $output, $quiet=false){
+		$this->output = $output;
 		if(posix_geteuid() != 0) {
 			$output->writeln("<error>"._("You need to be root to run this command")."</error>");
 			exit(1);
 		}
 		$this->quiet = $quiet;
+		$etcdir = \FreePBX::Config()->get('ASTETCDIR');
 		if(!$this->quiet) {
+			if(!file_exists($etcdir.'/freepbx_chown.conf')) {
+				$output->writeln("<info>".sprintf(_("Taking too long? Customize the chown command, See %s"),"http://wiki.freepbx.org/display/FOP/FreePBX+Chown+Conf")."</info>");
+			}
 			$output->writeln(_("Setting Permissions")."...");
 		}
 		$freepbx_conf = \freepbx_conf::create();
@@ -54,11 +153,12 @@ class Chown extends Command {
 		 * 		execdir:	Same as rdir but the execute bit is not stripped.
 		 */
 		$sessdir = session_save_path();
-		$sessdir = !empty($session) ? $session : '/var/lib/php/session';
+		$sessdir = !empty($sessdir) ? $sessdir : '/var/lib/php/session';
 		$args = array();
 		if($input){
 			$args = $input->getArgument('args');
-			$this->moduleName = !empty($this->moduleName) ? $this->moduleName : strtolower($args[0]);
+			$mname = isset($args[0])?$args[0]:'';
+			$this->moduleName = !empty($this->moduleName) ? $this->moduleName : strtolower($mname);
 		}
 		// Always update hooks before running a Chown
 		\FreePBX::Hooks()->updateBMOHooks();
@@ -92,29 +192,36 @@ class Chown extends Command {
 			}
 			$this->modfiles['framework'][] = array('type' => 'rdir',
 														'path' => $sessdir,
-														'perms' => 0744);
+														'perms' => 0744,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'file',
 														'path' => '/etc/amportal.conf',
-														'perms' => 0640);
+														'perms' => 0640,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'file',
 														'path' => '/etc/freepbx.conf',
-														'perms' => 0640);
+														'perms' => 0640,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'dir',
 														'path' => $ASTRUNDIR,
-														'perms' => 0755);
+														'perms' => 0755,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'rdir',
 														'path' => \FreePBX::GPG()->getGpgLocation(),
-														'perms' => 0755);
+														'perms' => 0755,
+														'always' => true);
 			//we may wish to declare these manually or through some automated fashion
 			$this->modfiles['framework'][] = array('type' => 'rdir',
 														'path' => $ASTETCDIR,
-														'perms' => 0750);
+														'perms' => 0750,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'file',
 														'path' => $ASTVARLIBDIR . '/.ssh/id_rsa',
 														'perms' => 0600);
 			$this->modfiles['framework'][] = array('type' => 'rdir',
 														'path' => $ASTLOGDIR,
-														'perms' => 0755);
+														'perms' => 0755,
+														'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'rdir',
 														'path' => $ASTSPOOLDIR,
 														'perms' => 0755);
@@ -148,153 +255,185 @@ class Chown extends Command {
 			//So that we dont get overwritten by ampwebroot
 			$this->modfiles['framework'][] = array('type' => 'execdir',
 			'path' => $AMPBIN,
-			'perms' => 0755);
+			'perms' => 0755,
+			'always' => true);
 			$this->modfiles['framework'][] = array('type' => 'execdir',
 			'path' => $ASTAGIDIR,
-			'perms' => 0755);
+			'perms' => 0755,
+			'always' => true);
+			$this->modfiles['framework'][] = array('type' => 'execdir',
+			'path' => $ASTVARLIBDIR. "/bin",
+			'perms' => 0755,
+			'always' => true);
 			//Merge static files and hook files, then act on them as a single unit
 			$fwcCF = $this->fwcChownFiles();
 			if(!empty($this->modfiles) && !empty($fwcCF)){
-				$this->modfiles = array_merge_recursive($this->modfiles,$fwcCF);
+				foreach ($fwcCF as $key => $value) {
+					$this->modfiles[$key] = $value;
+				}
+				//$this->modfiles = array_merge_recursive($this->modfiles,$fwcCF);
 			}
 		}
+		//Let's move the custom array to the end so it happens last
+		//FREEPBX-12515
+		//Store in a temporary variable. If Null we make it an empty array
+		$holdarray = $this->modfiles['byconfig'];
+		//Unset it from the array
+		unset($this->modfiles['byconfig']);
+		//Add it back to the array
+		$this->modfiles['byconfig'] = $holdarray;
 
 		$ampowner = $AMPASTERISKWEBUSER;
 		/* Address concerns carried over from amportal in FREEPBX-8268. If the apache user is different
 		 * than the Asterisk user we provide permissions that allow both.
 		 */
 		$ampgroup =  $AMPASTERISKWEBUSER != $AMPASTERISKUSER ? $AMPASTERISKGROUP : $AMPASTERISKWEBGROUP;
-		foreach($this->modfiles as $moduleName => $modfilelist){
-			foreach($modfilelist as $file){
+		$fcount = 0;
+		if(!$this->quiet) {
+			$output->write("\t"._("Collecting Files..."));
+		}
+		$exclusive = $input->hasOption('file') ? $input->getOption('file') : null;
+		$process = array();
+		foreach($this->modfiles as $moduleName => $modfilelist) {
+			if(!is_array($modfilelist)) {
+				continue;
+			}
+			foreach($modfilelist as $file) {
+				switch($file['type']){
+					case 'file':
+					case 'dir':
+						if(empty($exclusive) || $exclusive == $file['path']) {
+							$file['files'] = array($file['path']);
+							$fcount++;
+						} else {
+							continue 2;
+						}
+					break;
+					case 'execdir':
+					case 'rdir':
+						$files = $this->recursiveDirList($file['path']);
+						$children = false;
+						if(empty($exclusive) || $exclusive == $file['path']) {
+							$file['files'] = array($file['path']);
+							$fcount++;
+							$children = true;
+						}
+						foreach($files as $f){
+							if(empty($exclusive) || $children || $exclusive == $f) {
+								$file['files'][] = $f;
+								$fcount++;
+							} else {
+								continue;
+							}
+						}
+						if(empty($file['files'])) {
+							continue 2;
+						}
+					break;
+				}
+				$process[$file['type']][] = $file;
+			}
+		}
+		$verbose = $this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE;
+		if(!$this->quiet) {
+			$output->writeln(_("Done"));
+			if(!$verbose) {
+				$progress = new ProgressBar($output, $fcount);
+				$progress->setRedrawFrequency(100);
+				$progress->start();
+			}
+		}
+		foreach($process as $type => $modfilelist) {
+			foreach($modfilelist as $file) {
 				if(!isset($file['path']) || !isset($file['perms']) || !file_exists($file['path'])){
-						continue;
+					if(!$this->quiet && !$verbose) {
+						$progress->advance();
+					}
+					continue;
 				}
 				//Handle custom ownership (optional)
 				$owner = isset($file['owner'])?$file['owner']:$ampowner;
 				$group = isset($file['group'])?$file['group']:$ampgroup;
-				//Set warning for bad permissions and move on
-				$this->padPermissions($file['path'],$file['perms']);
-				$file['type'] = isset($file['type'])?$file['type']:'file';
-				switch($file['type']){
-					case 'file':
-					case 'dir':
-						$path = \ForceUTF8\Encoding::toLatin1($file['path']);
-						$owner = \ForceUTF8\Encoding::toLatin1($owner);
-						$group = \ForceUTF8\Encoding::toLatin1($group);
-						$json = @json_encode(array($path,$owner,$group,$file['perms']));
-						$err = $this->jsonError();
-						if(empty($err)) {
-							$this->actions->enqueue($json);
-						} else {
-							$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-						}
+				$owner = \ForceUTF8\Encoding::toLatin1($owner);
+				$group = \ForceUTF8\Encoding::toLatin1($group);
+				foreach($file['files'] as $path) {
+					if($this->checkBlacklist($path)){
+						$this->infos[] = sprintf(_('%s skipped by configuration'), $path);
+						continue;
+					}
+					switch($file['type']){
+						case 'file':
+						case 'dir':
+							$this->setPermissions(array($path,$owner,$group,$file['perms']));
 						break;
-					case 'rdir':
-						$fileperms = $this->stripExecute($file['perms']);
-						$files = $this->recursiveDirList($file['path']);
-						$path = \ForceUTF8\Encoding::toLatin1($file['path']);
-						$owner = \ForceUTF8\Encoding::toLatin1($owner);
-						$group = \ForceUTF8\Encoding::toLatin1($group);
-						$json = @json_encode(array($path, $owner, $group, $file['perms']));
-						$err = $this->jsonError();
-						if(empty($err)) {
-							$this->actions->enqueue($json);
-						} else {
-							$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-						}
-						foreach($files as $f){
-							if(is_dir($f)){
-								$path = \ForceUTF8\Encoding::toLatin1($f);
-								$owner = \ForceUTF8\Encoding::toLatin1($owner);
-								$group = \ForceUTF8\Encoding::toLatin1($group);
-								$json = @json_encode(array($path, $owner, $group, $file['perms']));
-								$err = $this->jsonError();
-								if(empty($err)) {
-									$this->actions->enqueue($json);
-								} else {
-									$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-								}
+						case 'rdir':
+							if(is_dir($path)){
+								$this->setPermissions(array($path, $owner, $group, $file['perms']));
 							}else{
-								$path = \ForceUTF8\Encoding::toLatin1($f);
-								$owner = \ForceUTF8\Encoding::toLatin1($owner);
-								$group = \ForceUTF8\Encoding::toLatin1($group);
-								$json = @json_encode(array($path, $owner, $group, $fileperms));
-								$err = $this->jsonError();
-								if(empty($err)) {
-									$this->actions->enqueue($json);
-								} else {
-									$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-								}
+								$fileperms = $this->stripExecute($file['perms']);
+								$this->setPermissions(array($path, $owner, $group, $fileperms));
 							}
-						}
 						break;
-					case 'execdir':
-						$files = $this->recursiveDirList($file['path']);
-						$path = \ForceUTF8\Encoding::toLatin1($file['path']);
-						$owner = \ForceUTF8\Encoding::toLatin1($owner);
-						$group = \ForceUTF8\Encoding::toLatin1($group);
-						$json = @json_encode(array($path, $owner, $group, $file['perms']));
-						$err = $this->jsonError();
-						if(empty($err)) {
-							$this->actions->enqueue($json);
-						} else {
-							$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-						}
-						foreach($files as $f){
-							$path = \ForceUTF8\Encoding::toLatin1($f);
-							$owner = \ForceUTF8\Encoding::toLatin1($owner);
-							$group = \ForceUTF8\Encoding::toLatin1($group);
-							$json = @json_encode(array($path, $owner, $group, $file['perms']));
-							$err = $this->jsonError();
-							if(empty($err)) {
-								$this->actions->enqueue($json);
-							} else {
-								$this->errors[] = sprintf(_('An error occurred while adding file %s because %s'), $f, $err);
-							}
-						}
+						case 'execdir':
+							$this->setPermissions(array($path, $owner, $group, $file['perms']));
 						break;
+					}
+					if(!$this->quiet && !$verbose) {
+						$progress->advance();
+					}
 				}
 			}
 		}
-		$actioncount = count($this->actions);
-		if(!$this->quiet) {
-			$progress = new ProgressBar($output, $actioncount);
-			$progress->setRedrawFrequency(100);
-			$progress->start();
-		}
-		foreach($this->actions as $action){
-			$action = json_decode($action,true);
-			//Ignore call files, Asterisk may process/delete them before we get to them.
-			if(pathinfo($action[0], PATHINFO_EXTENSION) == 'call'){
-				continue;
-			}
-			$this->singleChown($action[0],$action[1],$action[2]);
-			$this->singlePerms($action[0], $action[3]);
-			if(!$this->quiet) {
-				$progress->advance();
-			}
-		}
-		if(!$this->quiet) {
+		if(!$this->quiet && !$verbose) {
 			$progress->finish();
+		}
+		if(!$this->quiet) {
 			$output->writeln("");
 			$output->writeln("Finished setting permissions");
-			foreach($this->errors as $error) {
+			$errors = array_unique($this->errors);
+			foreach($errors as $error) {
 				$output->writeln("<error>".$error."</error>");
 			}
-			foreach($this->infos as $error) {
+			$infos = array_unique($this->infos);
+			foreach($infos as $error) {
 				$output->writeln("<info>".$error."</info>");
 			}
 		}
 	}
+
+	private function setPermissions($action) {
+		if(pathinfo($action[0], PATHINFO_EXTENSION) == 'call'){
+			return;
+		}
+		$this->singleChown($action[0],$action[1],$action[2]);
+		$this->singlePerms($action[0], $action[3]);
+		$this->d("Setting ".$action[0]." owner to: ".$action[1].":".$action[2].", with permissions of: ".decoct($action[3]));
+	}
+
+	private function checkBlacklist($file){
+		//If path is in the blacklist we move on.
+		$filepath = pathinfo($file,PATHINFO_DIRNAME);
+		if(in_array($file, $this->blacklist['files'])){
+			return true;
+		}
+		if(in_array($filepath, $this->blacklist['dirs'])){
+			return true;
+		}
+		return false;
+	}
+
 	private function stripExecute($mask){
-		$mask = ($mask & ~(1<<0));
-		$mask = ($mask & ~(1<<3));
-		$mask = ($mask & ~(1<<6));
+		$mask = ( $mask & ~0111 );
 		return $mask;
 	}
+
 	private function singleChown($file, $user, $group){
+		clearstatcache(true, $file);
+		if(!file_exists($file)) {
+			return false;
+		}
+		$filetype = \freepbx_filetype($file);
 		try {
-			$filetype = filetype($file);
 			if($filetype == "link") {
 				$link = readlink($file);
 				if(file_exists($link)) {
@@ -310,7 +449,6 @@ class Chown extends Command {
 			}
 		}
 		try {
-			$filetype = filetype($file);
 			if($filetype == "link") {
 				$link = readlink($file);
 				if(file_exists($link)) {
@@ -326,46 +464,17 @@ class Chown extends Command {
 			}
 		}
 	}
-	private function recursiveChown($dir, $user, $group){
-		try {
-			$filetype = filetype($dir);
-			if($filetype == "link") {
-				$link = readlink($dir);
-				if(file_exists($link)) {
-					$this->fs->chown($link,$user, true);
-					$this->fs->chown($dir,$user, true);
-				}
-			} else {
-				$this->fs->chown($dir,$user, true);
-			}
-		} catch (IOExceptionInterface $e) {
-			if($dir){
-				$this->errors[] = sprintf(_('An error occurred while changing ownership %s'),$dir);
-			}
-		}
-		try {
-			$filetype = filetype($dir);
-			if($filetype == "link") {
-				$link = readlink($dir);
-				if(file_exists($link)) {
-					$this->fs->chgrp($link,$user, true);
-					$this->fs->chgrp($dir,$user, true);
-				}
-			} else {
-				$this->fs->chgrp($dir,$group, true);
-			}
-		} catch (IOExceptionInterface $e) {
-			if($file){
-				$this->errors[] = sprintf(_('An error occurred while changing group %s'),$dir);
-			}
-		}
-	}
+
 	private function singlePerms($file, $perms){
 		if(!trim($file)){
 			$this->errors[] = _('We received an empty string for a file name. Some files may not have the proper permissions');
 			return false;
 		}
-		$filetype = filetype($file);
+		clearstatcache(true, $file);
+		if(!file_exists($file)) {
+			return false;
+		}
+		$filetype = \freepbx_filetype($file);
 		switch($filetype){
 			case 'link':
 				$realfile = readlink($file);
@@ -401,36 +510,24 @@ class Chown extends Command {
 			break;
 		}
 	}
-	private function recursivePerms($dir, $perms){
-		try {
-			$this->fs->chmod($dir,$perms, 0000, true);
-		} catch (IOExceptionInterface $e) {
-			if($dir){
-				$this->errors[] = sprintf(_('An error occurred while changing permissions %s'),$dir);
-			}
-		}
-	}
+
 	private function recursiveDirList($path){
+		clearstatcache(true, $path);
+		if(!file_exists($path)) {
+			return array();
+		}
 		$list =  array();
-		$files = scandir($path);
-		foreach($files as $file){
-			if ($file == '.' || $file == '..'){
-				continue;
+		$objects = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+		foreach($objects as $path => $object){
+			if($this->checkBlacklist($path)){
+				$this->infos[] = _("One or more files skipped by configuration in freepbx_chown.conf");
+				return array();
 			}
-			$fullpath = $path . '/' . $file;
-			$filetype = filetype($fullpath);
-			if($filetype == 'dir'){
-				$list[] = $fullpath;
-				$getFiles = $this->recursiveDirList($fullpath);
-				foreach($getFiles as $f){
-					$list[] = $f;
-				}
-			}else{
-				$list[] = $fullpath;
-			}
+			$list[] = $path;
 		}
 		return array_unique($list);
 	}
+
 	private function padPermissions($file, $mode){
 		if(($mode>>9) == 0){
 			return true;
@@ -441,34 +538,15 @@ class Chown extends Command {
 		}
 	}
 
+	private function d($message) {
+		$debug = $this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE;
+		if($debug && is_object($this->output)) {
+			$this->output->writeln($message);
+		}
+	}
+
 	private function fwcChownFiles(){
 		$modules = \FreePBX::Hooks()->processHooks();
 		return $modules;
-	}
-
-	private function jsonError() {
-		switch (json_last_error()) {
-			case JSON_ERROR_NONE:
-				return false;
-			break;
-			case JSON_ERROR_DEPTH:
-				return 'Maximum stack depth exceeded';
-			break;
-			case JSON_ERROR_STATE_MISMATCH:
-				return 'Underflow or the modes mismatch';
-			break;
-			case JSON_ERROR_CTRL_CHAR:
-				return 'Unexpected control character found';
-			break;
-			case JSON_ERROR_SYNTAX:
-				return 'Syntax error, malformed JSON';
-			break;
-			case JSON_ERROR_UTF8:
-				return 'Malformed UTF-8 characters, possibly incorrectly encoded';
-			break;
-			default:
-				return 'Unknown error';
-			break;
-			}
 	}
 }

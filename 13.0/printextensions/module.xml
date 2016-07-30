@@ -2,7 +2,7 @@
   <rawname>printextensions</rawname>
   <repo>standard</repo>
   <name>Print Extensions</name>
-  <version>13.0.3</version>
+  <version>13.0.3.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -12,6 +12,7 @@
     <printextensions>Print Extensions</printextensions>
   </menuitems>
 	<changelog>
+		*13.0.3.1* Ringfree branch
 		*13.0.3* Hide unimplimented PDF and format print stylesheet
 		*13.0.2* Version bump Beta
     *13.0.1alpha2* Inset and border changes
@@ -26,8 +27,8 @@
 		*2.9.0.1* #4650
 		*2.9.0.0* #4647 make exten numbers a link to edit the extension
 	</changelog>
-  <location>release/13.0/printextensions-13.0.3.tgz</location>
-  <md5sum>6511cfbcbc5058a3cd622b5ff3695f5a</md5sum>
+  <location>release/13.0/printextensions-13.0.3.1.tgz</location>
+  <md5sum></md5sum>
   <supported>
     <version>13.0</version>
   </supported>

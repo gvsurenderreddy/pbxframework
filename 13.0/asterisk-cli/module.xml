@@ -2,7 +2,7 @@
 	<rawname>asterisk-cli</rawname>
 	<repo>extended</repo>
 	<name>Asterisk CLI</name>
-	<version>13.0.3</version>
+	<version>13.0.4.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -14,9 +14,11 @@
 	<depends>
 		<engine>asterisk</engine>
 	</depends>
-	<location>release/13.0/asterisk-cli-13.0.3.tgz</location>
-	<md5sum>ec7170329af844e6d73572a802490d2a</md5sum>
+	<location>release/13.0/asterisk-cli-13.0.4.1.tgz</location>
+	<md5sum></md5sum>
 	<changelog>
+		*13.0.4.1* Ringfree branch
+		*13.0.4* FREEPBX-12606 Absolute paths used in some modules.
 		*13.0.3* Asterisk needs to be running for this to be useful
 		*13.0.2* Version bump Beta
 		*13.0.1* Finalize

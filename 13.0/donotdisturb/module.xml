@@ -2,11 +2,12 @@
 	<rawname>donotdisturb</rawname>
 	<repo>standard</repo>
 	<name>Do-Not-Disturb (DND)</name>
-	<version>13.0.3</version>
+	<version>13.0.3.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
+		*13.0.3.1* Ringfree branch
 		*13.0.3* FREEPBX-9564 UCP goes offline after changing settings
 		*13.0.2* Version bump Beta
 		*13.0.1alpha1* Visuals
@@ -27,6 +28,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/donotdisturb-13.0.3.tgz</location>
-	<md5sum>af6edeb1b12afd45cba4937d44ccfcc2</md5sum>
+	<location>release/13.0/donotdisturb-13.0.3.1.tgz</location>
+	<md5sum></md5sum>
 </module>

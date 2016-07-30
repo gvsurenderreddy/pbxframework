@@ -62,12 +62,12 @@ function announcement_get_config($engine) {
 			foreach (announcement_list() as $row) {
 				$recording = recordings_get_file($row['recording_id']);
 				if (! $row['noanswer']) {
-					$ext->add('app-announcement-'.$row['announcement_id'], 's', '', new ext_gotoif('$["${CDR(disposition)}" = "ANSWERED"]','begin'));
+					$ext->add('app-announcement-'.$row['announcement_id'], 's', '', new ext_gotoif('$["${CHANNEL(state)}" = "Up"]','begin'));
 					$ext->add('app-announcement-'.$row['announcement_id'], 's', '', new ext_answer(''));
 					$ext->add('app-announcement-'.$row['announcement_id'], 's', '', new ext_wait('1'));
-        } else {
+				} else {
 					$ext->add('app-announcement-'.$row['announcement_id'], 's', '', new ext_progress());
-        }
+				}
 				$ext->add('app-announcement-'.$row['announcement_id'], 's', 'begin', new ext_noop('Playing announcement '.$row['description']));
 				if ($row['allow_skip'] || $row['repeat_msg']) {
 					// allow skip

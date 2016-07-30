@@ -4,16 +4,38 @@
 //	Copyright 2015 Schmooze Com Inc.
 //
 namespace FreePBX\modules;
-// Default setting array passed to ajaxRequest
-$setting = array('authenticate' => true, 'allowremote' => false);
-
+include(__DIR__."/vendor/autoload.php");
+use splitbrain\PHPArchive\Tar;
+use splitbrain\PHPArchive\Zip;
 class Soundlang extends \FreePBX_Helpers implements \BMO {
 	private $message = '';
 	private $maxTimeLimit = 250;
+	private $temp;
+	private $path;
+	/** Extensions to show in the convert to section
+	 * Limited on purpose because there are far too many,
+	 * Most of which are not supported by asterisk
+	 */
+	private $convert = array(
+		"wav",
+		"sln",
+		"sln16",
+		"sln48",
+		"g722",
+		"ulaw",
+		"alaw",
+		"g729",
+		"gsm"
+	);
 
 	public function __construct($freepbx = null) {
 		$this->db = $freepbx->Database;
 		$this->FreePBX = $freepbx;
+		$this->temp = $this->FreePBX->Config->get("ASTSPOOLDIR") . "/tmp";
+		if(!file_exists($this->temp)) {
+			mkdir($this->temp,0777,true);
+		}
+		$this->path = $this->FreePBX->Config->get("ASTVARLIBDIR")."/sounds";
 	}
 
 	public function install() {
@@ -48,12 +70,13 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 		$languages = $this->getLanguages();
 
 		switch ($action) {
-		case '':
+		case 'global':
 		case 'save':
 			$language = $this->getLanguage();
 
 			$html .= load_view(dirname(__FILE__).'/views/select.php', array('languages' => $languages, 'language' => $language));
 			break;
+		case '':
 		case 'packages':
 		case 'install':
 		case 'uninstall':
@@ -92,7 +115,6 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 		case 'customlangs':
 		case 'delcustomlang':
 			$customlangs = $this->getCustomLanguages();
-
 			$html .= load_view(dirname(__FILE__).'/views/customlangs.php', array('customlangs' => $customlangs));
 			break;
 		case 'addcustomlang':
@@ -101,7 +123,17 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 				$customlang = $this->getCustomLanguage($request['customlang']);
 			}
 
-			$html .= load_view(dirname(__FILE__).'/views/customlang.php', array('customlang' => $customlang));
+			$media = $this->FreePBX->Media();
+			$supported = $media->getSupportedFormats();
+			ksort($supported['in']);
+			ksort($supported['out']);
+			$supported['in']['tgz'] = 'tgz';
+			$supported['in']['gz'] = 'gz';
+			$supported['in']['tar'] = 'tar';
+			$supported['in']['zip'] = 'zip';
+			$convertto = array_intersect($supported['out'], $this->convert);
+
+			$html .= load_view(dirname(__FILE__).'/views/customlang.php', array('customlang' => $customlang, 'convertto' => $convertto, 'supported' => $supported));
 		}
 
 		return $html;
@@ -174,7 +206,7 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 		$buttons = array();
 
 		switch ($action) {
-		case '':
+		case 'global':
 		case 'save':
 			$buttons['reset'] = array(
 				'name' => 'reset',
@@ -228,7 +260,10 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 	 */
 	public function ajaxRequest($req, $setting){
 		switch($req){
+			case "convert":
+			case "upload":
 			case "delete":
+			case "saveCustomLang":
 				return true;
 			break;
 			default:
@@ -243,6 +278,49 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 	public function ajaxHandler(){
 		$request = $_REQUEST;
 		switch($request['command']){
+			case "saveCustomLang":
+				if (empty($_POST['id'])) {
+					$this->addCustomLanguage($_POST['language'], $_POST['description']);
+				} else {
+					$this->updateCustomLanguage($_POST['id'], $_POST['language'], $_POST['description']);
+				}
+				return array("status" => true);
+			break;
+			case "convert":
+				set_time_limit(0);
+				$media = $this->FreePBX->Media;
+				$temporary = $_POST['temporary'];
+				$name = basename($_POST['name']);
+				$codec = $_POST['codec'];
+				$lang = $_POST['language'];
+				$directory = $_POST['directory'];
+				$path = $this->path . "/" . $lang;
+				if(!empty($directory)) {
+					$path = $path ."/".$directory;
+				}
+				if(!file_exists($path)) {
+					mkdir($path);
+				}
+				$name = preg_replace("/\s+|'+|`+|\"+|<+|>+|\?+|\*|\.+|&+/","-",$name);
+				if(!empty($codec)) {
+					$media->load($temporary);
+					try {
+						$media->convert($path."/".$name.".".$codec);
+						unlink($temporary);
+					} catch(\Exception $e) {
+						return array("status" => false, "message" => $e->getMessage()." [".$path."/".$name.".".$codec."]");
+					}
+					return array("status" => true, "name" => $name);
+				} else {
+					$ext = pathinfo($temporary,PATHINFO_EXTENSION);
+					if($temporary && file_exists($temporary)) {
+						rename($temporary, $path."/".$name.".".$ext);
+						return array("status" => true, "name" => $name);
+					} else {
+						return array("status" => true, "name" => $name);
+					}
+				}
+			break;
 			case 'delete':
 				switch ($request['type']) {
 					case 'customlangs':
@@ -252,6 +330,105 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 						}
 						return array('status' => true, 'message' => $ret);
 					break;
+				}
+			break;
+			case "upload":
+				if(empty($_FILES["files"])) {
+					return array("status" => false, "message" => _("No files were sent to the server"));
+				}
+				foreach ($_FILES["files"]["error"] as $key => $error) {
+					switch($error) {
+						case UPLOAD_ERR_OK:
+							$extension = pathinfo($_FILES["files"]["name"][$key], PATHINFO_EXTENSION);
+							$extension = strtolower($extension);
+							$supported = $this->FreePBX->Media->getSupportedFormats();
+							$archives = array("tgz","gz","tar","zip");
+							if(in_array($extension,$supported['in']) || in_array($extension,$archives)) {
+								$tmp_name = $_FILES["files"]["tmp_name"][$key];
+								$dname = \Media\Media::cleanFileName($_FILES["files"]["name"][$key]);
+								$dname = pathinfo($dname,PATHINFO_FILENAME);
+								$id = time().rand(1,1000);
+								$name = $dname . '-' . $id . '.' . $extension;
+								move_uploaded_file($tmp_name, $this->temp."/".$name);
+								$gfiles = $bfiles = array();
+								if(in_array($extension,$archives)) {
+									//this is an archive
+									if($extension == "zip") {
+										$tar = new Zip();
+									} else {
+										$tar = new Tar();
+									}
+									$archive = $this->temp."/".$name;
+									$tar->open($archive);
+									$path = $this->temp."/".$id;
+									if(!file_exists($path)) {
+										mkdir($path);
+									}
+									$tar->extract($path);
+									$objects = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
+									foreach($objects as $name => $object){
+										if($object->isDir()) {
+											continue;
+										}
+										$file = (string)$object;
+										$extension = pathinfo($file, PATHINFO_EXTENSION);
+										$extension = strtolower($extension);
+										$dir = dirname(str_replace($path."/","",$file));
+										$dir = ($dir != ".") ? $dir : "";
+										$dname = \Media\Media::cleanFileName(pathinfo($file,PATHINFO_FILENAME));
+										if(!in_array($extension,$supported['in'])) {
+											$bfiles[] = array(
+												"directory" => $dir,
+												"filename" => (!empty($dir) ? $dir."/" : "").$dname,
+												"localfilename" => $file,
+												"id" => ""
+											);
+											continue;
+										}
+										$gfiles[] = array(
+											"directory" => $dir,
+											"filename" => (!empty($dir) ? $dir."/" : "").$dname,
+											"localfilename" => $file,
+											"id" => ""
+										);
+									}
+									unlink($archive);
+								} else {
+									$gfiles[] = array(
+										"directory" => "",
+										"filename" => pathinfo($dname,PATHINFO_FILENAME),
+										"localfilename" => $this->temp."/".$name,
+										"id" => $id
+									);
+								}
+								return array("status" => true, "gfiles" => $gfiles, "bfiles" => $bfiles);
+							} else {
+								return array("status" => false, "message" => _("Unsupported file format"));
+								break;
+							}
+						break;
+						case UPLOAD_ERR_INI_SIZE:
+							return array("status" => false, "message" => _("The uploaded file exceeds the upload_max_filesize directive in php.ini"));
+						break;
+						case UPLOAD_ERR_FORM_SIZE:
+							return array("status" => false, "message" => _("The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form"));
+						break;
+						case UPLOAD_ERR_PARTIAL:
+							return array("status" => false, "message" => _("The uploaded file was only partially uploaded"));
+						break;
+						case UPLOAD_ERR_NO_FILE:
+							return array("status" => false, "message" => _("No file was uploaded"));
+						break;
+						case UPLOAD_ERR_NO_TMP_DIR:
+							return array("status" => false, "message" => _("Missing a temporary folder"));
+						break;
+						case UPLOAD_ERR_CANT_WRITE:
+							return array("status" => false, "message" => _("Failed to write file to disk"));
+						break;
+						case UPLOAD_ERR_EXTENSION:
+							return array("status" => false, "message" => _("A PHP extension stopped the file upload"));
+						break;
+					}
 				}
 			break;
 			default:
@@ -601,71 +778,103 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 	/**
 	 * Install Package from online servers
 	 * @param  array $package Array of information about the package
+	 * @param bool $force Force redownload, even if it exists.
 	 * @return mixed          return a string of the installed package or null
 	 */
-	public function installPackage($package) {
+	public function installPackage($package, $force = false) {
 		global $amp_conf;
 
-		$this->uninstallPackage($package);
+		$basename = $package['type'].'-'.$package['module'].'-'.$package['language'].'-'.$package['format'] .'-'.$package['version'];
+		$soundsdir = $amp_conf['ASTVARLIBDIR'] . "/sounds";
 
-		$tmpdir = sys_get_temp_dir();
-		$pkgdir = $tmpdir . '/' . $package['type'] . '-' . $package['module'] . '-' . $package['language'] . '-' . $package['format'] . '-' . $package['version'] . '/';
+		// Does this sound language package already exist on this machine?
+		$txtfile = $soundsdir.'/'.$package['language'].'/'.$package['module'].'-'.$package['language'].'.txt';
+		if ($force || !file_exists("$soundsdir/.$basename") || !file_exists($txtfile)) {
+			// No. We need to fetch it.
 
-		$filename = $package['type'] . '-' . $package['module'] . '-' . $package['language'] . '-' . $package['format'] . '-' . $package['version'] . '.tar.gz';
-
-		$filedata = $this->getRemoteFile("/sounds/" . $filename);
-		file_put_contents($tmpdir . "/" . $filename, $filedata);
-
-		/* Untar into temp dir */
-		@mkdir($pkgdir);
-		exec("tar zxf " . $tmpdir . "/" . escapeshellarg($filename) . " -C " . escapeshellarg($pkgdir), $output, $exitcode);
-		if ($exitcode != 0) {
-			@rmdir($pkgdir);
-			freepbx_log(FPBX_LOG_ERROR, sprintf(_("failed to open %s sounds archive."), $filename));
-			return array(sprintf(_('Could not untar %s to %s'), $filename, $amp_conf['ASTVARLIBDIR'] . "/sounds/" . $package['language'] . "/"));
-		}
-
-		/* Track installed sounds */
-		$olddir = getcwd();
-		chdir($pkgdir);
-		$glob = glob("{*.[a-z]*,*/*.[a-z]*}", GLOB_BRACE);
-		$files = array_filter($glob, function($v) {
-			return substr($v, -4) != ".txt";
-		});
-		chdir($olddir);
-
-		if ($files && !empty($files)) {
-			$sql = "INSERT INTO soundlang_prompts (type, module, language, format, filename) VALUES (:type, :module, :language, :format, :filename)";
-			$sth = $this->db->prepare($sql);
-			foreach ($files as $file) {
-				$row = array(
-					':type' => $package['type'],
-					':module' => $package['module'],
-					':language' => $package['language'],
-					':format' => $package['format'],
-					':filename' => $file,
-				);
-				$res = $sth->execute($row);
+			$tmpdir = "$soundsdir/tmp";
+			if (!is_dir($tmpdir)) {
+				mkdir($tmpdir);
 			}
 
-			/* Move prompts into place */
-			$destdir = $amp_conf['ASTVARLIBDIR'] . "/sounds/" . $package['language'] . "/";
+			// This is the file we want to download
+			$filename = $basename . '.tar.gz';
+			$filedata = $this->getRemoteFile("/sounds/" . $filename);
+			file_put_contents($tmpdir . "/" . $filename, $filedata);
+
+			// Extract it to the correct location
+			$destdir = "$soundsdir/".$package['language']."/";
 			@mkdir($destdir);
-			foreach ($files as $file) {
-				if (!is_dir(dirname($destdir . $file))) {
-					@mkdir(dirname($destdir . $file));
-				}
+			exec("tar zxf " . $tmpdir . "/" . escapeshellarg($filename) . " -C " . escapeshellarg($destdir), $output, $exitcode);
 
-				rename($pkgdir . $file, $destdir . $file);
+			if ($exitcode != 0) {
+				freepbx_log(FPBX_LOG_ERROR, sprintf(_("failed to open %s sounds archive."), $filename));
+				return array(sprintf(_('Could not untar %s to %s'), $filename, $destdir));
 			}
 
-			$this->setPackageInstalled($package, $package['version']);
-
-			needreload();
+			// If the txt file doesn't exist, there's something wrong with the package.
+			if (!file_exists($txtfile)) {
+				throw new \Exception("Couldn't find $txtfile - not in archive $filename?");
+			}
+			// Create our version file so we know it exists in the future.
+			touch ("$soundsdir/.$basename");
 		}
 
-		if (unlink($tmpdir . "/" . $filename) === false) {
-			freepbx_log(FPBX_LOG_WARNING, sprintf(_("failed to delete %s from cache directory after opening sounds archive."), $filename));
+		// Get a list of sounds in this package.
+		$prompts = file($txtfile, \FILE_SKIP_EMPTY_LINES);
+		$files = array();
+		foreach ($prompts as $prompt) {
+			// If it's a comment, skip
+			if ($prompt[0] == ";") {
+				continue;
+			}
+			// Ignore the description
+			$tmparr = explode(":", $prompt);
+			$files[] = $tmparr[0];
+		}
+
+		if (!$files) {
+			throw new \Exception("Unable to find any soundfiles in $basename package");
+		}
+
+		$row = array(
+			':type' => $package['type'],
+			':module' => $package['module'],
+			':language' => $package['language'],
+			':format' => $package['format']
+		);
+
+		// Delete any prompts from this package previously
+		$sql = "DELETE FROM `soundlang_prompts` WHERE `type`=:type AND `module`=:module AND `language`=:language AND `format`=:format";
+		$del = $this->db->prepare($sql);
+		$del->execute($row);
+
+		// Now load in the new files
+		$sql = "INSERT INTO soundlang_prompts (type, module, language, format, filename) VALUES (:type, :module, :language, :format, :filename)";
+		$sth = $this->db->prepare($sql);
+		foreach ($files as $file) {
+			$row['filename'] = $file.'.'.$package['format'];
+			$res = $sth->execute($row);
+		}
+
+		$this->setPackageInstalled($package, $package['version']);
+	}
+
+	public function recursivermdir($dir) {
+		if (is_dir($dir)) {
+			$objs = scandir($dir);
+			foreach ($objs as $obj) {
+				if ($obj != "." && $obj != "..") {
+					$name = $dir . "/" . $obj;
+					if (filetype($name) == "dir") {
+						$this->recursivermdir($name);
+					} else {
+						unlink($name);
+					}
+				}
+				reset($objs);
+			}
+			rmdir($dir);
 		}
 	}
 
@@ -675,6 +884,17 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 	 */
 	public function uninstallPackage($package) {
 		global $amp_conf;
+
+		$soundsdir = $amp_conf['ASTVARLIBDIR'] . "/sounds";
+		$tmpname = $package['type'].'-'.$package['module'].'-'.$package['language'].'-'.$package['format'] .'-';
+
+		// Figure out which one we have, if any
+		$installed = glob("$soundsdir/.$tmpname*");
+		if ($installed) {
+			foreach ($installed as $file) {
+				unlink($file);
+			}
+		}
 
 		$this->setPackageInstalled($package, NULL);
 
@@ -689,7 +909,9 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 		$files = $sth->fetchAll(\PDO::FETCH_ASSOC);
 
 		if ($files) {
-			$destdir = $amp_conf['ASTVARLIBDIR'] . "/sounds/" . $package['language'] . "/";
+			$destdir = "$soundsdir/" . $package['language'] . "/";
+
+			// Delete the soundfiles from this pack
 			foreach ($files as $file) {
 				@unlink($destdir . $file['filename']);
 			}
@@ -740,5 +962,8 @@ class Soundlang extends \FreePBX_Helpers implements \BMO {
 				freepbx_log(FPBX_LOG_ERROR, sprintf(_('Failed to get remote file, error was:'), (string)$e->getMessage()));
 			}
 		}
+	}
+	public function getRightNav($request) {
+		return load_view(dirname(__FILE__).'/views/rnav.php',array());
 	}
 }

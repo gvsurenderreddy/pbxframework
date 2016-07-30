@@ -7,13 +7,15 @@
  * Copyright 2006-2014 Schmooze Com Inc.
  */
 
-class Ucp extends \FreePBX_Helpers implements \BMO {
+class Ucp implements \BMO {
 	private $message;
 	private $registeredHooks = array();
 	private $brand = 'FreePBX';
+	private $tokenCache = false;
 	public function __construct($freepbx = null) {
-		if ($freepbx == null)
+		if ($freepbx == null) {
 			throw new Exception("Not given a FreePBX Object");
+		}
 
 		$this->FreePBX = $freepbx;
 		$this->Userman = $this->FreePBX->Userman;
@@ -41,6 +43,21 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 	}
 	public function restore($backup){
 
+	}
+
+	/**
+	 * Force UCP to refresh on next page load
+	 * @param  int $uid User Manager ID
+	 */
+	public function refreshInterface($uid) {
+		if(!empty($uid)) {
+			$ref = $this->Userman->getModuleSettingByID($uid,'ucp|Global','flushPage');
+			if($ref) {
+				$this->Userman->setModuleSettingByID($uid,'ucp|Global','flushPage',false);
+			}
+			return $ref;
+		}
+		return false;
 	}
 
 	public function usermanShowPage() {
@@ -190,7 +207,9 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 		$usettings = $this->FreePBX->Userman->getAuthAllPermissions();
 
 		if(!empty($ports['ucp'])) {
-			$data['host'] = $data['host'].":".$ports['ucp'];
+			//sslucp
+			$p = preg_match("/^https/",$data['host']) && !empty($ports['ucpssl']) ? $ports['ucpssl'] : $ports['ucp'];
+			$data['host'] = $data['host'].":".$p;
 			$final = array(
 				"\t".sprintf(_('User Control Panel: %s'),$data['host']),
 			);
@@ -301,7 +320,7 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 
 		$group = $this->Userman->getGroupByGID($id);
 		foreach($group['users'] as $user) {
-			$this->expireUserSessions($user);
+			$this->FreePBX->Userman->setModuleSettingByID($user,'ucp|Global','flushPage',true);
 		}
 	}
 
@@ -325,7 +344,7 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 
 		$group = $this->Userman->getGroupByGID($id);
 		foreach($group['users'] as $user) {
-			$this->expireUserSessions($user);
+			$this->FreePBX->Userman->setModuleSettingByID($user,'ucp|Global','flushPage',true);
 		}
 	}
 
@@ -373,6 +392,7 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 		}
 		$login = $this->FreePBX->Userman->getModuleSettingByID($id,'ucp|Global','allowLogin');
 		$this->FreePBX->Hooks->processHooks($id,$display,$login,$data);
+		$this->FreePBX->Userman->setModuleSettingByID($id,'ucp|Global','flushPage',true);
 	}
 
 	/**
@@ -407,7 +427,7 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 		}
 		$login = $this->FreePBX->Userman->getModuleSettingByID($id,'ucp|Global','allowLogin');
 		$this->FreePBX->Hooks->processHooks($id,$display,$login,$data);
-		$this->expireUserSessions($id);
+		$this->FreePBX->Userman->setModuleSettingByID($id,'ucp|Global','flushPage',true);
 		return true;
 	}
 
@@ -692,10 +712,17 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 	/**
 	* Trash all sessions (used for upgrade purposes)
 	*/
-	public function expireAllUserSessions() {
-		$sql = "TRUNCATE TABLE ucp_sessions";
+	public function expireAllUserSessions($days = null) {
+		if(empty($days)) {
+			$sql = "TRUNCATE TABLE ucp_sessions";
+		} elseif(ctype_digit($days)) {
+			$sql = "DELETE FROM ucp_sessions WHERE `time` < unix_timestamp(now() - interval ".$days." day))";
+		} else {
+			return false;
+		}
 		try {
 			$sth = $this->db->prepare($sql);
+			$sth->execute();
 		} catch(\Exception $e) {}
 		return true;
 	}
@@ -781,10 +808,19 @@ class Ucp extends \FreePBX_Helpers implements \BMO {
 	 * @param {string} $token The token name
 	 */
 	public function getToken($token) {
+		if(!empty($this->tokenCache)) {
+			return $this->tokenCache;
+		}
+		$expire = $this->FreePBX->Config->get("UCPSESSIONTIMEOUT");
+		if(!empty($expire) && ctype_digit($expire)) {
+			$this->expireAllUserSessions($expire);
+		}
+
 		$sql = "SELECT uid, address FROM ucp_sessions WHERE session = :token";
 		$sth = $this->db->prepare($sql);
 		$sth->execute(array(':token' => $token));
-		return $sth->fetch(\PDO::FETCH_ASSOC);
+		$this->tokenCache = $sth->fetch(\PDO::FETCH_ASSOC);
+		return $this->tokenCache;
 	}
 
 	/**

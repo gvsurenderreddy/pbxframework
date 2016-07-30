@@ -3,13 +3,79 @@
 	<repo>standard</repo>
 	<category>Applications</category>
 	<name>Core</name>
-	<version>13.0.37</version>
+	<version>13.0.102.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.102* Noload a few more pjsip modules
+		*13.0.101* FREEPBX-12620 add language to pjsip trunks
+		*13.0.100* FREEPBX-12708 fix export with no data
+		*13.0.99* Add sound languages: it,fr,en_GB			
+		*13.0.98* Allow arbitrary sections in pjsip configuration
+		*13.0.97* Address concerns re digium. Thanks Scott!
+		*13.0.96* ASTNOW-436 allow addEndpoint to create non-device sections
+		*13.0.95* FREEPBX-12608 Add a field for PJSIP extensions to set device_state_busy_at
+		*13.0.94* FREEPBX-9281 remove new user option when creating a device in UD mode
+		*13.0.93* FREEPBX-10264 Don't auto-answer when in a queue
+		*13.0.92* FREEPBX-12408 Regression: DID using keywords in cid field
+		*13.0.91* Fix verification of DIDs
+		*13.0.90* Display the ports that are being used in a more comprehensible fashion.
+		*13.0.89* FREEPBX-12192 Update validation, FREEPBX-12281 variable naming, FREEPBX-12286 Fix dialplan logic for AMPBADNUMBER
+		*13.0.88* FREEPBX-12345 Only replace dialopts not the string
+		*13.0.87* FREEPBX-12325 only use PJSIP or SIP when they are the driver
+		*13.0.86* FREEPBX-8801 Move some paging functionality into paging
+		*13.0.85* FREEPBX-12271 IVR Direct Dial no longer working with Device and User mode
+		*13.0.84* FREEPBX-11597 reset form after quick create page change
+		*13.0.83* FREEPBX-8981 add automon back into featuremap as it doesnt seem to conflict
+		*13.0.82* FREEPBX-12013 remove invalid dtmf none option, add valid auto option
+		*13.0.81* FREEPBX-11826 import answermode
+		*13.0.80* Dynamic intercom hints for reload improvements
+		*13.0.79* Add ipv6 brackets when needed
+		*13.0.78* Use proper bind port
+		*13.0.77* Yes is not true
+		*13.0.76* Bind to correct port on https
+		*13.0.75* Fix missing data on edit
+		*13.0.74* Session timers needs to be labeled something else
+		*13.0.73* FREEPBX-11969 FREEPBX-12015 FREEPBX-12074 FREEPBX-12076 FREEPBX-12085 FREEPBX-11915 FREEPBX-12000
+		*13.0.72* FREEPBX-12058 prevent potential unexpected use of transfer functionality
+		*13.0.71* IP-196
+		*13.0.70* FREEPBX-12019 run trim against any timezone setting
+		*13.0.69* FREEPBX-11988 Fix bug with editing extensions
+		*13.0.68* FREEPBX-11862 Fix field sizing
+		*13.0.67* Advanced settings name changes
+		*13.0.66* FREEPBX-11710 Attach endpoint to identify
+		*13.0.65* FREEPBX-11753, FREEPBX-11601, FREEPBX-11777, FREEPBX-11564, FREEPBX-11671, FREEPBX-11710, FREEPBX-11727, FREEPBX-11728, FREEPBX-11733, FREEPBX-9268, FREEPBX-11744
+		*13.0.64* Allow adding sections to sip_additional.conf
+		*13.0.63* FREEPBX-9691 Add asterisk http.conf settings in GUI
+		*13.0.62* FREEPBX-9914 Add incoming routes/dids to search
+		*13.0.61* FREEPBX-11037 Parking Pro module - Parked Music Class wont change
+		*13.0.60* FREEPBX-11768 Inbound Call Fails If All Extensions on DND
+		*13.0.59* FREEPBX-11093 Check for common errors during bulk import
+		*13.0.58* Simplify settings
+		*13.0.57* Simple inbound routes views
+		*13.0.56* FREEPBX-11734 remove backslashed semi-colon
+		*13.0.55* FREEPBX-11730 Advanced settings display issues
+		*13.0.54* FREEPBX-11463 Improve permit/deny tooltips, FREEPBX-11649 bootstrap tables cookie fix
+		*13.0.53* FREEPBX-11017 fix variables for PJSIP, FREEPBX-11068 Fix quoting of screen variable, FREEPBX-11388 Fix did links, 	FREEPBX-11570 catch username conflicts., FREEPBX-11601 Fix element bindings for trunk
+		*13.0.52* FREEPBX-11648 FREEPBX-11676 use datalist instead of unsupport js library
+		*13.0.51* Macro hook additions
+		*13.0.50* Exit macro-dial properly (RE: FREEPBX-11698)
+		*13.0.49* FREEPBX-11698 Remove all numbered priorities on ring groups
+		*13.0.48* Allow splicing into macro-dial one during group exten parsing
+		*13.0.47* Better wording of destination drop downs for voicemail
+		*13.0.46* FREEPBX-11612 force_rport not being written
+		*13.0.45* If there are fatal errors in install then return false dont die_freepbx, just abort this module
+		*13.0.44* FREEPBX-11494 "fwconsole chown" doesn't work in Kickstart script
+		*13.0.43* FREEPBX-11460 add mediaencryption defaults so they import
+		*13.0.42* Fix pjsip trunks with no auth generating invalid config
+		*13.0.41* Migrate from pickupgroup to namedpickupgroup
+		*13.0.40* FREEPBX-11421 Users Section - No Users Listed
+		*13.0.39* FREEPBX-11329 Add checkrange to grid FREEPBX-11324 Array validation FREEPBX-11017 Patch submission namedpickupgroup instead of pickupgroup
+		*13.0.38.2* Add func-sip-apply-headers to local confirm
+		*13.0.38.1* FREEPBX-11149 bad destinations fix
 		*13.0.37* Ignore space on Alert Infos
 		*13.0.36* FREEPBX-11233
 		*13.0.35* FREEPBX-11259 FREEPBX-11224
@@ -129,7 +195,7 @@
 		*13.0.1alpha2* Reskin. Complete visuals change. Added new functionality. Broke apart drivers.
 	</changelog>
 	<depends>
-		<version>13.0.46</version>
+		<version>13.0.75</version>
 	</depends>
 	<menuitems>
 		<extensions needsenginedb="yes">Extensions</extensions>
@@ -169,6 +235,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/core-13.0.37.tgz</location>
-	<md5sum>099176025ea90a2da88a07bdfe08fe92</md5sum>
+	<location>release/13.0/core-13.0.102.1.tgz</location>
+	<md5sum></md5sum>
 </module>

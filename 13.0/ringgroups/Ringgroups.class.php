@@ -21,6 +21,7 @@ class Ringgroups implements \BMO {
 		isset($request['extdisplay'])?$extdisplay=$request['extdisplay']:$extdisplay='';
 		isset($request['account'])?$account = $request['account']:$account='';
 		isset($request['grptime'])?$grptime = $request['grptime']:$grptime='';
+		isset($request['progress'])?$progress = $request['progress']:$progress='yes';
 		isset($request['grppre'])?$grppre = $request['grppre']:$grppre='';
 		isset($request['strategy'])?$strategy = $request['strategy']:$strategy='';
 		isset($request['annmsg_id'])?$annmsg_id = $request['annmsg_id']:$annmsg_id='';
@@ -30,7 +31,7 @@ class Ringgroups implements \BMO {
 		isset($request['cwignore'])?$cwignore = $request['cwignore']:$cwignore='';
 		isset($request['cpickup'])?$cpickup = $request['cpickup']:$cpickup='';
 		isset($request['cfignore'])?$cfignore = $request['cfignore']:$cfignore='';
-		isset($request['remotealert_id'])?$remotealert_id = $request['remotealert_id']:$remotealert_id='';
+		isset($request['remotealert_id'])?$remotealert_id = $request['remotealert_id']:$remotealert_id='0';
 		isset($request['toolate_id'])?$toolate_id = $request['toolate_id']:$toolate_id='';
 		isset($request['ringing'])?$ringing = $request['ringing']:$ringing='';
 
@@ -42,7 +43,6 @@ class Ringgroups implements \BMO {
 		} else {
 						$goto = '';
 		}
-
 
 		if (isset($request["grplist"])) {
 			$grplist = explode("\n",$request["grplist"]);
@@ -83,7 +83,7 @@ class Ringgroups implements \BMO {
 					if (!empty($usage_arr)) {
 						$conflict_url = framework_display_extension_usage_alert($usage_arr);
 
-					} elseif (ringgroups_add($account,$strategy,$grptime,implode("-",$grplist),$goto,$description,$grppre,$annmsg_id,$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid,$fixedcid,$cpickup,$recording)) {
+					} elseif (ringgroups_add($account,$strategy,$grptime,implode("-",$grplist),$goto,$description,$grppre,$annmsg_id,$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid,$fixedcid,$cpickup,$recording, $progress)) {
 
 						// save the most recent created destination which will be picked up by
 						//
@@ -105,7 +105,7 @@ class Ringgroups implements \BMO {
 				//edit group - just delete and then re-add the extension
 				if ($action == 'edtGRP') {
 					ringgroups_del($account);
-					ringgroups_add($account,$strategy,$grptime,implode("-",$grplist),$goto,$description,$grppre,$annmsg_id,$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid,$fixedcid,$cpickup,$recording);
+					ringgroups_add($account,$strategy,$grptime,implode("-",$grplist),$goto,$description,$grppre,$annmsg_id,$alertinfo,$needsconf,$remotealert_id,$toolate_id,$ringing,$cwignore,$cfignore,$changecid,$fixedcid,$cpickup,$recording,$progress);
 					needreload();
 					$_REQUEST['extdisplay'] = $account;
 				}
@@ -152,47 +152,50 @@ class Ringgroups implements \BMO {
 						'id' => 'reset',
 						'value' => _('Reset')
 					)
-    			);
-    		break;
-    	}
-    	if (empty($request['extdisplay'])) {
-    		unset($buttons['delete']);
-    	}
-    	if($request['view'] != 'form'){
-    		unset($buttons);
-    	}
-    	return $buttons;
-    }
-		public function listRinggroups($get_all=false) {
-			$sql = "SELECT grpnum, description FROM ringgroups ORDER BY CAST(grpnum as UNSIGNED)";
-			$stmt = $this->db->prepare($sql);
-			$stmt->execute();
-			$results = $stmt->fetchall(\PDO::FETCH_ASSOC);
-			foreach ($results as $result) {
-				if ($get_all || (isset($result['grpnum']) && checkRange($result['grpnum']))) {
-					$grps[] = array(
-						0 => $result['grpnum'],
-						1 => $result['description'],
-						'grpnum' => $result['grpnum'],
-						'description' => $result['description'],
-					);
-				}
-			}
-			if (isset($grps))
-				return $grps;
-			else
-				return array();
+				);
+			break;
 		}
-		public function ajaxRequest($req, &$setting) {
-			switch ($req) {
-				case 'getJSON':
-					return true;
-				break;
-				default:
-					return false;
-				break;
+		if (empty($request['extdisplay'])) {
+			unset($buttons['delete']);
+		}
+		if($request['view'] != 'form'){
+			unset($buttons);
+		}
+		return $buttons;
+	}
+
+	public function listRinggroups($get_all=false) {
+		$sql = "SELECT grpnum, description FROM ringgroups ORDER BY CAST(grpnum as UNSIGNED)";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		$results = $stmt->fetchall(\PDO::FETCH_ASSOC);
+		foreach ($results as $result) {
+			if ($get_all || (isset($result['grpnum']) && checkRange($result['grpnum']))) {
+				$grps[] = array(
+					0 => $result['grpnum'],
+					1 => $result['description'],
+					'grpnum' => $result['grpnum'],
+					'description' => $result['description'],
+				);
 			}
 		}
+		if (isset($grps))
+			return $grps;
+		else
+			return array();
+	}
+
+	public function ajaxRequest($req, &$setting) {
+		switch ($req) {
+			case 'getJSON':
+				return true;
+			break;
+			default:
+				return false;
+			break;
+		}
+	}
+
 	public function ajaxHandler(){
 		switch ($_REQUEST['command']) {
 			case 'getJSON':
@@ -212,6 +215,7 @@ class Ringgroups implements \BMO {
 			break;
 		}
 	}
+
 	public function getRightNav($request) {
 	  if(isset($request['view']) && $request['view'] == 'form'){
 	    return load_view(__DIR__."/views/bootnav.php",array());

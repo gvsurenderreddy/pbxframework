@@ -349,7 +349,7 @@ class component {
 		$this->sorted_processfuncs = true;
 	}
 
-	function generateconfigpage($loadView=null) {
+	function generateconfigpage($loadView=null, $variables = array()) {
 		if(empty($loadView)) {
 			$loadView = dirname(__DIR__) . "/views/currentcomponent.php";
 		}
@@ -436,7 +436,9 @@ class component {
 			$action = isset($this->opts['form_action']) ? $this->opts['form_action'] : "";
 			$display = !empty($_REQUEST['display']) ? $_REQUEST['display'] : rand(0,10);
 			$showTabs = count($html['middle']) > 1;
-			return load_view($loadView, array("tabtranslations" => $this->tabtranslations, "showtabs" => $showTabs, "display" => $display, "active" => $active, "hiddens" => $hiddens, "action" => $action, "html" => $html, "jsfuncs" => $jsfuncs));
+			$vars = array("tabtranslations" => $this->tabtranslations, "showtabs" => $showTabs, "display" => $display, "active" => $active, "hiddens" => $hiddens, "action" => $action, "html" => $html, "jsfuncs" => $jsfuncs);
+			$finalVars = !empty($variables) ? array_merge($variables, $vars) : $vars;
+			return load_view($loadView, $finalVars);
 		} else {
 			return '';
 		}
@@ -555,6 +557,9 @@ class guielement {
  */
 class gui_hidden extends guielement {
 	function gui_hidden($elemname, $currentvalue = '', $table=true) {
+		if(is_array($elemname)) {
+			extract($elemname);
+		}
 		// call parent class contructor
 		parent::__construct($elemname, '', '');
 
@@ -1052,7 +1057,7 @@ class gui_drawselects extends guiinput {
 }
 
 class gui_textarea extends guiinput {
-	public function __construct($elemname, $currentvalue = '', $prompttext = '', $helptext = '', $jsvalidation = '', $failvalidationmsg = '', $canbeempty = true, $maxchars = 0, $class='') {
+	public function __construct($elemname, $currentvalue = '', $prompttext = '', $helptext = '', $jsvalidation = '', $failvalidationmsg = '', $canbeempty = true, $maxchars = 0, $class='', $select = array()) {
 		if(is_array($elemname)) {
 			extract($elemname);
 		}
@@ -1068,6 +1073,47 @@ class gui_textarea extends guiinput {
 
 		$this->html_input = "<textarea rows=\"$rows\" name=\"$this->_elemname\" class=\"form-control autosize ".$class."\" id=\"$this->_elemname\" $maxlength $disable_state>" . htmlentities($this->currentvalue) . "</textarea>";
 		$this->type = "textarea";
+	}
+}
+
+class gui_textarea_select extends gui_textarea {
+	public function __construct($elemname, $currentvalue = '', $prompttext = '', $helptext = '', $jsvalidation = '', $failvalidationmsg = '', $canbeempty = true, $maxchars = 0, $class='',$select=array()) {
+		if(is_array($elemname)) {
+			extract($elemname);
+		}
+		parent::__construct($elemname, $currentvalue, $prompttext, $helptext, $jsvalidation, $failvalidationmsg, $canbeempty, $maxchars, $class);
+
+		$select = is_array($select) ? $select : array();
+		$disable_state = isset($disable) && $disable ? ' disabled' : '';
+		$maxlength = ($maxchars > 0) ? " maxlength=\"$maxchars\"" : '';
+		$list = explode("\n",$this->currentvalue);
+		$rows = count($list);
+		$rows = (($rows > 20) ? 20 : $rows);
+		$rows++;
+
+		$this->html_input = '<div class="input-group">';
+		$this->html_input .= '<textarea id="'.$this->_elemname.'" class="form-control autosize '.$class.'" rows="'.$rows.'" name="'.$this->_elemname.'" '.$maxlength.' '.$disable_state.'>'.htmlentities($this->currentvalue).'</textarea>';
+		$this->html_input .= '<span class="input-group-addon">';
+		$this->html_input .= '<select id="'.$this->_elemname.'_select" class="form-control" data-for="'.$this->_elemname.'" style="width:170px;">';
+		$this->html_input .= '<option selected="" value="">'._("Quick Select").'</option>';
+		foreach($select as $data) {
+			$this->html_input .= '<option value="'.$data['value'].'">'.$data['text'].'</option>';
+		}
+		$this->html_input .= '</select></span></div>';
+		$this->html_input .= "<script>$('#{$this->_elemname}_select').change(function() {
+			var taelm = $(this).data('for');
+			var cval = $('#'+taelm).val();
+			if(cval.length === 0){
+				$('#'+taelm).val($(this).val());
+				$(this).children('option[value=\"'+$(this).val()+'\"]').remove();
+			}else{
+				$('#'+taelm).val(cval+\"\\n\"+$(this).val());
+				$(this).children('option[value=\"'+$(this).val()+'\"]').remove();
+			}
+			var ta = document.querySelector('textarea.autosize');
+			autosize.update(ta);
+		})</script>";
+		$this->type = "textarea_select";
 	}
 }
 
@@ -1129,6 +1175,78 @@ class guitext extends guielement {
 		$output .= "\t</tr>\n";
 
 		return $output;
+	}
+}
+
+/**
+ * Generate a bootstrap table
+ */
+class gui_table extends guitext {
+	public function __construct($elemname, $headers, $rows=array(), $options=array()) {
+		// call parent class contructor
+		parent::__construct($elemname, '');
+
+		$default = array(
+			"cache" => "false",
+			"cookie" => "true",
+			"cookie-id-table" => $this->_elemname,
+			"maintain-selected" => "true",
+			"show-columns" => "true",
+			"show-toggle" => "true",
+			"pagination" => "true",
+			"search" => "true"
+		);
+		foreach($default as $key => $value) {
+			if(!isset($options[$key])) {
+				$options[$key] = $value;
+			}
+		}
+
+		$html = '<table id="'.$this->_elemname.'" data-toggle="table" ';
+		foreach($options as $key => $value) {
+			$html .= "data-".$key."=".$value." ";
+		}
+		$html .= ' class="table table-striped">';
+		$html .= '<thead><tr>';
+		foreach($headers as $data) {
+			$html .= '<th ';
+			if(!empty($data['options'])) {
+				foreach($data['options'] as $key => $value) {
+					$html .= "data-".$key."=".$value." ";
+				}
+			}
+			$html .= '>'.$data['name'].'</th>';
+		}
+		$html .= '</tr></thead>';
+		if(!empty($rows)) {
+			$html .= '<tbody>';
+			foreach($rows as $row) {
+				$html .= '<tr>';
+				foreach($row as $cel) {
+					$html .= '<td>'.$cel.'</td>';
+				}
+				$html .= '</tr>';
+			}
+			$html .= '</tbody>';
+		}
+		$html .= '</table>';
+		$this->html_text = $html;
+		$this->type = "table";
+	}
+}
+
+/**
+ * Send HTML down the line directly into the component
+ */
+class gui_html extends guitext {
+	public function __construct($elemname, $html) {
+		// call parent class contructor
+		parent::__construct($elemname, $html);
+
+		// nothing really needed here as it's just whatever html was passed
+		// but suppose we should do something with the element name
+		$this->html_text = $html;
+		$this->type = "html";
 	}
 }
 

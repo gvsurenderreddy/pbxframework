@@ -2,11 +2,26 @@
 	<rawname>contactmanager</rawname>
 	<repo>standard</repo>
 	<name>Contact Manager</name>
-	<version>13.0.16</version>
+	<version>13.0.30.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
+		*13.0.30.1* Ringfree branch
+		*13.0.30* Support contact images (uploaded or from gravatar)
+		*13.0.29* FREEPBX-12561 Cannot see personal External Contact Manager Groups in Phone Apps that were created in UCP
+		*13.0.28* Remove dialing code that would never work correctly
+		*13.0.27* Fix bug when trying to clean up corruption
+		*13.0.26* Fix undefined id in updateGroupEntryByID
+		*13.0.25* Allow assigning all public groups
+		*13.0.24* FREEPBX-11972 FREEPBX-11686
+		*13.0.23* Remove CoS functionality, this is now controlled in User Manager
+		*13.0.22* Reference contact manager
+		*13.0.21* Dont reference old userman callbacks
+		*13.0.20* FREEPBX-11557 Primary number deletes if more than one number entered when saving edit
+		*13.0.19* Remove en_US Translations
+		*13.0.18* Remove en_US Translations
+		*13.0.17* FREEPBX-11267 bulk handler issues
 		*13.0.16* FREEPBX-11133
 		*13.0.15* FREEPBX-10845
 		*13.0.14* FREEPBX-10889
@@ -37,28 +52,28 @@
 	</menuitems>
 	<depends>
 		<version>13.0.0</version>
-		<module>userman ge 13.0.24</module>
+		<module>userman ge 13.0.56</module>
 	</depends>
 	<supported>
 		<version>13.0</version>
 	</supported>
 	<hooks>
-		<bulkhandler namespace="FreePBX\modules" class="Bulkhandler">
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="getHeaders">bulkhandlerGetHeaders</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="getTypes">bulkhandlerGetTypes</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="import">bulkhandlerImport</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="export">bulkhandlerExport</method>
+		<bulkhandler class="Bulkhandler" namespace="FreePBX\modules">
+			<method callingMethod="getHeaders" class="Contactmanager" namespace="FreePBX\modules">bulkhandlerGetHeaders</method>
+			<method callingMethod="getTypes" class="Contactmanager" namespace="FreePBX\modules">bulkhandlerGetTypes</method>
+			<method callingMethod="import" class="Contactmanager" namespace="FreePBX\modules">bulkhandlerImport</method>
+			<method callingMethod="export" class="Contactmanager" namespace="FreePBX\modules">bulkhandlerExport</method>
 		</bulkhandler>
-		<userman namespace="FreePBX\modules" class="Userman">
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="delGroup">usermanDelGroup</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="addGroup">usermanAddGroup</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="updateGroup">usermanUpdateGroup</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="delUser">usermanDelUser</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="addUser">usermanAddUser</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="updateUser">usermanUpdateUser</method>
-			<method namespace="FreePBX\modules" class="Contactmanager" callingMethod="myShowPage">usermanShowPage</method>
+		<userman class="Userman" namespace="FreePBX\modules">
+			<method callingMethod="delGroup" class="Contactmanager" namespace="FreePBX\modules">usermanDelGroup</method>
+			<method callingMethod="addGroup" class="Contactmanager" namespace="FreePBX\modules">usermanAddGroup</method>
+			<method callingMethod="updateGroup" class="Contactmanager" namespace="FreePBX\modules">usermanUpdateGroup</method>
+			<method callingMethod="delUser" class="Contactmanager" namespace="FreePBX\modules">usermanDelUser</method>
+			<method callingMethod="addUser" class="Contactmanager" namespace="FreePBX\modules">usermanAddUser</method>
+			<method callingMethod="updateUser" class="Contactmanager" namespace="FreePBX\modules">usermanUpdateUser</method>
+			<method callingMethod="myShowPage" class="Contactmanager" namespace="FreePBX\modules">usermanShowPage</method>
 		</userman>
 	</hooks>
-	<location>release/13.0/contactmanager-13.0.16.tgz</location>
-	<md5sum>8b265f691cd24abbfb99ba31a60af636</md5sum>
+	<location>release/13.0/contactmanager-13.0.30.1.tgz</location>
+	<md5sum></md5sum>
 </module>

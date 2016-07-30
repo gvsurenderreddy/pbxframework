@@ -13,7 +13,8 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		"res_pjsip_registrar_expire.so", "res_pjsip_transport_websocket.so", "res_pjsip_caller_id.so", "res_pjsip_header_funcs.so",
 		"res_pjsip_one_touch_record_info.so", "res_pjsip_registrar.so", "res_pjsip_diversion.so", "res_pjsip_log_forwarder.so",
 		"res_pjsip_outbound_authenticator_digest.so", "res_pjsip_rfc3326.so", "res_pjsip_dtmf_info.so", "res_pjsip_logger.so",
-		"res_pjsip_outbound_registration.so", "res_pjsip_sdp_rtp.so", "res_pjsip_outbound_publish.so");
+		"res_pjsip_outbound_registration.so", "res_pjsip_sdp_rtp.so", "res_pjsip_outbound_publish.so", "res_pjsip_config_wizard.so",
+		"res_pjproject.so");
 
 	private $_endpoint = array();
 	private $_auth = array();
@@ -21,10 +22,15 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 	private $_global = array();
 	private $_registration = array();
 	private $_identify = array();
+	private $language = null;
 
 	public function __construct($freepbx) {
 		parent::__construct($freepbx);
 		$this->db = $this->database;
+
+		if ($this->freepbx->Modules->moduleHasMethod('Soundlang', 'getLanguage')) {
+			$this->language = $this->freepbx->Soundlang->getLanguage(); //global language
+		}
 	}
 
 	public function getInfo() {
@@ -114,15 +120,19 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				"value" => "no",
 				"flag" => $flag++
 			),
+			"timers" => array(
+				"value" => "yes",
+				"flag" => $flag++
+			),
 			"icesupport" => array(
 				"value" => "no",
 				"flag" => $flag++
 			),
-			"callgroup" => array(
+			"namedcallgroup" => array(
 				"value" => $this->freepbx->Config->get('DEVICE_CALLGROUP'),
 				"flag" => $flag++
 			),
-			"pickupgroup" => array(
+			"namedpickupgroup" => array(
 				"value" => $this->freepbx->Config->get('DEVICE_PICKUPGROUP'),
 				"flag" => $flag++
 			),
@@ -159,7 +169,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				"flag" => $flag++
 			),
 			"force_rport" => array(
-				"value" => "no",
+				"value" => "yes",
 				"flag" => $flag++
 			),
 			"rewrite_contact" => array(
@@ -170,6 +180,18 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				"value" => "solicited",
 				"flag" => $flag++
 			),
+			"mediaencryption" => array(
+				"value" => "no",
+				"flag" => $flag++
+			),
+			"mediaencryptionoptimistic'" => array(
+				"value" => "no",
+				"flag" => $flag++
+			),
+			"device_state_busy_at" => array(
+				"value" => "0",
+				"flag" => $flag++
+			)
 		);
 		return array(
 			"dial" => $dial,
@@ -179,7 +201,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 
 	public function getDeviceDisplay($display, $deviceInfo, $currentcomponent, $primarySection) {
 		$tmparr = parent::getDeviceDisplay($display, $deviceInfo, $currentcomponent, $primarySection);
-		unset($tmparr['force_avp'],$tmparr['permit'],$tmparr['deny'], $tmparr['accountcode'], $tmparr['encryption'], $tmparr['type'], $tmparr['qualify'],$tmparr['port'],$tmparr['canreinvite'],$tmparr['host'],$tmparr['nat']);
+		unset($tmparr['videosupport'],$tmparr['session-timers'],$tmparr['force_avp'],$tmparr['permit'],$tmparr['deny'], $tmparr['accountcode'], $tmparr['encryption'], $tmparr['type'], $tmparr['qualify'],$tmparr['port'],$tmparr['canreinvite'],$tmparr['host'],$tmparr['nat']);
 		if (version_compare($this->version,'12.5.0','ge')) {
 			$tt = _("Account Code for this extension");
 			$tmparr['accountcode'] = array('prompttext' => _("Account Code"), 'value' => '', 'tt' => $tt, 'level' => 1);
@@ -201,7 +223,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		$tt = _("Allow Contact header to be rewritten with the source IP address-port");
 		$tmparr['rewrite_contact'] = array('prompttext' => _('Rewrite Contact'), 'value' => 'yes', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
 		$tt = _("Force use of return port.");
-		$tmparr['force_rport'] = array('prompttext' => _('Force rport'), 'value' => 'no', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
+		$tmparr['force_rport'] = array('prompttext' => _('Force rport'), 'value' => 'yes', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
 
 		unset($select);
 
@@ -218,16 +240,29 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		unset($select);
 
 		$select[] = array('value' => 'no', 'text' => _('None'));
-		$select[] = array('value' => 'sdes', 'text' => _('SRTP via in-SDP'));
-		$select[] = array('value' => 'dtls', 'text' => _('DTLS-SRTP'));
+		$select[] = array('value' => 'sdes', 'text' => _('SRTP via in-SDP (recommended)'));
+		$select[] = array('value' => 'dtls', 'text' => _('DTLS-SRTP (not recommended)'));
 		$tt = _("Media (RTP) Encryption. Normally you would use None, unless you have explicitly set up SDP or DTLS.").' [media_encryption]';
 		$tmparr['mediaencryption'] = array('prompttext' => _('Media Encryption'), 'value' => 'no', 'tt' => $tt, 'select' => $select, 'level' => 1);
 		unset($select);
 
 		$select[] = array('value' => 'no', 'text' => _('No'));
 		$select[] = array('value' => 'yes', 'text' => _('Yes'));
+		$select[] = array('value' => 'required', 'text' => _('Required'));
+		$select[] = array('value' => 'always', 'text' => _('Always'));
+		$select[] = array('value' => 'forced', 'text' => _('Forced'));
+		$tt = _("The sessions are kept alive by sending a RE-INVITE or UPDATE request at a negotiated interval. If a session refresh fails then all the entities that support Session-Timers clear their internal session state. Default is Yes.").' [timers]';
+		$tmparr['timers'] = array('prompttext' => _('Session Timers'), 'value' => 'yes', 'tt' => $tt, 'select' => $select, 'level' => 1);
+		unset($select);
+
+		$select[] = array('value' => 'no', 'text' => _('No'));
+		$select[] = array('value' => 'yes', 'text' => _('Yes'));
 		$tt = _("Determines whether encryption should be used if possible but does not terminate the session if not achieved. This option only applies if Media Encryption is set to SRTP via in-SDP or DTLS-SRTP.").' [media-encryption_optimistic]';
-		$tmparr['mediaencryptionoptimistic'] = array('prompttext' => _('Media Encryption Optimistic'), 'value' => 'no', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
+		$tmparr['mediaencryptionoptimistic'] = array('prompttext' => _('Require RTP (Media) Encryption'), 'value' => 'no', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
+
+		$tt = _("The number of in-use channels which will cause busy to be returned as device state. This should be left at 0 unless you know what you are doing");
+		$tmparr['device_state_busy_at'] = array('prompttext' => _('Device State Busy at'), 'value' => '0', 'tt' => $tt, 'level' => 1);
+		unset($select);
 
 		//https://wiki.asterisk.org/wiki/display/AST/Asterisk+13+Configuration_res_pjsip_endpoint_identifier_ip
 		$tt = _("The value is a comma-delimited list of IP addresses. IP addresses may have a subnet mask appended. The subnet mask may be written in either CIDR or dot-decimal notation. Separate the IP address and subnet mask with a slash ('/')");
@@ -357,6 +392,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 					foreach($this->_registration[$tn] as $el) {
 						$conf["pjsip.registration.conf"][$tn][] = "{$el['key']}={$el['value']}";
 					}
+					unset($this->_registration[$tn]);
 				}
 			}
 
@@ -385,7 +421,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				if(!empty($trunk['aor_contact'])) {
 					$conf['pjsip.aor.conf'][$tn]['contact'] = $trunk['aor_contact'];
 				} else {
-					$conf['pjsip.aor.conf'][$tn]['contact'] = 'sip:'.$trunk['username'].'@'.$trunk['sip_server'].':'.$trunk['sip_server_port'];
+					// If there is no username, don't add the @
+					if ($trunk['username']) {
+						$conf['pjsip.aor.conf'][$tn]['contact'] = 'sip:'.$trunk['username'].'@'.$trunk['sip_server'].':'.$trunk['sip_server_port'];
+					} else {
+						$conf['pjsip.aor.conf'][$tn]['contact'] = 'sip:'.$trunk['sip_server'].':'.$trunk['sip_server_port'];
+					}
 				}
 			} elseif ($trunk['registration'] == "receive") {
 				$conf['pjsip.aor.conf'][$tn]['max_contacts'] = 1;
@@ -395,6 +436,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				foreach($this->_aor[$tn] as $el) {
 					$conf["pjsip.aor.conf"][$tn][] = "{$el['key']}={$el['value']}";
 				}
+				unset($this->_aor[$tn]);
 			}
 
 			$conf['pjsip.endpoint.conf'][$tn] = array(
@@ -405,6 +447,10 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				'allow' => str_replace('&', ',', !empty($trunk['codecs']) ? $trunk['codecs'] : 'ulaw'), // '&' is invalid in pjsip, valid in chan_sip
 				'aors' => $tn
 			);
+			$lang = !empty($trunk['language']) ? $trunk['language'] : $this->language;
+			if (!empty($lang)) {
+				$conf['pjsip.endpoint.conf'][$tn]['language'] = $lang;
+			}
 
 			if ($trunk['authentication'] == "outbound" || $trunk['authentication'] == "both") {
 				$conf['pjsip.endpoint.conf'][$tn]['outbound_auth'] = $tn;
@@ -426,7 +472,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 					$validdtmf[] = "auto";
 				}
 				if (!in_array($trunk['dtmfmode'],$validdtmf)) {
-					$trunk['dtmfmode'] = "rfc4733";
+					if(version_compare($this->version,'13','ge')) {
+						$trunk['dtmfmode'] = "auto";
+					} else {
+						$trunk['dtmfmode'] = "rfc4733";
+					}
+
 				}
 				//FREEPBX-10666
 				//yes,no
@@ -453,6 +504,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				foreach($this->_endpoint[$tn] as $el) {
 					$conf["pjsip.endpoint.conf"][$tn][] = "{$el['key']}={$el['value']}";
 				}
+				unset($this->_endpoint[$tn]);
 			}
 
 			// Identify types aren't used when we're receiving registrations
@@ -467,6 +519,52 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 			if(!empty($this->_identify[$tn]) && is_array($this->_identify[$tn])) {
 				foreach($this->_identify[$tn] as $el) {
 					$conf["pjsip.identify.conf"][$tn][] = "{$el['key']}={$el['value']}";
+				}
+				unset($this->_identify[$tn]);
+			}
+		}
+
+		if(!empty($this->_registration) && is_array($this->_registration)) {
+			foreach($this->_registration as $section => $els) {
+				$conf["pjsip.registration.conf"][$section][] = "type=registration";
+				foreach($els as $el) {
+					$conf["pjsip.registration.conf"][$section][] = "{$el['key']}={$el['value']}";
+				}
+			}
+		}
+
+		if(!empty($this->_auth) && is_array($this->_auth)) {
+			foreach($this->_auth as $section => $els) {
+				$conf["pjsip.auth.conf"][$section][] = "type=auth";
+				foreach($els as $el) {
+					$conf["pjsip.auth.conf"][$section][] = "{$el['key']}={$el['value']}";
+				}
+			}
+		}
+
+		if(!empty($this->_aor) && is_array($this->_aor)) {
+			foreach($this->_aor as $section => $els) {
+				$conf["pjsip.aor.conf"][$section][] = "type=aor";
+				foreach($els as $el) {
+					$conf["pjsip.aor.conf"][$section][] = "{$el['key']}={$el['value']}";
+				}
+			}
+		}
+
+		if(!empty($this->_endpoint) && is_array($this->_endpoint)) {
+			foreach($this->_endpoint as $section => $els) {
+				$conf["pjsip.endpoint.conf"][$section][] = "type=endpoint";
+				foreach($els as $el) {
+					$conf["pjsip.endpoint.conf"][$section][] = "{$el['key']}={$el['value']}";
+				}
+			}
+		}
+
+		if(!empty($this->_identify) && is_array($this->_indentify)) {
+			foreach($this->_identify as $section => $els) {
+				$conf["pjsip.identify.conf"][$section][] = "type=identify";
+				foreach($els as $el) {
+					$conf["pjsip.identify.conf"][$section][] = "{$el['key']}={$el['value']}";
 				}
 			}
 		}
@@ -550,7 +648,6 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 	/**
 	* External Hook to Add settings to the Global Section
 	* Works like Core Conf
-	* @param {string} $section The section to be adding information to
 	* @param {string} $key     The Key
 	* @param {string} $value   The Value
 	*/
@@ -589,10 +686,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 			return $this->TransportConfigCache;
 		}
 		$transport = array();
-		//TODO: move this to \FreePBX::Sipsettings()->getBinds();
-		//Calling the config directly will return an array or false.
-		$binds = $this->freepbx->Sipsettings->getConfig("binds");
-		//false breaks the foreach loop FREEPBX-9419
+
+		$ss = \FreePBX::Sipsettings();
+
+		// Calling the config directly will return an array or false.
+		$binds = $ss->getConfig("binds");
+		// Make sure it's an array
 		$binds = is_array($binds)?$binds:array();
 
 		foreach ($binds as $protocol => $arr) {
@@ -603,17 +702,17 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				$t = "$ip-$protocol";
 				$transport[$t]['type'] = "transport";
 				$transport[$t]['protocol'] = $protocol;
-				$port = $this->freepbx->Sipsettings->getConfig($protocol."port-$ip");
+				$port = $ss->getConfig($protocol."port-$ip");
 				if (!$port) {
 					$transport[$t]['bind'] = "$ip";
 				} else {
 					$transport[$t]['bind'] = "$ip:$port";
 				}
-				$extip = $this->freepbx->Sipsettings->getConfig($protocol."extip-$ip");
+				$extip = $ss->getConfig($protocol."extip-$ip");
 
 				if (!$extip) {
 					// Is there a global extern setting?
-					$extip = $this->freepbx->Sipsettings->getConfig("externip");
+					$extip = $ss->getConfig("externip");
 				}
 
 				if ($extip) {
@@ -621,9 +720,21 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 					$transport[$t]['external_signaling_address'] = $extip;
 				}
 
+				// Is this a TLS transport?
+				if ($protocol === "tls") {
+					$tls = $ss->getTLSConfig();
+					foreach ($tls as $k => $v) {
+						$transport[$t][$k] = $v;
+					}
+				}
+
+				if(version_compare($this->version,'13.8','ge')) {
+					$transport[$t]['allow_reload'] = "yes";
+				}
+
 				// Add the Generic localnet settings.
 				//TODO: This should call a method and not the config direct.
-				$localnets = $this->freepbx->Sipsettings->getConfig('localnets');
+				$localnets = $ss->getConfig('localnets');
 				$localnets = is_array($localnets)?$localnets:array();
 				if ($localnets) {
 					foreach($localnets as $arr) {
@@ -700,7 +811,6 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 	private function generateEndpoint($config, &$retarr) {
 		// Validate $config array
 		$this->validateEndpoint($config);
-
 		if($config['sipdriver'] != 'chan_pjsip') {
 			return false;
 		}
@@ -716,6 +826,9 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		$auth[] = "type=auth";
 		$aorname = "$endpointname";
 		$aor[] = "type=aor";
+
+		//identify
+		$identify[] = "endpoint=$endpointname";
 
 		// Endpoint
 		$endpoint[] = "aors=$aorname";
@@ -733,8 +846,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		if(version_compare($this->version,'13','ge')) {
 			$validdtmf[] = "auto";
 		}
-		if (!in_array($trunk['dtmfmode'],$validdtmf)) {
-			$config['dtmfmode'] = "rfc4733";
+		if (!in_array($config['dtmfmode'],$validdtmf)) {
+			if(version_compare($this->version,'13','ge')) {
+				$config['dtmfmode'] = "auto";
+			} else {
+				$config['dtmfmode'] = "rfc4733";
+			}
 		}
 		$endpoint[] = "dtmf_mode=".$config['dtmfmode'];
 
@@ -765,12 +882,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 
 		$endpoint[] = "aggregate_mwi=".(isset($config['aggregate_mwi']) ? $config['aggregate_mwi'] : "yes");
 
-		if (!empty($config['callgroup'])) {
-			$endpoint[] = "call_group=".$config['callgroup'];
+		if (!empty($config['namedcallgroup'])) {
+			$endpoint[] = "named_call_group=".$config['namedcallgroup'];
 		}
 
-		if (!empty($config['pickupgroup'])) {
-			$endpoint[] = "pickup_group=".$config['pickupgroup'];
+		if (!empty($config['namedpickupgroup'])) {
+			$endpoint[] = "named_pickup_group=".$config['namedpickupgroup'];
 		}
 
 		if (!empty($config['avpf'])) {
@@ -788,17 +905,33 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		if (!empty($config['trustrpid'])) {
 			$endpoint[] = "trust_id_inbound=".$config['trustrpid'];
 		}
-
 		if (!empty($config['match'])) {
 			$identify[] = "match=".$config['match'];
 		}
 
 		if (!empty($config['mediaencryption'])) {
 			$endpoint[] = "media_encryption=".$config['mediaencryption'];
+		} else {
+			// Automatically enable sdes if possible
+			//
+			// Requires sipsettings 13.0.16 or higher
+			if ($this->freepbx->Modules->moduleHasMethod('Sipsettings', 'getTLSConfig')) {
+				if (\FreePBX::Sipsettings()->getTLSConfig()) {
+					$endpoint[] = "media_encryption=sdes";
+				}
+			}
+		}
+
+		if (!empty($config['timers'])) {
+			$endpoint[] = "timers=".$config['timers'];
 		}
 
 		if (!empty($config['mediaencryptionoptimistic'])) {
 			$endpoint[] = "media_encryption_optimistic=".$config['mediaencryptionoptimistic'];
+		}
+
+		if(!empty($config['device_state_busy_at']) && is_numeric($config['device_state_busy_at']) && $config['device_state_busy_at'] > 0) {
+			$endpoint[] = "device_state_busy_at=".$config['device_state_busy_at'];
 		}
 
 		if (isset($config['sendrpid'])) {
@@ -815,11 +948,10 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 		//rewrite_contact needs to be yes for NAT --mjordan, Digium
 		$endpoint[] = !empty($config['rewrite_contact']) ? "rewrite_contact=".$config['rewrite_contact'] : "rewrite_contact=yes";
 
-		if ($this->freepbx->Modules->moduleHasMethod('Soundlang', 'getLanguage')) {
-			$language = $this->freepbx->Soundlang->getLanguage();
-			if ($language != "") {
-				$endpoint[] = "language=" . $language;
-			}
+		$endpoint[] = !empty($config['force_rport']) ? "force_rport=".$config['force_rport'] : "force_rport=yes";
+
+		if (!empty($this->language)) {
+			$endpoint[] = "language=" . $this->language;
 		}
 
 		// Auth
@@ -856,6 +988,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 			foreach($this->_endpoint[$endpointname] as $el) {
 				$retarr["pjsip.endpoint.conf"][$endpointname][] = "{$el['key']}={$el['value']}";
 			}
+			unset($this->_endpoint[$endpointname]);
 		}
 
 		if (isset($retarr["pjsip.auth.conf"][$authname])) {
@@ -866,6 +999,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 			foreach($this->_auth[$authname] as $el) {
 				$retarr["pjsip.auth.conf"][$authname][] = "{$el['key']}={$el['value']}";
 			}
+			unset($this->_auth[$authname]);
 		}
 
 		if (isset($retarr["pjsip.aor.conf"][$aorname])) {
@@ -876,17 +1010,19 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 			foreach($this->_aor[$aorname] as $el) {
 				$retarr["pjsip.aor.conf"][$aorname][] = "{$el['key']}={$el['value']}";
 			}
+			unset($this->_aor[$aorname]);
 		}
 
 
 		if (isset($retarr["pjsip.identify.conf"][$identifyname])) {
 			throw new \Exception("Identify $aorname already exists.");
 		}
-		$retarr["pjsip.identify.conf"][$identifyname] = $aor;
+		$retarr["pjsip.identify.conf"][$identifyname] = $identify;
 		if(!empty($this->_identify[$identifyname]) && is_array($this->_identify[$identifyname])) {
 			foreach($this->_identify[$identifyname] as $el) {
 				$retarr["pjsip.identify.conf"][$identifyname][] = "{$el['key']}={$el['value']}";
 			}
+			unset($this->_identify[$identifyname]);
 		}
 	}
 
@@ -1011,7 +1147,7 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 	/**
 	 * Get Display Variables
 	 * @param {int} $trunkid   Trunk ID
-	 * @param {array} &$dispvars Display Variables
+	 * @param {array} $dispvars Display Variables
 	 */
 	public function getDisplayVars($trunkid, $dispvars) {
 		$sipSettingsCodecs = $this->freepbx->Sipsettings->getCodecs('audio',true);
@@ -1048,8 +1184,12 @@ class PJSip extends \FreePBX\modules\Core\Drivers\Sip {
 				"transport" => null,
 				"codecs" => $sipSettingsCodecs,
 				"qualify_frequency" => 60,
-				"dtmfmode" => "rfc4733"
+				"dtmfmode" => "rfc4733",
+				"language" => ""
 			);
+			if(version_compare($this->version,'13','ge')) {
+				$dispvars['dtmfmode'] = 'auto';
+			}
 		}
 		$dispvars['transports'] = array_keys($this->getTransportConfigs());
 

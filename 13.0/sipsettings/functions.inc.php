@@ -110,6 +110,7 @@ function sipsettings_hookGet_config($engine) {
           $idx++;
         }
 
+	$interim_settings = array();
         foreach ($raw_settings as $var) {
           switch ($var['type']) {
             case SIP_NORMAL:
@@ -156,11 +157,39 @@ function sipsettings_hookGet_config($engine) {
         $jbenable = $interim_settings['jbenable'];
 
 	$foundexternip = false;
-	if (is_array($interim_settings)) foreach ($interim_settings as $key => $value) {
+
+	// Ensure default TLS Settings for chansip are available
+	if(empty($interim_settings['tlsbindport'])) {
+		// Note - this is TCP, not UDP.
+		$interim_settings['tlsbindport'] = 5061;
+	}
+
+	if(!empty($interim_settings['tlsbindaddr'])) {
+		$interim_settings['tlsbindaddr'] = $interim_settings['tlsbindaddr'].":".$interim_settings['tlsbindport'];
+	} else {
+		// [::] means 'listen on all interfaces, both ipv4 and ipv6' when in sipsettings.
+		$interim_settings['tlsbindaddr'] = "[::]:".$interim_settings['tlsbindport'];
+	}
+
+	// There is no sip setting 'tlsbindport', so make sure we remove it before writing the file.
+	unset($interim_settings['tlsbindport']);
+
+	foreach ($interim_settings as $key => $value) {
 		switch ($key) {
+		case 'csipcertid':
+			if(!empty($value) && $interim_settings['tlsenable'] == 'yes' && FreePBX::Modules()->moduleHasMethod("certman","getDefaultCertDetails")) {
+				$cert = FreePBX::Certman()->getCertificateDetails($value);
+				if(!empty($cert['files']['crt']) && !empty($cert['files']['key'])) {
+					$sip_settings[] = array('tlsprivatekey', $cert['files']['key']);
+					$sip_settings[] = array('tlscertfile', $cert['files']['crt']);
+					if(isset($cert['files']['ca-bundle'])) {
+						$sip_settings[] = array('tlscafile', $cert['files']['ca-bundle']);
+					}
+				}
+			}
+			break;
 		case 'nat_mode':
 			break;
-
 		case 'externhost_val':
 			if ($nat_mode == 'externhost' && $value != '') {
 				$sip_settings[] = array('externhost', $value);
@@ -241,7 +270,6 @@ function sipsettings_hookGet_config($engine) {
 			break;
 		}
 	}
-
 	// Is there a global external IP settings? If there wasn't one specified
 	// as part of the chan_sip settings, check to see if there's one here.
 	if (!$foundexternip && $nat_mode == "externip") {
@@ -387,6 +415,10 @@ function sipsettings_edit($sip_settings) {
       case 'notifyhold':
       case 'allowguest':
       case 'srvlookup':
+			case 'tlsbindaddr':
+			case 'tlsdontverifyserver':
+			case 'tlsclientmethod':
+			case 'tlsenable':
         $save_settings[] = array($key,$val,'10',SIP_NORMAL);
       break;
 

@@ -8,6 +8,7 @@ class Cel extends \FreePBX_Helpers implements \BMO {
 	private $message = '';
 	private $calls;
 	private $db_table = 'cel';
+	public $cdrdb = null;
 
 	public function __construct($freepbx = null) {
 		$amp_conf = \FreePBX::$conf;
@@ -35,7 +36,7 @@ class Cel extends \FreePBX_Helpers implements \BMO {
 		try {
 			$this->cdrdb = new \DB(new \Database($db_type.':host='.$db_host.$db_port.';dbname='.$db_name,$db_user,$db_pass));
 		} catch(\Exception $e) {
-			die('Unable to connect to CDR Database using string:'.$db_type.':host='.$db_host.$db_port.';dbname='.$db_name.','.$db_user.','.$db_pass);
+			throw new \Exception('Unable to connect to CDR Database using string:'.$db_type.':host='.$db_host.$db_port.';dbname='.$db_name.','.$db_user.','.$db_pass);
 		}
 	}
 
@@ -739,8 +740,9 @@ class Cel extends \FreePBX_Helpers implements \BMO {
 					if ($app['appname'] == 'MixMonitor') {
 						$args = explode(',', $app['appdata']);
 						if ($args[0]) {
-							$mon_dir = $amp_conf['MIXMON_DIR'] ? $amp_conf['MIXMON_DIR'] : $amp_conf['ASTSPOOLDIR'] . '/monitor';
+							$mon_dir = !empty($amp_conf['MIXMON_DIR']) ? $amp_conf['MIXMON_DIR'] : $amp_conf['ASTSPOOLDIR'] . '/monitor';
 							$recording = $mon_dir . '/' . $args[0];
+							dbug($recording);
 							$recordingfile = $crypt->encrypt($recording, $REC_CRYPT_PASSWORD);
 							$call['recordings'][$recordingfile] = file_exists($recording);
 						}

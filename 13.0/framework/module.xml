@@ -2,14 +2,131 @@
 	<rawname>framework</rawname>
 	<modtype>framework</modtype>
 	<repo>standard</repo>
-	<name>FreePBX Framework</name>
-	<version>13.0.51</version>
+	<name>Ringfree PBX Framework</name>
+	<version>13.0.163.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv2+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.163.1* Ringfree branch
+		*13.0.163* Stored XSS - Douglas Goddard
+		*13.0.162* Public property not private
+		*13.0.161* Better check for settings in astman wait_response
+		*13.0.160* Wait for Asterisk to be fully booted during startup, FREEPBX-12665, FREEPBX-12710
+		*13.0.159* Need to escape freepbx class
+		*13.0.158* Language clarification
+		*13.0.157* FREEPBX-12718 check if file exists after clearing cache
+		*13.0.156* wget bug during download
+		*13.0.155* Prevent looping upgrades that drain ram
+		*13.0.154* AGI get full variable support
+		*13.0.153* Fix for filesize function
+		*13.0.152* Send user event after reload if Asterisk 11
+		*13.0.151* Only display swap notice if there's no swap or it's less than 200mb
+		*13.0.150* FREEPBX-12621 Inadequate Error Message
+		*13.0.149* FREEPBX-12637 display issue fix
+		*13.0.148* FREEPBX-12637 check for utf8 fallback as well
+		*13.0.147* FREEPBX-12615 dont tolatin1 paths
+		*13.0.146* Better work on languages
+		*13.0.145* FREEPBX-12616
+		*13.0.144* FREEPBX-12478, FREEPBX-12320, FREEPBX-9633, FREEPBX-11703
+		*13.0.143* Force upgrade pending, needing update modules
+		*13.0.142* FREEPBX-12580 Fix problem with gotos, again
+		*13.0.141* Fix modgettext class to use global language
+		*13.0.140* FREEPBX-12580 Fix problem with gotos
+		*13.0.139* Read xml bug
+		*13.0.138* Read xml bug
+		*13.0.137* Fix bitwise operator
+		*13.0.136* More fixes to chown
+		*13.0.135* Correct issues in chown
+		*13.0.134* Dramatic reload speed improvements, chown improvements
+		*13.0.133* Fix GPG issues with expired keys
+		*13.0.132* FREEPBX-12514 FREEPBX-12516
+		*13.0.131* FREEPBX-12289 remove all option
+		*13.0.130* FREEPBX-12407 more sha256 work
+		*13.0.129* FREEPBX-12474, FREEPBX-11117
+		*13.0.128* Add support for database FULLTEXT
+		*13.0.127* Clear statcache for FREEPBX-12460
+		*13.0.126* FREEPBX-12460 no need to set permissions when deleting or removing
+		*13.0.125* FREEPBX-12454 Dont set system locales if the locale does not exist (even the fallback)
+		*13.0.124* FREEPBX-12405, along with drawselects restrictions
+		*13.0.123* Actually fix FREEPBX-12259
+		*13.0.122* FREEPBX-12259 FREEPBX-12170
+		*13.0.121* Add new database migration support
+		*13.0.120* Bug in current component
+		*13.0.119* Fixes reloads stalling in Asterisk 13
+		*13.0.118* Media conversion can be passed what it thinks are ico
+		*13.0.117* FREEPBX-8768 add new component to allow quick picks
+		*13.0.116* Dashboard overrides
+		*13.0.115* FREEPBX-11223 Reload actually still breaks hints in AMI, workaround
+		*13.0.114* FREEPBX-12256 Fix single line issues in modules.conf
+		*13.0.113* Fix some astdb issues and gpg issues
+		*13.0.112* FREEPBX-11223 fully resolve by preloading func_db.so
+		*13.0.111* Add new VoicemailRefresh AMI command for Asterisk 12 or higher
+		*13.0.110* Issue a CLI 'dialplan reload' after startup and reload
+		*13.0.109* Fully add back the functions
+		*13.0.108* Add back fallback functions
+		*13.0.107* FREEPBX-11992 Add visual notice that edge is enabled
+		*13.0.106* Fix restart
+		*13.0.105* FREEPBX-12019 run trim against any timezone setting
+		*13.0.104* Fix broken stop start for modules
+		*13.0.103* FREEPBX-12010 Dont track GPG of MOH files
+		*13.0.102* Fix more issues in start/stop
+		*13.0.101* The addition of the getSystemMemInfo function into the 'framework' module causes it to fail to run on FreeBSD systems. - lidl
+		*13.0.100* FREEPBX-11852 Warn if module is disabled on fwconsole installed
+		*13.0.99* Skip OOBE during popovers, since OOBE can have popovers
+		*13.0.98* FREEPBX-11914 reblock stream when finished shutting down Asterisk
+		*13.0.97* FREEPBX-11888 fix issue with installing local modules
+		*13.0.96* Support new edge mode for module release. More details to come
+		*13.0.95* Make sure asterisk files are owned by asterisk based user
+		*13.0.94* Speed up install, adjust logic. Use fwconsole
+		*13.0.93* Dont write to a logfile if we dont have permissions
+		*13.0.92* Speed up install times
+		*13.0.91* CLI mysql uses native STDs
+		*13.0.90* Adjust notification message
+		*13.0.89* Allow disabled or blocked modules to be upgraded
+		*13.0.88* Hide errors that are irrelevant
+		*13.0.87* Exclude folders in the symlink check
+		*13.0.86* FREEPBX-11844 Symlink from modules failed
+		*13.0.85* Fix notifications CLI and CLI Helper
+		*13.0.84* Chown bin directory
+		*13.0.83* Fix up ampuser to use private calls
+		*13.0.82* FREEPBX-11564 fix visible extension range
+		*13.0.81* Fix submitted patch to not break but continue
+		*13.0.80* Support writing out stasis dialplan
+		*13.0.79* FREEPBX-11809 report invalid timezones to dashboard
+		*13.0.78* FREEPBX-11809 fix for newer php versions
+		*13.0.77* FREEPBX-10571 colorize restart button in player
+		*13.0.76* FREEPBX-11538 urlencode the filename for media playback
+		*13.0.75* Add more flexibility to current component
+		*13.0.74* Dont destroy a destination popover until after it's been closed so we get correct events
+		*13.0.73* Visual changes to buttons
+		*13.0.72* Move in browser recorder to framework
+		*13.0.71* FREEPBX-11648 FREEPBX-11676 use datalist instead of unsupport js library
+		*13.0.70* Dont sort a blank destination dropdown
+		*13.0.69* Better restrictions on drawselects
+		*13.0.68* Visual asjustments to popovers, cleanup and documentation for drawselects
+		*13.0.67* Die_freepbx uses standard whoops error handler now. (Throws an exception)
+		*13.0.66* Allow asking a specific media driver for its supported formats
+		*13.0.65* Locate installed ASTAGIDIR correctly by lidl
+		*13.0.64* Check loaded functions.incs on every module iteration
+		*13.0.63* Resolve local dependencies as well as remote through cli
+		*13.0.62* Addition of external modules
+		*13.0.61.4* Look and feel changes (specifically wizards and play-seekers)
+		*13.0.61.3* Framework should not depend on itself
+		*13.0.61.2* FREEPBX-11494 "fwconsole chown" doesn't work in Kickstart script
+		*13.0.61.1* Fix remote unlock compatibility issue
+		*13.0.61* FREEPBX-11518 remove extension when cleaning up the filename
+		*13.0.60* Case sensitivity matters in answers during install
+		*13.0.59* FREEPBX-11523 Globally search for strings on install for included files
+		*13.0.58* FREEPBX-11487 Create media dir if not exist
+		*13.0.57* FREEPBX-11482 CDR_PROP to set
+		*13.0.56* FREEPBX-11423 In asterisk 12+ use CDR_PROP instead of NOCDR, FREEPBX-11459 Add directory option to freepbx_chown.conf blacklist, FREEPBX-11466 Use framwork media method to determine mime type
+		*13.0.55* FREEPBX-11437 fix chown hooks
+		*13.0.54* Remove --full from chown. Only use the conf ignore file
+		*13.0.53* Fixes FREEPBX-11417 missing full param
+		*13.0.52* FREEPBX-11203 http://wiki.freepbx.org/display/FOP/FreePBX+Chown+Conf FREEPBX-11292 typo
 		*13.0.51* Rare race condition
 		*13.0.50* Change ASTVARLIBPLAYBACK to AMPPLAYBACK for consistency
 		*13.0.49* Check for valid object in ami update before ami actions
@@ -227,13 +344,12 @@
 	</description>
 	<depends>
 		<phpversion>5.3.0</phpversion>
-		<version>13.0</version>
 	</depends>
 	<supported>
 		<version>13.0</version>
 	</supported>
 	<category>Admin</category>
-  <location>release/13.0/framework-13.0.51.tgz</location>
-  <md5sum>32027ddef80c26f6e716676d448c8cf5</md5sum>
-  <sha1>a4aacfc5b9c257a0de8ecf72e94f8c7f658508da</sha1>
+  <location>release/13.0/framework-13.0.163.1.tgz</location>
+  <md5sum></md5sum>
+  <sha1></sha1>
 </module>

@@ -2,7 +2,7 @@
 	<rawname>parking</rawname>
 	<repo>standard</repo>
 	<name>Parking Lot</name>
-	<version>13.0.12</version>
+	<version>13.0.17.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,12 @@
 	Parking is a way of putting calls "on hold", and then picking them up from any extension.
 	</description>
 	<changelog>
+		*13.0.17.1* Ringfree branch
+		*13.0.17* FREEPBX-12576 better channel lookup
+		*13.0.16* Speed up reload times with dynamic hints
+		*13.0.15* Generate hints for pjsip
+		*13.0.14* Dont quote the channel name when getting shared channel variables
+		*13.0.13* FREEPBX-11236 deal with spaces in trunk names
 		*13.0.12* Add Park to your Assigned Lot feature code
 		*13.0.11* Support drop down Alert Info
 		*13.0.10* FREEPBX-10450
@@ -39,6 +45,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/parking-13.0.12.tgz</location>
-	<md5sum>8cd1faaf2d3e7e1be3f18f96c499ebda</md5sum>
+	<location>release/13.0/parking-13.0.17.1.tgz</location>
+	<md5sum></md5sum>
 </module>

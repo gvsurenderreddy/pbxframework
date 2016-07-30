@@ -2,7 +2,7 @@
   <rawname>extensionsettings</rawname>
   <repo>unsupported</repo>
   <name>Extension Settings</name>
-  <version>13.0.3</version>
+  <version>13.0.4.1</version>
   <publisher>Ringfree</publisher>
   <license>GPLv3+</license>
   <licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -12,6 +12,8 @@
     <extensionsettings>Extension Settings</extensionsettings>
   </menuitems>
 	<changelog>
+		*13.0.4.1* Ringfree branch
+		*13.0.4* FREEPBX-11598 initialize array
 		*13.0.3* FREEPBX-11062
     *13.0.2* Remove alpha
 		*13.0.1alpha1* Visual styling updates
@@ -24,8 +26,8 @@
 		*2.10.0.0* new version changes
 		*2.9.0.0* First release, display all settings
 	</changelog>
-  <md5sum>981dc09ce0d14292645e867ba6acf6e1</md5sum>
-  <location>release/13.0/extensionsettings-13.0.3.tgz</location>
+  <md5sum></md5sum>
+  <location>release/13.0/extensionsettings-13.0.4.1.tgz</location>
   <supported>
     <version>13.0</version>
   </supported>

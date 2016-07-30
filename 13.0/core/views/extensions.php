@@ -13,7 +13,8 @@
         <div class="wrapper">
           <ul class="nav nav-tabs list" role="tablist">
             <?php foreach(array_keys($html['middle']) as $category) { ?>
-              <li data-name="<?php echo strtolower($category)?>" class="change-tab <?php echo ($active == strtolower($category)) ? 'active' : ''?>"><a href="#<?php echo strtolower($category)?>" aria-controls="<?php echo strtolower($category)?>" role="tab" data-toggle="tab"><?php echo $tabtranslations[$category]?></a></li>
+							<?php $hidden = is_array($hideCategory) && in_array($category,$hideCategory) ? "hidden" : ""?>
+              <li data-name="<?php echo strtolower($category)?>" class="change-tab <?php echo ($active == strtolower($category)) ? 'active' : ''?> <?php echo $hidden?>"><a href="#<?php echo strtolower($category)?>" aria-controls="<?php echo strtolower($category)?>" role="tab" data-toggle="tab"><?php echo $tabtranslations[$category]?></a></li>
             <?php } ?>
           </ul>
         </div>
@@ -46,7 +47,7 @@
                         <?php if(!empty($elem['helptext'])) { ?>
                           <div class="row">
                             <div class="col-md-12">
-                              <span id="<?php echo $elem['name']?>-help" class="help-block fpbx-help-block"><?php echo $elem['helptext']?></span>
+                              <span id="<?php echo $elem['name']?>-help" class="help-block fpbx-help-block <?php echo strtolower($category)?>-find"><?php echo $elem['helptext']?></span>
                             </div>
                           </div>
                         <?php } ?>

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-20 14:38-0700\n"
+"POT-Creation-Date: 2016-06-17 16:53-0700\n"
 "PO-Revision-Date: 2008-02-06 20:54+0100\n"
 "Last-Translator: Lónyai Gergely <alephlg@gmail.com>\n"
 "Language-Team: Magyar <support@freepbx.hu>\n"
@@ -21,12 +21,12 @@ msgstr ""
 msgid "Add or replace entry"
 msgstr ""
 
-#: assets/js/blacklist.js:57
+#: assets/js/blacklist.js:56
 #, perl-format
 msgid "Added %s to the blacklist."
 msgstr ""
 
-#: assets/js/blacklist.js:39
+#: assets/js/blacklist.js:40
 msgid "Adding..."
 msgstr ""
 
@@ -43,7 +43,12 @@ msgid ""
 "the system will receive a disconnect recording."
 msgstr ""
 
-#: Blacklist.class.php:20 views/general.php:24
+#: blacklist.i18n.php:6 blacklist.i18n.php:12
+msgid "Admin"
+msgstr ""
+
+#: Blacklist.class.php:20 Blacklist.class.php:512 blacklist.i18n.php:4
+#: blacklist.i18n.php:10 views/general.php:24
 msgid "Blacklist"
 msgstr ""
 
@@ -63,12 +68,12 @@ msgstr ""
 msgid "Blacklist the last caller"
 msgstr ""
 
-#: views/general.php:72
+#: views/general.php:56
 msgid "Block Unknown/Blocked Caller ID"
 msgstr ""
 
-#: views/general.php:44
-msgid "CSV Format"
+#: views/general.php:46
+msgid "Bulk Handler"
 msgstr ""
 
 #: views/addnumber.php:75
@@ -79,11 +84,11 @@ msgstr ""
 msgid "Call Log"
 msgstr ""
 
-#: views/general.php:87
+#: views/general.php:71
 msgid "Check here to catch Unknown/Blocked Caller ID"
 msgstr ""
 
-#: views/general.php:111
+#: views/general.php:95
 msgid "Choose where blacklisted calls go"
 msgstr ""
 
@@ -91,51 +96,43 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: Blacklist.class.php:164
+#: Blacklist.class.php:173
 msgid "Could not find file after upload"
-msgstr ""
-
-#: views/general.php:46
-msgid "DESCRIPTION"
 msgstr ""
 
 #: views/blgrid.php:2
 msgid "Delete Selected"
 msgstr ""
 
-#: views/addnumber.php:40 views/blgrid.php:10
+#: Blacklist.class.php:522 views/addnumber.php:40 views/blgrid.php:10
 msgid "Description"
 msgstr ""
 
-#: views/general.php:99
+#: Blacklist.class.php:522
+msgid "Description of number blacklisted"
+msgstr ""
+
+#: views/general.php:83
 msgid "Destination for BlackListed Calls"
 msgstr ""
 
-#: assets/js/blacklist.js:55
+#: assets/js/blacklist.js:54
 msgid "Entry Updated"
-msgstr ""
-
-#: views/general.php:58
-msgid "Export to CSV"
-msgstr ""
-
-#: views/general.php:53
-msgid "Import from CSV"
 msgstr ""
 
 #: views/general.php:29
 msgid "Import/Export"
 msgstr ""
 
-#: views/general.php:46
-msgid "NUMBER"
+#: Blacklist.class.php:513
+msgid "Import/Export Caller Blacklist"
 msgstr ""
 
-#: views/general.php:79
+#: views/general.php:63
 msgid "No"
 msgstr ""
 
-#: Blacklist.class.php:183
+#: Blacklist.class.php:192
 msgid "No Entries to export"
 msgstr ""
 
@@ -147,6 +144,22 @@ msgstr ""
 msgid "Number/CallerID"
 msgstr ""
 
+#: assets/js/blacklist.js:35
+msgid "Number/CallerID cannot be blank"
+msgstr ""
+
+#: Blacklist.class.php:65
+msgid "Numbers Deleted"
+msgstr ""
+
+#: Blacklist.class.php:521
+msgid "Phone Number"
+msgstr ""
+
+#: Blacklist.class.php:539
+msgid "Phone Number Required"
+msgstr ""
+
 #: Blacklist.class.php:18
 msgid "Remove a number from the blacklist"
 msgstr ""
@@ -155,11 +168,11 @@ msgstr ""
 msgid "Removes a number from the Blacklist Module"
 msgstr ""
 
-#: Blacklist.class.php:361
+#: Blacklist.class.php:374
 msgid "Reset"
 msgstr ""
 
-#: assets/js/blacklist.js:52
+#: assets/js/blacklist.js:51
 msgid "Save Changes"
 msgstr ""
 
@@ -171,26 +184,34 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: Blacklist.class.php:367
+#: Blacklist.class.php:380
 msgid "Submit"
 msgstr ""
 
-#: Blacklist.class.php:162
+#: Blacklist.class.php:171
 msgid "Sucessfully imported all entries"
 msgstr ""
 
-#: Blacklist.class.php:167
+#: Blacklist.class.php:176
 msgid "The file must be in CSV format!"
 msgstr ""
 
-#: Blacklist.class.php:142
+#: Blacklist.class.php:521
+msgid "The number as it appears in the callerid display"
+msgstr ""
+
+#: Blacklist.class.php:151
 msgid "There was an error uploading the file"
 msgstr ""
 
-#: Blacklist.class.php:373
-msgid "Upload"
+#: views/general.php:44
+msgid "This functionality is now part of the Bulk Handler Module"
 msgstr ""
 
-#: views/general.php:77
+#: blacklist.i18n.php:8
+msgid "This module is used to manage a system wide list of blocked callers"
+msgstr ""
+
+#: views/general.php:61
 msgid "Yes"
 msgstr ""

@@ -2,7 +2,7 @@
   <rawname>music</rawname>
   <repo>standard</repo>
   <name>Music on Hold</name>
-  <version>13.0.12</version>
+  <version>13.0.21.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,16 @@
   <category>Settings</category>
   <description>Uploading and management of sound files (wav, mp3) to be used for on-hold music.</description>
 	<changelog>
+		*13.0.21.1* Ringfree branch 
+		*13.0.21* Put the right version in
+		*13.0.20* FREEPBX-12656 Hang on upgrade of Music on Hold module
+		*13.0.19* FREEPBX-12527 increase format length in DB
+		*13.0.18* Trap file upload failure - better than a runtime exception by lidl
+		*13.0.17* Visual styling issues cleaned up
+		*13.0.16* Add simple mode
+		*13.0.15* Recursively mkdir
+		*13.0.14* FREEPBX-11729 generate the none category
+		*13.0.13* Support all Asterisk supported media formats
     *13.0.12* Support global file name function
 		*13.0.11* Fix formats
 		*13.0.10* FREEPBX-10629
@@ -35,10 +45,10 @@
     <music>Music on Hold</music>
   </menuitems>
   <depends>
-    <module>framework ge 13.0.41</module>
+    <module>framework ge 13.0.121</module>
   </depends>
-  <location>release/13.0/music-13.0.12.tgz</location>
-  <md5sum>4b0f1729e90e1c166d495d64b768600a</md5sum>
+  <location>release/13.0/music-13.0.21.1.tgz</location>
+  <md5sum></md5sum>
   <supported>
     <version>13.0</version>
   </supported>

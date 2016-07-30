@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FreePBX 2.5 Chinese Translation\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-24 12:53-0800\n"
+"POT-Creation-Date: 2016-02-29 11:35-0800\n"
 "PO-Revision-Date: 2011-04-14 00:00+0800\n"
 "Last-Translator: 周征晟 <zhougongjizhe@163.com>\n"
 "Language-Team: EdwardBadBoy <zhougongjizhe@163.com>\n"
@@ -18,45 +18,33 @@ msgstr ""
 "X-Poedit-Country: CHINA\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: views/form.php:20
+#: views/form.php:22
 msgid ""
 " It executes an HTTP GET passing the caller number as argument to retrieve "
 "the correct name"
 msgstr ""
 
-#: views/form.php:21
+#: views/form.php:23
 msgid ""
 " It executes an HTTPS GET passing the caller number as argument to retrieve "
 "the correct name"
 msgstr ""
 
-#: views/form.php:19
+#: views/form.php:21
 msgid ""
 " Use DNS to lookup caller names, it uses ENUM lookup zones as configured in "
 "enum.conf"
 msgstr ""
 
-#: views/form.php:17
-msgid " Use OpenCNAM [https://www.opencnam.com/]"
-msgstr ""
-
-#: views/form.php:18
+#: views/form.php:20
 msgid " use astdb as lookup source, use phonebook module to populate it"
 msgstr ""
 
 #: views/form.php:131
 msgid ""
-"<p><b>NOTE:</b> OpenCNAM's Hobbyist Tier (default) only allows you to do 60 "
-"cached CallerID lookups per hour. If you get more than 60 incoming calls per "
-"hour, or want real-time CallerID information (more accurate), you should use "
-"the Professional Tier.</p>"
-msgstr ""
-
-#: views/form.php:132
-msgid ""
-"<p>If you'd like to create an OpenCNAM Professional Tier account, you can do "
-"so on their website: <a href=\"https://www.opencnam.com/register\" target="
-"\"_blank\">https://www.opencnam.com/register</a></p>"
+"<p>If you need to create an OpenCNAM account, you can visit their website: "
+"<a href=\"https://www.opencnam.com/register\" target=\"_blank\">https://www."
+"opencnam.com/register</a></p>"
 msgstr ""
 
 #: page.cidlookup.php:8
@@ -73,19 +61,19 @@ msgstr ""
 "CRM里获取的内容。你也可以安装电话簿模块以提供简易的数字<->名字关联。请注意，"
 "名字查找将会减慢你的PBX服务器。"
 
-#: views/form.php:168
+#: views/form.php:140
 msgid "Account SID:"
 msgstr ""
 
-#: views/grid.php:35
+#: views/grid.php:38
 msgid "Actions"
 msgstr ""
 
-#: views/grid.php:21
+#: views/grid.php:24
 msgid "Add CIDLookup Source"
 msgstr ""
 
-#: install.php:121
+#: install.php:122
 msgid "Adding opencnam account columns to the cidlookup table..."
 msgstr ""
 
@@ -99,7 +87,7 @@ msgid ""
 "(OpenCNAM, MySQL, HTTP, ENUM, Phonebook Module)"
 msgstr ""
 
-#: views/form.php:192
+#: views/form.php:164
 msgid "Auth Token"
 msgstr ""
 
@@ -123,31 +111,31 @@ msgstr "主叫ID查询"
 msgid "CallerID Lookup Sources"
 msgstr "主叫ID查询"
 
-#: views/form.php:488
+#: views/form.php:460
 msgid "Character Set"
 msgstr ""
 
-#: install.php:103
+#: install.php:104
 msgid "Checking for cidlookup field in core's incoming table.."
 msgstr "正在检查incoming表的cidlookup字段。。。"
 
-#: install.php:144
+#: install.php:145
 msgid "Cleaning up duplicate OpenCNAM CallerID Lookup Sources..."
 msgstr ""
 
-#: install.php:125
+#: install.php:126
 msgid "Could not add opencnam_account_sid column to cidlookup table."
 msgstr ""
 
-#: install.php:131
+#: install.php:132
 msgid "Could not add opencnam_auth_token column to cidlookup table."
 msgstr ""
 
-#: views/form.php:392
+#: views/form.php:364
 msgid "Database"
 msgstr ""
 
-#: views/form.php:404
+#: views/form.php:376
 msgid "Database Name"
 msgstr ""
 
@@ -161,63 +149,63 @@ msgstr "设置是否将查询结果缓存到astDB；它将覆盖当前设置。�
 msgid "Delete"
 msgstr ""
 
-#: views/grid.php:33
+#: views/grid.php:36
 msgid "Description"
 msgstr ""
 
-#: install.php:44 install.php:133 install.php:141 install.php:161
+#: install.php:45 install.php:134 install.php:142 install.php:162
 msgid "Done!"
 msgstr ""
 
-#: views/form.php:19
+#: views/form.php:21
 msgid "ENUM:"
 msgstr ""
 
-#: install.php:90
+#: install.php:91
 msgid "ERROR: failed: "
 msgstr "错误：失败："
 
-#: views/form.php:63
+#: views/form.php:65
 msgid "Enter a description for this source."
 msgstr "为此源添加描述。"
 
-#: install.php:81
+#: install.php:82
 msgid "FATAL: failed to transform old routes: "
 msgstr "致命错误：无法转换旧的路由（线路）："
 
-#: install.php:41 install.php:139
+#: install.php:42 install.php:140
 msgid "Failed to add OpenCNAM CallerID Lookup Source: "
 msgstr ""
 
-#: views/form.php:20
+#: views/form.php:22
 msgid "HTTP:"
 msgstr ""
 
-#: views/form.php:21
+#: views/form.php:23
 msgid "HTTPS:"
 msgstr ""
 
-#: views/form.php:220 views/form.php:368
+#: views/form.php:192 views/form.php:340
 msgid "Host"
 msgstr ""
 
-#: views/form.php:232
+#: views/form.php:204
 msgid "Host name or IP address"
 msgstr "主机名或者IP地址"
 
-#: install.php:37 install.php:135
+#: install.php:38 install.php:136
 msgid "Installing OpenCNAM CallerID Lookup Sources..."
 msgstr ""
 
-#: views/form.php:81
+#: views/form.php:83
 msgid "Internal"
 msgstr ""
 
-#: views/form.php:18
+#: views/form.php:20
 msgid "Internal:"
 msgstr ""
 
-#: views/form.php:22
+#: views/form.php:24
 msgid "It queries a MySQL database to retrieve caller name"
 msgstr ""
 
@@ -225,31 +213,31 @@ msgstr ""
 msgid "List Sources"
 msgstr ""
 
-#: install.php:73
+#: install.php:74
 msgid "Migrating channel routing to Zap DID routing.."
 msgstr "正在将频道路由迁移到Zap DID路由。。。"
 
-#: views/form.php:500
+#: views/form.php:472
 msgid "MySQL Character Set. Leave blank for MySQL default latin1"
 msgstr ""
 
-#: views/form.php:380
+#: views/form.php:352
 msgid "MySQL Host"
 msgstr "MySQL主机"
 
-#: views/form.php:476
+#: views/form.php:448
 msgid "MySQL Password"
 msgstr "MySQL密码"
 
-#: views/form.php:452
+#: views/form.php:424
 msgid "MySQL Username"
 msgstr "MySQL用户名"
 
-#: views/form.php:22
+#: views/form.php:24
 msgid "MySQL:"
 msgstr ""
 
-#: views/form.php:115 views/form.php:148
+#: views/form.php:115
 msgid "No"
 msgstr ""
 
@@ -257,49 +245,43 @@ msgstr ""
 msgid "None"
 msgstr "无"
 
-#: install.php:97
+#: install.php:98
 msgid "Not Needed"
 msgstr "没有必要"
 
-#: views/form.php:509 views/form.php:514
+#: views/form.php:481 views/form.php:486
 msgid "Not yet implemented"
 msgstr "尚未实现"
 
-#: install.php:83 install.php:92
+#: install.php:84 install.php:93
 msgid "OK"
 msgstr "完成"
 
-#: views/form.php:80
+#: views/form.php:10
 msgid "OpenCNAM"
+msgstr ""
+
+#: functions.inc.php:187
+msgid "OpenCNAM Requires Authentication"
 msgstr ""
 
 #: bin/opencnam-alert.php:25
 msgid "OpenCNAM Throttle Reached!"
 msgstr ""
 
-#: views/form.php:156
-msgid ""
-"OpenCNAM's Professional Tier lets you do as many real-time CNAM queries as "
-"you want, for a small fee. This is recommended for business users."
-msgstr ""
-
-#: views/form.php:17
-msgid "OpenCNAM:"
-msgstr ""
-
-#: views/form.php:292 views/form.php:464
+#: views/form.php:264 views/form.php:436
 msgid "Password"
 msgstr ""
 
-#: views/form.php:304
+#: views/form.php:276
 msgid "Password to use in HTTP authentication"
 msgstr "用于HTTP鉴权的密码"
 
-#: views/form.php:316
+#: views/form.php:288
 msgid "Path"
 msgstr ""
 
-#: views/form.php:328
+#: views/form.php:300
 msgid ""
 "Path of the file to GET<br/>e.g.: /cidlookup.php<br>Special token '[NUMBER]' "
 "will be replaced with caller number<br/>e.g.: /cidlookup/[NUMBER]/<br/"
@@ -307,19 +289,19 @@ msgid ""
 "will be replaced with channel language"
 msgstr ""
 
-#: views/form.php:244
+#: views/form.php:216
 msgid "Port"
 msgstr ""
 
-#: views/form.php:256
+#: views/form.php:228
 msgid "Port HTTP(s) server is listening at (default http 80, https 443)"
 msgstr ""
 
-#: views/form.php:340 views/form.php:416
+#: views/form.php:312 views/form.php:388
 msgid "Query"
 msgstr ""
 
-#: views/form.php:352
+#: views/form.php:324
 msgid ""
 "Query string, special token '[NUMBER]' will be replaced with caller "
 "number<br/>e.g.: number=[NUMBER]&source=crm<br/>'[NAME]' will be replaced "
@@ -327,7 +309,7 @@ msgid ""
 "language"
 msgstr ""
 
-#: views/form.php:428
+#: views/form.php:400
 msgid ""
 "Query, special token '[NUMBER]' will be replaced with caller number<br/>e."
 "g.: SELECT name FROM phonebook WHERE number LIKE '%[NUMBER]%'"
@@ -335,7 +317,7 @@ msgstr ""
 "设置查询字符串，特殊标识符“[NUMBER]”会被替换成主叫号码<br/>例如：SELECT name "
 "FROM phonebook WHERE number LIKE '%[NUMBER]%'"
 
-#: install.php:86
+#: install.php:87
 msgid "Removing deprecated channel field from incoming.."
 msgstr "正在从incoming表中移除废弃的channel字段。。。"
 
@@ -343,7 +325,7 @@ msgstr "正在从incoming表中移除废弃的channel字段。。。"
 msgid "Reset"
 msgstr ""
 
-#: views/form.php:15
+#: views/form.php:17
 msgid "Select the source type, you can choose between:"
 msgstr ""
 
@@ -351,11 +333,11 @@ msgstr ""
 msgid "Source"
 msgstr "源"
 
-#: views/form.php:51
+#: views/form.php:53
 msgid "Source Description"
 msgstr ""
 
-#: views/form.php:75
+#: views/form.php:77
 msgid "Source type"
 msgstr ""
 
@@ -367,30 +349,32 @@ msgstr "可以向呼叫者姓名查找源小节添加源"
 msgid "Submit"
 msgstr ""
 
-#: views/form.php:34
+#: views/form.php:36
 #, php-format
 msgid ""
 "There are %s DIDs using this source that will no longer have lookups if "
 "deleted."
 msgstr ""
 
-#: views/grid.php:34
+#: views/grid.php:37
 msgid "Type"
 msgstr ""
 
-#: views/form.php:141
-msgid "Use Professional Tier"
+#: functions.inc.php:187
+msgid ""
+"Unauthenticated calls to the OpenCNAM API will soon fail. You will need an "
+"Open CNAM account to continue using their API"
 msgstr ""
 
-#: views/form.php:268 views/form.php:440
+#: views/form.php:240 views/form.php:412
 msgid "Username"
 msgstr ""
 
-#: views/form.php:280
+#: views/form.php:252
 msgid "Username to use in HTTP authentication"
 msgstr "用于HTTP鉴权的用户名"
 
-#: views/form.php:113 views/form.php:146
+#: views/form.php:113
 msgid "Yes"
 msgstr ""
 
@@ -405,23 +389,23 @@ msgid ""
 "<br/>"
 msgstr ""
 
-#: views/form.php:180
+#: views/form.php:152
 msgid ""
 "Your OpenCNAM Account SID. This can be found on your OpenCNAM dashboard "
 "page: https://www.opencnam.com/dashboard"
 msgstr ""
 
-#: views/form.php:204
+#: views/form.php:176
 msgid ""
 "Your OpenCNAM Auth Token. This can be found on your OpenCNAM dashboard page: "
 "https://www.opencnam.com/dashboard"
 msgstr ""
 
-#: install.php:107
+#: install.php:108
 msgid "not present"
 msgstr "没有出现"
 
-#: install.php:109
+#: install.php:110
 msgid "removed"
 msgstr "已移除"
 

@@ -18,7 +18,6 @@ function paging_get_config($engine) {
 	global $db, $ext, $chan_dahdi, $version, $amp_conf, $conferences_conf;
 	switch($engine) {
 	case "asterisk":
-		$ast_ge_11 = version_compare($version, '11', 'ge');
 
 		// setup for intercom
 		$fcc = new featurecode('paging', 'intercom-prefix');
@@ -150,11 +149,6 @@ function paging_get_config($engine) {
 			$ext->add($context, $code, '', new ext_set('CONNECTEDLINE(name,i)', '${DB(AMPUSER/${EXTEN:' . $len . '}/cidname)}'));
 			$ext->add($context, $code, '', new ext_set('CONNECTEDLINE(num)', '${EXTEN:' . $len . '}'));
 
-			// If it's less than Asterisk 11, manually run the add sip header macro.
-			if (!$ast_ge_11) {
-				$ext->add($context, $code, '', new ext_gosubif('$["${OVERRIDE}" != "ring"]', 'autoanswer,s,1', false, '${ALERTINFO},${CALLINFO}'));
-			}
-
 			$ext->add($context, $code, 'godial', new ext_dial('${DIAL}','${DTIME},' . $dopt . '${DOPTIONS}${INTERCOM_EXT_DOPTIONS}'));
 
 			$ext->add($context, $code, 'end', new ext_execif('$[${INTERCOM_RETURN}]', 'Return'));
@@ -193,14 +187,10 @@ function paging_get_config($engine) {
 				$ext->add($context, $sub, '', new ext_set('PAGE_MEMBERS', '${ARG1}'));
 				$ext->add($context, $sub, '', new ext_set('PAGE_CONF_OPTS', 'duplex'));
 				$ext->add($context, $sub, '', new ext_agi('page.agi'));
-				if ($ast_ge_11) {
-					$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,template)', 'page_user_duplex'));
-					$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,admin)', 'yes'));
-					$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,marked)', 'yes'));
-					$ext->add($context, $sub, '', new ext_meetme('${PAGE_CONF}',',','admin_menu'));
-				} else {
-					$ext->add($context, $sub, '', new ext_meetme('${PAGE_CONF}', 'doqwxAG'));
-				}
+				$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,template)', 'page_user_duplex'));
+				$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,admin)', 'yes'));
+				$ext->add($context, $sub, '', new ext_set('CONFBRIDGE(user,marked)', 'yes'));
+				$ext->add($context, $sub, '', new ext_meetme('${PAGE_CONF}',',','admin_menu'));
 				$ext->add($context, $sub, '', new ext_hangup());
 			}
 
@@ -216,12 +206,12 @@ function paging_get_config($engine) {
 			$ext->add($context, $lang, '', new ext_return());
 
 			$extintercomusers = 'ext-intercom-users';
-			$userlist = core_users_list();
-			if (is_array($userlist)) {
-				foreach($userlist as $item) {
-					$ext_intercom_code = $intercom_code.$item[0];
-					$ext->add($extintercomusers, $ext_intercom_code, '', new ext_goto($context.',${EXTEN},1'));
-				}
+			$sql = "SELECT LENGTH(id) as len FROM devices GROUP BY len";
+			$sth = FreePBX::Database()->prepare($sql);
+			$sth->execute();
+			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+			foreach($rows as $row) {
+				$ext->add($extintercomusers, '_'.$intercom_code.str_repeat('X',$row['len']),'', new ext_goto($context.',${EXTEN},1'));
 			}
 
 			$context = $extintercomusers;
@@ -236,21 +226,27 @@ function paging_get_config($engine) {
 		unset($fcc);
 
 		if ($oncode) {
+			$ext->add($context, $oncode, '', new ext_macro('user-callerid'));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(name,i)',_("Intercom: Enabled")));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(num,i)','${AMPUSER}'));
 			$ext->add($context, $oncode, '', new ext_answer(''));
 			$ext->add($context, $oncode, '', new ext_wait('1'));
-			$ext->add($context, $oncode, '', new ext_macro('user-callerid'));
 			$ext->add($context, $oncode, '', new ext_setvar('DB(AMPUSER/${AMPUSER}/intercom)', 'enabled'));
 			$ext->add($context, $oncode, '', new ext_playback('intercom&enabled'));
 			$ext->add($context, $oncode, '', new ext_macro('hangupcall'));
 
 			$target = '${EXTEN:'.strlen($oncode).'}';
 			$oncode = "_".$oncode.".";
+			$ext->add($context, $oncode, '', new ext_macro('user-callerid'));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(name,i)',sprintf(_("Intercom from %s: Enabled"),$target)));
+			$ext->add($context, $oncode, '', new ext_set('CONNECTEDLINE(num,i)','${AMPUSER}'));
 			$ext->add($context, $oncode, '', new ext_setvar('dialnumber', '${EVAL(${EXTEN:'.strlen(substr($oncode, 1, -1)).'})}')); // Asterisk variable for saydigits languages
 			$ext->add($context, $oncode, '', new ext_answer(''));
 			$ext->add($context, $oncode, '', new ext_wait('1'));
-			$ext->add($context, $oncode, '', new ext_macro('user-callerid'));
 			$ext->add($context, $oncode, '', new ext_gotoif('$["${DB(AMPUSER/${AMPUSER}/intercom/'.$target.')}" = "allow" ]}','unset'));
-			$ext->add($context, $oncode, '', new ext_gotoif('$[${DB_EXISTS(AMPUSER/${EXTEN:3}/device)} != 1]','invaliduser'));
+			$ext->add($context, $oncode, '', new ext_gotoif('$[${DB_EXISTS(AMPUSER/'.$target.'/device)} != 1]','invaliduser'));
 			$ext->add($context, $oncode, '', new ext_dbput('AMPUSER/${AMPUSER}/intercom/'.$target, 'allow'));
 			$ext->add($context, $oncode, '', new ext_gosub('1', 'lang-playback', $context, 'hook_1'));
 			$ext->add($context, $oncode, '', new ext_macro('hangupcall'));
@@ -292,21 +288,27 @@ function paging_get_config($engine) {
 		unset($fcc);
 
 		if ($offcode) {
+			$ext->add($context, $offcode, '', new ext_macro('user-callerid'));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(name,i)',_("Intercom: Disabled")));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(num,i)','${AMPUSER}'));
 			$ext->add($context, $offcode, '', new ext_answer(''));
 			$ext->add($context, $offcode, '', new ext_wait('1'));
-			$ext->add($context, $offcode, '', new ext_macro('user-callerid'));
 			$ext->add($context, $offcode, '', new ext_setvar('DB(AMPUSER/${AMPUSER}/intercom)', 'disabled'));
 			$ext->add($context, $offcode, '', new ext_playback('intercom&disabled'));
 			$ext->add($context, $offcode, '', new ext_macro('hangupcall'));
 
 			$target = '${EXTEN:'.strlen($offcode).'}';
 			$offcode = "_".$offcode.".";
+			$ext->add($context, $offcode, '', new ext_macro('user-callerid'));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(name-charset,i)','utf8'));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(name,i)',sprintf(_("Intercom from %s: Disabled"),$target)));
+			$ext->add($context, $offcode, '', new ext_set('CONNECTEDLINE(num,i)','${AMPUSER}'));
 			$ext->add($context, $offcode, '', new ext_setvar('dialnumber', '${EVAL(${EXTEN:'.strlen(substr($offcode, 1, -1)).'})}')); // Asterisk variable for saydigits languages
 			$ext->add($context, $offcode, '', new ext_answer(''));
 			$ext->add($context, $offcode, '', new ext_wait('1'));
-			$ext->add($context, $offcode, '', new ext_macro('user-callerid'));
 			$ext->add($context, $offcode, '', new ext_gotoif('$["${DB(AMPUSER/${AMPUSER}/intercom/'.$target.')}" = "deny" ]}','unset2'));
-			$ext->add($context, $offcode, '', new ext_gotoif('$[${DB_EXISTS(AMPUSER/${EXTEN:3}/device)} != 1]','invaliduser2'));
+			$ext->add($context, $offcode, '', new ext_gotoif('$[${DB_EXISTS(AMPUSER/'.$target.'/device)} != 1]','invaliduser2'));
 			$ext->add($context, $offcode, '', new ext_dbput('AMPUSER/${AMPUSER}/intercom/'.$target, 'deny'));
 			$ext->add($context, $offcode, '', new ext_gosub('1', 'lang-playback', $context, 'hook_4'));
 			$ext->add($context, $offcode, '', new ext_macro('hangupcall'));
@@ -425,13 +427,19 @@ function paging_get_config($engine) {
 		//
 		if (!empty($autoanswer_arr)) {
 			global $version;
+			$ext->add($macro, "s", '', new ext_gotoif('$["${DIAL:0:5}" = "PJSIP"]', 'pjsipua'));
 			//http://issues.freepbx.org/browse/FREEPBX-7715
 			if(version_compare($version,"12","<")) {
 				$ext->add($macro, "s", '', new ext_setvar('USERAGENT', '${SIPPEER(${CUT(DIAL,/,2)}:useragent)}'));
 			} else {
 				$ext->add($macro, "s", '', new ext_setvar('USERAGENT', '${SIPPEER(${CUT(DIAL,/,2)},useragent)}'));
 			}
-			$ext->add($macro, "s", '', new ext_execif('$["${KNOWNAGENT}" != ""]', 'Set', 'USERAGENT=${KNOWNAGENT}'));
+			$ext->add($macro, "s", '', new ext_goto('uafin'));
+			$ext->add($macro, "s", 'pjsipua', new ext_setvar('AOR','${CUT(DIAL,/,2)}'));
+			$ext->add($macro, "s", '', new ext_setvar('CONTACT','${PJSIP_AOR(${AOR},contact)}'));
+			$ext->add($macro, "s", '', new ext_setvar('USERAGENT', '${PJSIP_CONTACT(${CONTACT},user_agent)}'));
+
+			$ext->add($macro, "s", 'uafin', new ext_execif('$["${KNOWNAGENT}" != ""]', 'Set', 'USERAGENT=${KNOWNAGENT}'));
 		}
 		// We used to set all the variables here (ALERTINFO, CALLINFO, etc. That has been moved to each
 		// paging group and the intercom main macro, since it was redundant for every phone causing a lot
@@ -487,12 +495,10 @@ function paging_get_config($engine) {
 		// Macro to apply SIP Headers to channel.
 		//   function ext_gosubif($condition, $true_priority, $false_priority = false, $true_args = '', $false_args = '') {
 		//
-		$ext->add("autoanswer", "s", '', new ext_gosubif('$["${ARG1}" != ""]', 'addheader,1', false, 'Alert-Info,${ARG1}'));
-		$ext->add("autoanswer", "s", '', new ext_gosubif('$["${ARG2}" != ""]', 'addheader,1', false, 'Call-Info,${ARG2}'));
+		$ext->add("autoanswer", "s", '', new ext_gosubif('$["${ARG1}" != ""]', 'func-set-sipheader,s,1', false, 'Alert-Info,${ARG1}'));
+		$ext->add("autoanswer", "s", '', new ext_gosubif('$["${ARG2}" != ""]', 'func-set-sipheader,s,1', false, 'Call-Info,${ARG2}'));
+		$ext->add("autoanswer", "s", '', new ext_gosub('func-apply-sipheaders,s,1'));
 		$ext->add("autoanswer", "s", '', new ext_return());
-		$ext->add("autoanswer", "addheader", '', new ext_sipaddheader('${ARG1}', '${ARG2}'));
-		$ext->add("autoanswer", "addheader", '', new ext_set('PJSIP_HEADER(add,${ARG1})', '${ARG2}'));
-		$ext->add("autoanswer", "addheader", '', new ext_return());
 
 		// Setup Variables before AGI script
 		//
@@ -525,13 +531,15 @@ function paging_get_config($engine) {
 		} else {
 			$ext->add($apppaging, "_PAGE.", 'SKIPCHECK', new ext_macro('autoanswer', '${EXTEN:4}'));
 		}
+
+		$ext->add($apppaging, "_PAGE.", '', new ext_noop('${EXTRINGTIME}'));
+		$ext->add($apppaging, "_PAGE.", '', new ext_gotoif('$["${EXTRINGTIME}" != "true"]', 'doptions'));
+		$ext->add($apppaging, "_PAGE.", '', new ext_set('_DTIME', '${RINGTIMER_DEFAULT}'));
+		$ext->add($apppaging, "_PAGE.", '', new ext_execif('$["${DB(AMPUSER/${EXTEN:4}/ringtimer)}" != "" & ${DB(AMPUSER/${EXTEN:4}/ringtimer)} > 0]', 'Set', '_DTIME=${DB(AMPUSER/${EXTEN:4}/ringtimer)}'));
+
 		//strip the global Announcement out of doptions (We use our announcement variable lower --V)
 		$doptions2 = preg_replace("/A\([^\)]*\)/","",$doptions);
-		$ext->add($apppaging, "_PAGE.", '', new ext_set('_DOPTIONS', $doptions2));
-		// If it's less than Asterisk 11, manually run the add sip header macro.
-		if (!$ast_ge_11) {
-			$ext->add($apppaging, "_PAGE.", '', new ext_gosub('1', 's', 'autoanswer', '${ALERTINFO},${CALLINFO}'));
-		}
+		$ext->add($apppaging, "_PAGE.", 'doptions', new ext_execif('$["${DOPTIONS}" = ""]', 'Set', '_DOPTIONS='.$doptions2));
 		$ext->add($apppaging, "_PAGE.", '', new ext_dial('${DIAL}','${DTIME},A(${ANNOUNCEMENT})${DOPTIONS}'));
 		$ext->add($apppaging, "_PAGE.", 'skipself', new ext_hangup());
 
@@ -553,7 +561,7 @@ function paging_get_config($engine) {
 
 		//See http://issues.freepbx.org/browse/FREEPBX-8796
 		//before you even think about removing this to after checking for a page group!
-		if ($amp_conf['ASTCONFAPP'] == 'app_confbridge' && $ast_ge_11 && isset($conferences_conf) && is_a($conferences_conf, "conferences_conf")) {
+		if ($amp_conf['ASTCONFAPP'] == 'app_confbridge' && isset($conferences_conf) && is_a($conferences_conf, "conferences_conf")) {
 			$pu = 'page_user';
 			$pud = 'page_user_duplex';
 			foreach (array($pu, $pud) as $u) {
@@ -584,7 +592,7 @@ function paging_get_config($engine) {
 		//       an admin as far as I can tell.
 		//
 		//
-		if ($amp_conf['ASTCONFAPP'] == 'app_confbridge' && $ast_ge_11) {
+		if ($amp_conf['ASTCONFAPP'] == 'app_confbridge') {
 			$ext->add($c, 's', '', new ext_set('CONFBRIDGE(user,template)', $pud));
 			$ext->add($c, 's', '', new ext_set('CONFBRIDGE(user,marked)', 'yes'));
 			$ext->add($c, 's', '', new ext_meetme('${PAGE_CONF}','',''));
@@ -645,7 +653,7 @@ function paging_get_config($engine) {
 			$ext->add($apppagegroups, $grp, '', new ext_gosub('1','ssetup', $apppaging));
 			$ext->add($apppagegroups, $grp, '', new ext_set('PAGEMODE', $pagemode));
 			$ext->add($apppagegroups, $grp, '', new ext_set('PAGE_MEMBERS', implode('-', $all_exts)));
-			if ($amp_conf['ASTCONFAPP'] == 'app_confbridge' && $ast_ge_11) {
+			if ($amp_conf['ASTCONFAPP'] == 'app_confbridge') {
 				$ext->add($apppagegroups, $grp, '', new ext_set('PAGE_CONF_OPTS', ($thisgroup['duplex'] ? 'duplex' : '')));
 			} else {
 				$ext->add($apppagegroups, $grp, '', new ext_set('PAGE_CONF_OPTS', $page_opts . (!$thisgroup['duplex'] ? 'm' : '')));
@@ -702,7 +710,7 @@ function paging_get_config($engine) {
 			//        s: present menu
 			//
 			//
-			if ($amp_conf['ASTCONFAPP'] == 'app_confbridge' && $ast_ge_11) {
+			if ($amp_conf['ASTCONFAPP'] == 'app_confbridge') {
 				$ext->add($apppagegroups, $grp, '', new ext_set('CONFBRIDGE(user,template)', $pud));
 				$ext->add($apppagegroups, $grp, '', new ext_set('CONFBRIDGE(user,admin)', 'yes'));
 				$ext->add($apppagegroups, $grp, '', new ext_set('CONFBRIDGE(user,marked)', 'yes'));
@@ -742,6 +750,23 @@ function paging_destinations() {
 	}
 }
 
+function paging_getdestinfo($dest) {
+	if (substr(trim($dest),0,15) == 'app-pagegroups,') {
+		$exten = explode(',',$dest);
+		$exten = $exten[1];
+		$thisexten = paging_get_pagingconfig($exten);
+		if (empty($thisexten)) {
+			return array();
+		} else {
+			return array('description' => sprintf(_("Paging Group %s : %s"),$exten,$thisexten['description']),
+			             'edit_url' => 'config.php?display=paging&view=form&extdisplay='.urlencode($exten),
+					);
+		}
+	} else {
+		return false;
+	}
+}
+
 function paging_getdest($exten) {
 	return array('pagegroups,'.$exten.',1');
 }
@@ -765,7 +790,7 @@ function paging_get_autoanswer_defaults($orderd = false) {
 
 function paging_set_autoanswer_defaults($data) {
 	global $db;
-
+	$put = array();
 	if (!is_array($data)) {
 		return false;
 	}
@@ -773,13 +798,14 @@ function paging_set_autoanswer_defaults($data) {
 	foreach ($data as $k => $v) {
 		$put[] = array('default', $k, $v);
 	}
-
-	$sql = "REPLACE INTO paging_autoanswer (useragent, var, setting) VALUES (?, ?, ?)";
-	$sql = $db->prepare($sql);
-	$res = $db->executeMultiple($sql, $put);
-	db_e($res);
-
-	return true;
+	if(!empty($put)){
+		$sql = "REPLACE INTO paging_autoanswer (useragent, var, setting) VALUES (?, ?, ?)";
+		$sql = $db->prepare($sql);
+		$res = $db->executeMultiple($sql, $put);
+		db_e($res);
+		return true;
+	}
+	return false;
 }
 
 function paging_get_autoanswer_useragents($useragent = '') {
@@ -986,13 +1012,21 @@ function paging_applyhooks() {
 	$currentcomponent->addoptlistitem('page_group', '1', _("Include"));
 	$currentcomponent->setoptlistopts('page_group', 'sort', false);
 
+	$currentcomponent->addoptlistitem('intercom', 'enabled', _("Enabled"));
+	$currentcomponent->addoptlistitem('intercom', 'disabled', _("Disabled"));
+	$currentcomponent->setoptlistopts('intercom', 'sort', false);
+
+	$currentcomponent->addoptlistitem('answermode', 'disabled', _("Disable"));
+	$currentcomponent->addoptlistitem('answermode', 'intercom', _("Intercom"));
+	$currentcomponent->setoptlistopts('answermode', 'sort', false);
+
 	$currentcomponent->addguifunc('paging_configpageload');
 }
 
 
 // This is called before the page is actually displayed, so we can use addguielem().
 function paging_configpageload() {
-	global $currentcomponent;
+	global $currentcomponent,$astman;
 
 	// Init vars from $_REQUEST[]
 	$action = isset($_REQUEST['action']) ? $_REQUEST['action']:null;
@@ -1008,6 +1042,16 @@ function paging_configpageload() {
 			$in_default_page_grp = paging_check_default($extdisplay);
 			$currentcomponent->addguielem($section, new gui_selectbox('in_default_page_grp', $currentcomponent->getoptlist('page_group'), $in_default_page_grp, _('Default Page Group'), _('You can include or exclude this extension/device from being part of the default page group when creating or editing.'), false));
 		}
+		$section = _("Extension Options");
+		$category = "advanced";
+
+		$answermode = $astman->database_get("AMPUSER",$extdisplay."/answermode");
+		$answermode = (trim($answermode) == '') ? $amp_conf['DEFAULT_INTERNAL_AUTO_ANSWER'] : $answermode;
+		$currentcomponent->addguielem($section, new gui_radio('answermode', $currentcomponent->getoptlist('answermode'), $answermode, _("Internal Auto Answer"), _("When set to Intercom, calls to this extension/user from other internal users act as if they were intercom calls meaning they will be auto-answered if the endpoint supports this feature and the system is configured to operate in this mode. All the normal white list and black list settings will be honored if they are set. External calls will still ring as normal, as will certain other circumstances such as blind transfers and when a Follow Me is configured and enabled. If Disabled, the phone rings as a normal phone."), false, '','',false), $category);
+
+		$intercom = $astman->database_get("AMPUSER",$extdisplay."/intercom");
+		$intercom = (trim($intercom) == '') ? 'enabled' : $intercom;
+		$currentcomponent->addguielem($section, new gui_radio('intercom', $currentcomponent->getoptlist('intercom'), $intercom, _("Intercom Mode"), _("When Enabled users can use *80<ext> to force intercom. When Disabled this user will reject intercom calls"), false, '','',false), $category);
 	}
 }
 

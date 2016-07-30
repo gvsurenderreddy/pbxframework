@@ -4,11 +4,16 @@
 $cidsources = cidlookup_list();
 $srow = "";
 foreach ($cidsources as $source) {
+    if($source['sourcetype'] === null){
+      continue;
+    }
     $srow .= '<tr>';
     $srow .= '<td>'.$source['description'].'</td>';
-    $srow .= '<td>'.$source['sourcetype'];
-    if ($source['sourcetype'] == 'opencnam' && !empty($source['opencnam_account_sid']) && !empty($source['opencnam_auth_token']) ) {
-        $srow .= " Pro ";
+    $srow .= '<td>';
+    if ($source['sourcetype'] == 'opencnam') {
+        $srow .= 'OpenCNAM';
+    } else {
+        $srow .= $source['sourcetype'];
     }
     $srow .= '</td>';
     $srow .= '<td><a href="?display=cidlookup&view=form&itemid='.$source['cidlookup_id'].'&amp;extdisplay='.$source['cidlookup_id'].'"><i class="fa fa-edit"></i></a>';

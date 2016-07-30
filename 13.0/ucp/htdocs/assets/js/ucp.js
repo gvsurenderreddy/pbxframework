@@ -91,10 +91,10 @@ var UCPC = Class.extend({
 						pass1 = $("input[name=npass1]").val().trim(),
 						pass2 = $("input[name=npass2]").val().trim();
 				if (pass1 != pass2) {
-					alert(_("Passwords do not match"));
+					alert(_("New password and old password do not match"));
 					return false;
 				} else if (pass1 === "" || pass2 === "") {
-					alert(_("Passwords can't be blank!"));
+					alert(_("Password fields can't be blank!"));
 					return false;
 				} else {
 					var queryString = $("#frm-login").formSerialize();
@@ -103,7 +103,7 @@ var UCPC = Class.extend({
 						if (!data.status) {
 							$("#error-msg").html(data.message).fadeIn("fast");
 						} else {
-							alert(_("Passwords changed!"));
+							alert(_("Password has been changed!"));
 							$("#switch-login").click();
 						}
 					});
@@ -372,7 +372,15 @@ var UCPC = Class.extend({
 	},
 	wsconnect: function(namespace, callback) {
 		//console.log(namespace);
-		if (!this.loggedIn || !ucpserver.enabled) {
+		if (!this.loggedIn) {
+			return false;
+		}
+
+		if(window.location.protocol != "https:" && !ucpserver.enabled) {
+			return false;
+		}
+
+		if(window.location.protocol == "https:" && !ucpserver.enabledS) {
 			return false;
 		}
 
@@ -390,9 +398,11 @@ var UCPC = Class.extend({
 		} else {
 			var host = ucpserver.host,
 					port = ucpserver.port,
+					portS = ucpserver.portS,
 					socket = null;
 			try {
-				socket = io("ws://" + host + ":" + port + "/" + namespace, {
+				var connectString = (window.location.protocol == "https:") ? "wss://" + host + ":" + portS + "/" + namespace : "ws://" + host + ":" + port + "/" + namespace;
+				socket = io(connectString, {
 					reconnection: true,
 					query: "token=" + UCP.token
 				});
@@ -400,13 +410,19 @@ var UCPC = Class.extend({
 				UCP.displayGlobalMessage(err, "red", true);
 				callback(false);
 			}
+			var timeout = setTimeout(function(){
+				window.s = socket;
+				UCP.displayGlobalMessage(_("Unable to authenticate with the UCP Node Server"), "red", true);
+				callback(false);
+			}, 3000);
 			socket.on("connect", function() {
+				clearTimeout(timeout);
 				UCP.lastIO = socket.io;
 				UCP.removeGlobalMessage();
 				callback(socket);
 			});
 			socket.on("connect_error", function(reason) {
-				UCP.displayGlobalMessage(sprintf(_("Unable to connect UCP Node Server because: '%s'"),reason), "red", true);
+				UCP.displayGlobalMessage(sprintf(_("Unable to connect to the UCP Node Server because: '%s'"),reason), "red", true);
 				callback(false);
 			});
 		}
@@ -616,13 +632,14 @@ var UCPC = Class.extend({
 			$(document).trigger( "phoneWindowRemoved");
 		});
 	},
-	addChat: function(module, id, icon, from, to, sender, msgid, message, callback) {
+	addChat: function(module, id, icon, from, to, cnam, msgid, message, callback, htmlV, direction) {
+		var html = (typeof htmlV !== "undefined") ? htmlV : false;
 		if (!$( "#messages-container .message-box[data-id=\"" + id + "\"]" ).length && (typeof this.messageBuffer[id] === "undefined")) {
 			//add placeholder
 			if (typeof msgid !== "undefined") {
 				this.messageBuffer[id] = [];
 				this.messageBuffer[id].push({
-					sender: sender,
+					sender: cnam,
 					msgid: msgid,
 					message: message
 				});
@@ -634,7 +651,7 @@ var UCPC = Class.extend({
 					if (typeof msgid !== "undefined") {
 						if (typeof UCP.messageBuffer[id] !== "undefined") {
 							$.each(UCP.messageBuffer[id], function(i, v) {
-								UCP.addChatMessage(id, v.sender, v.msgid, v.message);
+								UCP.addChatMessage(id, v.sender, v.msgid, v.message, false, html, direction);
 							});
 							delete UCP.messageBuffer[id];
 						}
@@ -671,11 +688,13 @@ var UCPC = Class.extend({
 						UCP.removeChat($(this).data("id"));
 					}
 				});
-				$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "slow");
+				$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").imagesLoaded( function() {
+					$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "slow");
+				});
 			}, dataType: "json", type: "POST" });
 		} else {
 			if (typeof msgid !== "undefined") {
-				UCP.addChatMessage(id, sender, msgid, message);
+				UCP.addChatMessage(id, cnam, msgid, message, false, html, direction);
 			}
 			return null;
 		}
@@ -690,13 +709,16 @@ var UCPC = Class.extend({
 			$(document).trigger( "chatWindowRemoved", [ id ] );
 		});
 	},
-	addChatMessage: function(id, sender, msgid, message, colorNew) {
+	addChatMessage: function(id, cnam, msgid, message, newmsg, htmlV, direction) {
 		var emailre = /([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})/ig,
-				urlre = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/ig;
+				urlre = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/ig,
+				html = (typeof htmlV !== "undefined") ? htmlV : false;
+		if(!html) {
+			message = emojione.toImage(htmlEncode(message));
+			message = message.replace(urlre,"<a href='$1' target='_blank'>$1</a>");
+			message = message.replace(emailre,"<a href='mailto:$1@$2.$3' target='_blank'>$1@$2.$3</a>");
+		}
 
-		message = emojione.toImage(htmlEncode(message));
-		message = message.replace(urlre,"<a href='$1' target='_blank'>$1</a>");
-		message = message.replace(emailre,"<a href='mailto:$1@$2.$3' target='_blank'>$1@$2.$3</a>");
 		if ($( "#messages-container .message-box[data-id=\"" + id + "\"]" ).length) {
 			if (!$( "#messages-container .message-box[data-id=\"" + id + "\"]" ).hasClass("expand")) {
 				$( "#messages-container .message-box[data-id=\"" + id + "\"]" ).addClass("expand");
@@ -704,26 +726,28 @@ var UCPC = Class.extend({
 			}
 			$( "#messages-container .message-box[data-id=\"" + id + "\"]" ).data("last-msg-id", msgid);
 
-			if (typeof colorNew === "undefined" || colorNew) {
+			if (typeof newmsg === "undefined" || newmsg) {
 				$( "#messages-container .title-bar[data-id=\"" + id + "\"]" ).css("background-color", "#428bca");
-			} else {
-				sender = "Me";
 			}
-			$( "#messages-container .message-box[data-id=\"" + id + "\"] .chat" ).append("<div class='message' data-id='" + msgid + "'><strong>" + sender + ":</strong> " + message + "</div>");
+			$( "#messages-container .message-box[data-id=\"" + id + "\"] .chat" ).append("<div class='message "+direction+"' data-id='" + msgid + "'>" + message + "</div>");
 			if (UCP.chatTimeout[id] !== undefined && UCP.chatTimeout[id] !== null) {
 				clearTimeout(UCP.chatTimeout[id]);
 			}
 
-			var d = new Date();
+			var d = moment().tz(timezone).calendar();
 			UCP.chatTimeout[id] = setTimeout(function() {
-				$( "#messages-container .message-box[data-id=\"" + id + "\"] .chat" ).append("<div class=\"status\" data-type=\"date\">Sent at " + d.format("g:i A \\o\\n l") + "</div>");
-				$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "fast");
+				$( "#messages-container .message-box[data-id=\"" + id + "\"] .chat" ).append("<div class=\"status\" data-type=\"date\">Sent at " + d + "</div>");
+				$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").imagesLoaded( function() {
+					$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "slow");
+				});
 			}, 60000);
 
-			$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "slow");
+			$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").imagesLoaded( function() {
+				$("#messages-container .message-box[data-id=\"" + id + "\"] .chat").animate({ scrollTop: $("#messages-container .message-box[data-id=\"" + id + "\"] .chat")[0].scrollHeight }, "slow");
+			});
 		} else if (typeof this.messageBuffer[id] !== "undefined") {
 			this.messageBuffer[id].push({
-				sender: sender,
+				sender: cnam,
 				msgid: msgid,
 				message: message
 			});
@@ -764,7 +788,8 @@ var UCPC = Class.extend({
 				sub = $.url().param("sub");
 
 		this.windowResize();
-		$("#loader-screen").fadeOut("fast");
+		NProgress.done();
+		$("#nav-btn-settings .icon i").removeClass("out");
 		if (typeof window[this.activeModule] == "object" &&
 			typeof window[this.activeModule].hide == "function") {
 			window[this.activeModule].hide(event);
@@ -809,11 +834,11 @@ var UCPC = Class.extend({
 		this.binds();
 	},
 	pjaxStart: function(event) {
-
+		NProgress.start();
+		$("#nav-btn-settings .icon i").addClass("out");
 	},
 	pjaxTimeout: function(event) {
 		//query higher up event here
-		$("#loader-screen").fadeIn("fast");
 		event.preventDefault();
 		return false;
 	},
@@ -822,6 +847,8 @@ var UCPC = Class.extend({
 		console.log("error");
 		console.log(event);
 		event.preventDefault();
+		NProgress.done();
+		$("#nav-btn-settings .icon i").removeClass("out");
 		return false;
 	},
 	validMethod: function(module, method) {
@@ -1029,8 +1056,8 @@ var UCPC = Class.extend({
 		$('table[data-toggle="table"]').bootstrapTable();
 	},
 	dateFormatter: function(unixtimestamp) {
-		var date = new Date(unixtimestamp *1000);
-		return date.format('m/d/y h:i:sa');
+		unixtimestamp = parseInt(unixtimestamp);
+		return moment.unix(unixtimestamp).tz(timezone).format('MM/DD/YYYY h:mm:ssa');
 	},
 	updateNavBadge: function(button, num) {
 		var badge = $("#nav-btn-" + button + " .badge");

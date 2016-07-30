@@ -2,13 +2,17 @@
 	<rawname>cidlookup</rawname>
 	<repo>standard</repo>
 	<name>CallerID Lookup</name>
-	<version>13.0.7</version>
+	<version>13.0.10.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<description>Allows CallerID Lookup of incoming calls against different sources (OpenCNAM, MySQL, HTTP, ENUM, Phonebook Module)</description>
 	<category>Admin</category>
 	<changelog>
+		*13.0.10.1* Ringfree branch
+		*13.0.10* FREEPBX-11552 - Fix cache logic. Also more opencnam cleanup. move rate limit to 10 based on current info from site..., FREEPBX-11718 Remove the ability to add new..			
+		*13.0.9* CallerID Lookup Sources 'None' entry uses OpenCNAM
+		*13.0.8* Use "/usr/bin/env php" to start script
 		*13.0.7* FREEPBX-10774
 		*13.0.6* Floating menu update
 		*13.0.5* FREEPBX-8172 Add tokens to path to allow path style lookups
@@ -45,6 +49,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/cidlookup-13.0.7.tgz</location>
-	<md5sum>1dc1bd7854bec8fda89bb03f38e581a6</md5sum>
+	<location>release/13.0/cidlookup-13.0.4.1.tgz</location>
+	<md5sum></md5sum>
 </module>

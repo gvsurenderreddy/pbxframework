@@ -1,7 +1,7 @@
 <module>
 	<rawname>contactdir</rawname>
 	<name>Contact Directory</name>
-	<version>2.11.0.2</version>
+	<version>2.11.0.2.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -9,6 +9,7 @@
 	<category>Settings</category>
 	<description>Add servers users can import contacts from</description>
 	<changelog>
+		*2.11.0.2.1* Ringfree branch
 		*2.11.0.2* Update license file
 		*2.11.0.1* Use new abstraction layer
 		*2.11.0.0* bump version
@@ -29,6 +30,6 @@
 	<supported>
 		<version>2.11</version>
 	</supported>
-	<location>release/13.0/contactdir-2.11.0.2.tgz</location>
-	<md5sum>cfb139ac6ff96c1bd56ac7693e2322dd</md5sum>
+	<location>release/13.0/contactdir-2.11.0.2.1.tgz</location>
+	<md5sum></md5sum>
 </module>

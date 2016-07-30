@@ -1,5 +1,22 @@
 <?php
 namespace FreePBX\modules\Backup;
+require __DIR__ . '/../vendor/autoload.php';
+/*FTP Stuff*/
+use Touki\FTP\FTP;
+use Touki\FTP\FTPWrapper;
+use Touki\FTP\Connection\Connection;
+use Touki\FTP\PermissionsFactory;
+use Touki\FTP\FilesystemFactory;
+use Touki\FTP\WindowsFilesystemFactory;
+use Touki\FTP\DownloaderVoter;
+use Touki\FTP\UploaderVoter;
+use Touki\FTP\CreatorVoter;
+use Touki\FTP\DeleterVoter;
+use Touki\FTP\Manager\FTPFilesystemManager;
+use Touki\FTP\Model\File;
+use Touki\FTP\Model\Directory;
+use Touki\FTP\Exception\DirectoryException;
+
 class Backup {
 
 	/**
@@ -181,7 +198,6 @@ class Backup {
 					// Match wildcards.
 					$dirs = glob($i['path'], \GLOB_ONLYDIR);
 					if (!isset($dirs[0])) {
-						backup_log("Skipping requested directory '".$i['path']."' as it does not exist.");
 						break;
 					}
 
@@ -258,7 +274,7 @@ class Backup {
 									. '.' . backup__($x);
 						}
 					}
-					$cmd[] = ' --opt --skip-comments --skip-extended-insert --lock-tables=false --skip-add-locks --compatible=no_table_options ';
+					$cmd[] = ' --opt --skip-comments --skip-extended-insert --lock-tables=false --skip-add-locks --compatible=no_table_options --default-character-set=utf8';
 
 					// Need to grep out leading /* comments and SET commands as they create problems
 					// restoring using the PEAR $db class
@@ -362,10 +378,18 @@ class Backup {
 					//TODO: set agent to something informative, including fpbx & backup versions
 					$email_options = array('useragent' => 'freepbx', 'protocol' => 'mail');
 					$email = new \CI_Email();
-					$from = $this->amp_conf['AMPBACKUPEMAILFROM']
-							? $this->amp_conf['AMPBACKUPEMAILFROM']
-							: 'freepbx@freepbx.org';
-
+					//Generic email
+					$from = 'freepbx@freepbx.local';
+					//If we have sysadmin and "from is set"
+					if(function_exists('sysadmin_get_storage_email')){
+						$emails = sysadmin_get_storage_email();
+						//Check that what we got back above is a email address
+						if(!empty($emails['fromemail']) && filter_var($emails['fromemail'],FILTER_VALIDATE_EMAIL)){
+							$from = $emails['fromemail'];
+						}
+					}
+					//If the user set an email in advanced settings it wins, otherwise take whatever won above.
+					$from = filter_var($this->amp_conf['AMPBACKUPEMAILFROM'],FILTER_VALIDATE_EMAIL)?$this->amp_conf['AMPBACKUPEMAILFROM']:$from;
 					$msg[] = _('Name')		. ': ' . $this->b['name'];
 					$msg[] = _('Created')		. ': ' . date('r', $this->b['_ctime']);
 					$msg[] = _('Files')		. ': ' . $this->manifest['file_count'];
@@ -374,15 +398,15 @@ class Backup {
 
 					$email->from($from);
 					$email->to(backup__($s['addr']));
-					$email->subject(_('Backup') . ' ' . $this->b['name']);
+					$email->subject($this->amp_conf['FREEPBX_SYSTEM_IDENT'] . ' ' . _('Backup') . ' ' . $this->b['name'] );
 					$body = implode("\n", $msg);
 					// If the backup file is more than 25MB, yell
 					$encodedsize = ceil(filesize($this->b['_tmpfile'])/3)*4;
 					if ($encodedsize > 26214400) {
-						$email->subject(_('Backup ERROR (exceeded SMTP limits)') . ' ' . $this->b['name']);
+						$email->subject($this->amp_conf['FREEPBX_SYSTEM_IDENT'] . ' ' . _('Backup ERROR (exceeded SMTP limits)') . ' ' . $this->b['name']);
 						$email->message(_('BACKUP NOT ATTACHED')."\n"._('The backup file exceeded the maximum SMTP limits of 25MB. It was not attempted to be sent. Please shrink your backup, or use a different method of transferring your backup.')."\n$body\n");
 					} elseif ($encodedsize > $s['maxsize']) {
-						$email->subject(_('Backup ERROR (exceeded soft limit)') . ' ' . $this->b['name']);
+						$email->subject($this->amp_conf['FREEPBX_SYSTEM_IDENT'] . ' ' . _('Backup ERROR (exceeded soft limit)') . ' ' . $this->b['name']);
 						$email->message(_('BACKUP NOT ATTACHED')."\n"._('The backup file exceeded the soft limit set in SMTP configuration (%s bytes). It was not attempted to be sent. Please shrink your backup, or use a different method of transferring your backup.')."\n$body\n");
 					} else {
 						$email->message($body);
@@ -398,37 +422,73 @@ class Backup {
 					$s['port'] = backup__($s['port']);
 					$s['user'] = backup__($s['user']);
 					$s['password'] = backup__($s['password']);
-					$s['path'] = backup__($s['path']);
-					$ftp = @ftp_connect($s['host'], $s['port']);
-					if($ftp === false){
-						$this->b['error'] = _("Error connecting to the FTP Server... Check your host name or DNS");
+					$s['path'] = trim(backup__($s['path']),'/');
+					$fstype = isset($s['fstype'])?$s['fstype']:'auto';
+					$path = $s['path'] . '/' . $this->b['_dirname'];
+					$connection = new Connection($s['host'], $s['user'], $s['password'], $s['port'], 90, ($s['transfer'] == 'passive'));
+					try{
+						$connection->open();
+					}catch (\Exception $e){
+						$this->b['error'] = $e->getMessage();
 						backup_log($this->b['error']);
-						return $ftp;
+						return;
 					}
-					if (@ftp_login($ftp, $s['user'], $s['password'])) {
-						//chose pasive/active transfer mode
-						ftp_pasv($ftp, ($s['transfer'] == 'passive'));
+					$wrapper = new FTPWrapper($connection);
+					$permFactory = new PermissionsFactory;
+					switch ($fstype) {
+						case 'auto':
+							$ftptype = $wrapper->systype();
+							if(strtolower($ftptype) == "unix"){
+								$fsFactory = new FilesystemFactory($permFactory);
+							}else{
+								$fsFactory = new WindowsFilesystemFactory;
+							}
+						break;
+						case 'unix':
+							$fsFactory = new FilesystemFactory($permFactory);
+						break;
+						case 'windows':
+							$fsFactory = new WindowsFilesystemFactory;
+						break;
+					}
 
-						//switch to directory. If we fail, build directory structure and try again
-						if (!@ftp_chdir($ftp, $s['path'] . '/' . $this->b['_dirname'])) {
-							//ensure directory structure
-							@ftp_mkdir($ftp, $s['path']);
-							@ftp_mkdir($ftp, $s['path'] . '/' . $this->b['_dirname']);
-							ftp_chdir($ftp, $s['path'] . '/' . $this->b['_dirname']);
+					$manager = new FTPFilesystemManager($wrapper, $fsFactory);
+					$dlVoter = new DownloaderVoter;
+					$ulVoter = new UploaderVoter;
+					$ulVoter->addDefaultFTPUploaders($wrapper);
+					$crVoter = new CreatorVoter;
+					$crVoter->addDefaultFTPCreators($wrapper, $manager);
+					$deVoter = new DeleterVoter;
+					$deVoter->addDefaultFTPDeleters($wrapper, $manager);
+					$ftp = new FTP($manager, $dlVoter, $ulVoter, $crVoter, $deVoter);
+					if(!$ftp){
+						$this->b['error'] = _("Error creating the FTP object");
+							backup_log($this->b['error']);
+							return;
+					}
+
+					if(!$ftp->directoryExists(new Directory($path))){
+						backup_log(sprintf(_("Creating directory '%s'"),$path));
+						try{
+							$ftp->create(new Directory($path),array(FTP::RECURSIVE => true));
+						}catch (\Exception $e){
+							$this->b['error'] = sprintf(_("Directory '%s' did not exist and we could not create it"),$path);
+							backup_log($this->b['error']);
+							backup_log($e->getMessage());
+							return;
 						}
-
-						//copy file
-						ftp_put($ftp, $this->b['_file'] . '.tgz', $this->b['_tmpfile'], FTP_BINARY);
-
-						//run maintenance on the directory
-						$this->maintenance($s['type'], $s, $ftp);
-
-						//release handel
-						ftp_close($ftp);
-					} else {
-						$this->b['error'] = _("Error connecting to the FTP Server...") . _(" Authentication Failure");
-						backup_log($this->b['error']);
 					}
+					try{
+						backup_log(_("Saving file to remote ftp"));
+						$ftp->upload(new File($path.'/'.$this->b['_file'] . '.tgz'),$this->b['_tmpfile']);
+					}catch (\Exception $e){
+						$this->b['error'] = _("Unable to upload file to the remote server");
+						backup_log($this->b['error']);
+						backup_log($e->getMessage());
+						return;
+					}
+						//run maintenance on the directory
+					$this->maintenance($s['type'], $path, $ftp);
 					break;
 				case 'awss3':
 					//subsitute variables if nesesary
@@ -665,7 +725,11 @@ class Backup {
 				$dir = scandir(backup__($data['path']) . '/' . $this->b['_dirname']);
 				break;
 			case 'ftp':
-				$dir = ftp_nlist($handle, '.');
+				$ftplist = $handle->findFilesystems(new Directory($data));
+				$dir = array();
+				foreach($ftplist as $ftpitem){
+					$dir[] = $ftpitem->getRealpath();
+				}
 				break;
 			case 'ssh':
 				$cmd[] = fpbx_which('ssh');
@@ -684,7 +748,7 @@ class Backup {
 				}
 				break;
 		}
-
+		$dir = is_array($dir)?$dir:array();
 		//sanitize file list
 		foreach ($dir as $file) {
 			//dont include the current backup or special items
@@ -728,7 +792,13 @@ class Backup {
 					unset($delete[$key]);
 					break;
 				case 'ftp':
-					ftp_delete($handle, $file);
+					$f = $handle->findFileByName($file);
+					try{
+						$handle->delete($f);
+					}catch(\Exception $e){
+						$this->b['error'] = sprintf(_("Error deleting %s"),$file);
+						backup_log($this->b['error']);
+					}
 					unset($delete[$key]);
 					break;
 				case 'awss3':
@@ -760,7 +830,7 @@ class Backup {
 				}
 			}
 
-			$subject = date("F j, Y, g:i a").'-'.$this->b['name'];
+			$subject = $this->amp_conf['FREEPBX_SYSTEM_IDENT'] . '-' . date("F j, Y, g:i a").'-'.$this->b['name'];
 			backup_email_log($this->b['email'], $from, $subject);
 
 		}

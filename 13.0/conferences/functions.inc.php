@@ -17,7 +17,7 @@ class conferences_conf {
 	}
 
 
-  function __construct() {
+	function __construct() {
 		$this->_confbridge['general'] = array();
 		$this->_confbridge['user'] = array();
 		$this->_confbridge['user']['default_user'] = array();
@@ -80,32 +80,28 @@ class conferences_conf {
 				$output .= ";This section reserved for future use\n";
 				$output .= "\n";
 			}
+			global $version;
+			if(version_compare($version, '13.4', 'ge') || (version_compare($version, '11.20', 'ge') && version_compare($version, '13.0', 'lt'))) {
+				$escapePound = '\#';
+			} else {
+				$escapePound = '#';
+			}
+
 			// Default if nothing configured
 			if (empty($this->_confbridge['menu']['admin_menu'])) {
 				$this->_confbridge['menu']['admin_menu'] = array(
 					'*'  => 'playback_and_continue(conf-adminmenu)',
 					'*1' => 'toggle_mute',
-					'1'  => 'toggle_mute',
 					'*2' => 'admin_toggle_conference_lock',
-					'2'  => 'admin_toggle_conference_lock',
 					'*3' => 'admin_kick_last',
-					'3'  => 'admin_kick_last',
 					'*4' => 'decrease_listening_volume',
-					'4'  => 'decrease_listening_volume',
 					'*5' => 'reset_listening_volume',
-					'5'  => 'dreset_listening_volume',
 					'*6' => 'increase_listening_volume',
-					'6'  => 'increase_listening_volume',
 					'*7' => 'decrease_talking_volume',
-					'7'  => 'decrease_talking_volume',
 					'*8' => 'reset_talking_volume',
-					'8'  => 'reset_talking_volume',
 					'*9' => 'increase_talking_volume',
-					'9'  => 'increase_talking_volume',
-					'\#' => 'leave_conference',
 					'*#'  => 'leave_conference',
 					'*0' => 'admin_toggle_mute_participants',
-					'0' => 'admin_toggle_mute_participants',
 				);
 			}
 			// Default if nothing configured
@@ -113,20 +109,12 @@ class conferences_conf {
 				$this->_confbridge['menu']['user_menu'] = array(
 					'*'  => 'playback_and_continue(conf-usermenu)',
 					'*1' => 'toggle_mute',
-					'1'  => 'toggle_mute',
 					'*4' => 'decrease_listening_volume',
-					'4'  => 'decrease_listening_volume',
 					'*5' => 'reset_listening_volume',
-					'5'  => 'dreset_listening_volume',
 					'*6' => 'increase_listening_volume',
-					'6'  => 'increase_listening_volume',
 					'*7' => 'decrease_talking_volume',
-					'7'  => 'decrease_talking_volume',
 					'*8' => 'no_op',
-					'8'  => 'no_op',
 					'*9' => 'increase_talking_volume',
-					'9'  => 'increase_talking_volume',
-					'\#' => 'leave_conference',
 					'*#'  => 'leave_conference',
 				);
 			}
@@ -174,8 +162,6 @@ function conferences_getdest($exten) {
 }
 
 function conferences_getdestinfo($dest) {
-	global $active_modules;
-
 	if (substr(trim($dest),0,11) == 'ext-meetme,') {
 		$exten = explode(',',$dest);
 		$exten = $exten[1];
@@ -183,7 +169,6 @@ function conferences_getdestinfo($dest) {
 		if (empty($thisexten)) {
 			return array();
 		} else {
-			//$type = isset($active_modules['announcement']['type'])?$active_modules['announcement']['type']:'setup';
 			return array('description' => sprintf(_("Conference Room %s : %s"),$exten,$thisexten['description']),
 			             'edit_url' => 'config.php?display=conferences&extdisplay='.urlencode($exten),
 					);

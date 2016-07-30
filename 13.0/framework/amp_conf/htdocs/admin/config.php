@@ -29,7 +29,7 @@ foreach ($vars as $k => $v) {
 	// page.<some_module>.php (which usually uses $var or $vars)
 	$config_vars[$k] = $$k = isset($_REQUEST[$k]) ? $_REQUEST[$k] : $v;
 
-	//special handeling
+	//special handling
 	switch ($k) {
 	case 'extdisplay':
 		$extdisplay = (isset($extdisplay) && $extdisplay !== false)
@@ -108,7 +108,8 @@ if (!@include_once(getenv('FREEPBX_CONF') ? getenv('FREEPBX_CONF') : '/etc/freep
 //if they are then tell the user to run said command below
 //which disables any zend module that breaks the autoloader
 if(function_exists('SPLAutoloadBroken') && SPLAutoloadBroken()) {
-	die_freepbx(_("The autoloader is damaged. Please run: ".$amp_conf['AMPBIN']."/fwconsole --fix_zend"));
+	//note this has to be done outside of freepbx_die
+	die(_("The autoloader is damaged. Please run: ".$amp_conf['AMPBIN']."/fwconsole --fix_zend"));
 }
 
 // At this point, we have a session, and BMO was created in bootstrap, so we can check to
@@ -329,6 +330,24 @@ if (!$quietmode && isset($fpbx_menu["extensions"])) {
 		}
 }
 
+// If it's index, do we have an override?
+if ($display === "index") {
+	$override = $bmo->Config()->get('DASHBOARD_OVERRIDE');
+	if (empty($override)) {
+		$opmode = $bmo->Config()->get('FPBXOPMODE');
+		if ($opmode == 'basic') {
+			$override = $bmo->Config()->get('DASHBOARD_OVERRIDE_BASIC');
+		}
+	}
+
+	// Does this user have permission to use this?
+	if (is_array($active_modules) && isset($active_modules[$override])) {
+		// Yes.
+		$display = $override;
+		$cur_menuitem = $fpbx_menu[$display];
+	}
+}
+
 ob_start();
 // Run all the pre-processing for the page that's been requested.
 if (!empty($display) && $display != 'badrefer') {
@@ -420,14 +439,16 @@ switch($display) {
 		break;
 	default:
 
-		$obecomplete = $bmo->OOBE->isComplete();
-		if (!$obecomplete) {
-			$ret = $bmo->OOBE->showOOBE();
-		} else {
-			$ret = false;
+		$showpage = true;
+		if (!$fw_popover) {
+			/* Don't show OOBE in a popover. */
+			$obecomplete = $bmo->OOBE->isComplete();
+			if (!$obecomplete) {
+				$showpage = $bmo->OOBE->showOOBE();
+			}
 		}
 
-		if ($obecomplete || $ret === true) {
+		if ($showpage === true) {
 
 			//display the appropriate module page
 			$module_name = $cur_menuitem['module']['rawname'];

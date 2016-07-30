@@ -67,7 +67,7 @@ $dphstring[] = '			<tr><td><strong>X</strong></td><td>'. _("matches any digit fr
 $dphstring[] = '			<tr><td><strong>Z</strong></td><td>'. _("matches any digit from 1-9").'</td></tr>';
 $dphstring[] = '			<tr><td><strong>N</strong></td><td>'. _("matches any digit from 2-9").'</td></tr>';
 $dphstring[] = '			<tr><td><strong>[1237-9]</strong></td><td>'. _("matches any digit or letter in the brackets (in this example, 1,2,3,7,8,9)").'</td></tr>';
-$dphstring[] = '			<tr><td><strong>.</strong></td><td>;'. _("wildcard, matches one or more characters").'</td></tr>';
+$dphstring[] = '			<tr><td><strong>.</strong></td><td>'. _("wildcard, matches one or more characters").'</td></tr>';
 
 if($amp_conf['ENABLEOLDDIALPATTERNS']){
 	$dphstring[] = '		<tr><td><strong>|</strong></td><td>'. _("separates a dialing prefix from the number (for example, 9|NXXXXXX would match when some dialed \"95551234\" but would only pass \"5551234\" to the trunks)").'</td></tr>';
@@ -234,7 +234,7 @@ for ($i=0; $i < $num_new_boxes; $i++) {
 		if ($trunkstate[$name] == 'off') {
 			$trunkhtml .= '<option value="'.$name.'">'.str_replace('AMP:', '', $display_description).'</option>';
 		} else {
-			$trunkhtml .= '<option value="'.$name.'" class="text-danger" >*'.ltrim($display_description,"AMP:").'*</option>';
+			$trunkhtml .= '<option value="'.$name.'" class="text-danger" >*'.str_replace('AMP:','',$display_description).'*</option>';
 		}
 	}
 	$trunkhtml .= '</select>';
@@ -247,10 +247,6 @@ for ($i=0; $i < $num_new_boxes; $i++) {
 	$trunkhtml .= '</table>';
 ?>
 <form enctype="multipart/form-data" class="fpbx-submit" autocomplete="off" id="routeEdit" name="routeEdit" action="?display=routing" method="POST" data-fpbx-delete="config.php?display=<?php echo urlencode($display) ?>&id=<?php echo urlencode($extdisplay) ?>&action=delroute">
-	<div style="display: none;">
-		<input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" aria-hidden="true" />
-		<input type="password" id="PreventChromeAutocomplete2" name="PreventChromeAutocomplete2" autocomplete="address-level4" aria-hidden="true"/>
-	</div>
 	<input type="hidden" id="extdisplay" name="extdisplay" value="<?php echo $extdisplay ?>"/>
 	<input type="hidden" id="id" name="id" value="<?php echo $extdisplay ?>"/>
 	<input type="hidden" id="action" name="action" value="<?php echo $formAction ?>"/>
@@ -356,7 +352,7 @@ for ($i=0; $i < $num_new_boxes; $i++) {
 								</div>
 								<div class="col-md-9">
 									<div class="input-group">
-										<input type="password" class="form-control toggle-password" id="routepass" name="routepass" value="<?php echo $routepass;?>">
+										<input type="password" class="form-control toggle-password clicktoedit" id="routepass" name="routepass" value="<?php echo $routepass;?>">
 										<span class="input-group-btn">
 											<button data-id="routepass" class="btn btn-default toggle-password" type="button"><i class="fa fa-2x fa-eye" style="margin-top: -2px;"></i></button>
 										</span>
@@ -486,7 +482,7 @@ for ($i=0; $i < $num_new_boxes; $i++) {
 				<h3><?php echo $dplabel?></h3>
 				<?php echo $dphelp?>
 				<br/>
-				<a href="#" class="btn btn-default btn-block" data-toggle="modal"	data-target="#dpwizard" id="wizmenu"><i class="fa fa-magic">&nbsp; <?php echo _("Dial patterns wizards")?></i></a>
+				<a href="#" class="btn btn-default btn-block" data-toggle="modal"	data-target="#dpwizard" id="wizmenu"><i class="fa fa-magic"></i>&nbsp; <?php echo _("Dial patterns wizards")?></a>
 				<br/><br/>
 				<table class="table table-striped" id="dptable">
 				<?php echo $dprows ?>

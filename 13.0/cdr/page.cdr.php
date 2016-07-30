@@ -19,6 +19,7 @@ $db_result_limit = 100;
 // Check if cdr database and/or table is set, if not, use our default settings
 $db_name = !empty($amp_conf['CDRDBNAME'])?$amp_conf['CDRDBNAME']:"asteriskcdrdb";
 $db_table_name = !empty($amp_conf['CDRDBTABLENAME'])?$amp_conf['CDRDBTABLENAME']:"cdr";
+
 $system_monitor_dir = isset($amp_conf['ASTSPOOLDIR'])?$amp_conf['ASTSPOOLDIR']."/monitor":"/var/spool/asterisk/monitor";
 
 // if CDRDBHOST and CDRDBTYPE are not empty then we assume an external connection and don't use the default connection
@@ -39,6 +40,14 @@ if (!empty($amp_conf["CDRDBHOST"]) && !empty($amp_conf["CDRDBTYPE"])) {
 	$dbcdr = $db;
 }
 
+// Make sure they're both escaped with backticks.
+if ($db_name[0] !== '`') {
+	$db_name = "`$db_name`";
+}
+if ($db_table_name[0] !== '`') {
+	$db_table_name = "`$db_table_name`";
+}
+
 // For use in encrypt-decrypt of path and filename for the recordings
 include_once("crypt.php");
 switch ($action) {
@@ -57,6 +66,7 @@ switch ($action) {
 				$fmonth = substr($rec_parts[3],4,2);
 				$fday = substr($rec_parts[3],6,2);
 				$monitor_base = $amp_conf['MIXMON_DIR'] ? $amp_conf['MIXMON_DIR'] : $amp_conf['ASTSPOOLDIR'] . '/monitor';
+				$file = pathinfo($file, PATHINFO_EXTENSION) == 'wav49'? pathinfo($file, PATHINFO_FILENAME).'.WAV' : $file;
 				$file = "$monitor_base/$fyear/$fmonth/$fday/" . $file;
 				download_file($file, '', '', true);
 			}
@@ -675,6 +685,14 @@ if ( isset($_POST['need_csv']) && $_POST['need_csv'] == 'true' ) {
 if ( empty($resultcdr) && isset($_POST['need_html']) && $_POST['need_html'] == 'true' ) {
 	$query = "SELECT `calldate`, `clid`, `did`, `src`, `dst`, `dcontext`, `channel`, `dstchannel`, `lastapp`, `lastdata`, `duration`, `billsec`, `disposition`, `amaflags`, `accountcode`, `uniqueid`, `userfield`, unix_timestamp(calldate) as `call_timestamp`, `recordingfile`, `cnum`, `cnam`, `outbound_cnum`, `outbound_cnam`, `dst_cnam`  FROM $db_name.$db_table_name $where $order $sort LIMIT $result_limit";
 	$resultscdr = $dbcdr->getAll($query, DB_FETCHMODE_ASSOC);
+	$resultscdr = is_array($resultscdr) ? $resultscdr : array();
+	foreach($resultscdr as &$call) {
+		$file = FreePBX::Cdr()->processPath($call['recordingfile']);
+		if(empty($file)) {
+			//hide files that dont exist
+			$call['recordingfile'] = '';
+		}
+	}
 }
 if ( isset($resultscdr) ) {
 	$tot_calls_raw = sizeof($resultscdr);
@@ -730,6 +748,7 @@ if ( $tot_calls_raw ) {
 			$fday = substr($rec_parts[3],6,2);
 			$monitor_base = $amp_conf['MIXMON_DIR'] ? $amp_conf['MIXMON_DIR'] : $amp_conf['ASTSPOOLDIR'] . '/monitor';
 			$recordingfile = "$monitor_base/$fyear/$fmonth/$fday/" . $row['recordingfile'];
+			$recordingfile = pathinfo($recordingfile, PATHINFO_EXTENSION) == 'wav49'? "$monitor_base/$fyear/$fmonth/$fday/" . pathinfo($recordingfile, PATHINFO_FILENAME).'.WAV' : $recordingfile;
 			if (!file_exists($recordingfile)) {
 				$recordingfile = '';
 			}
@@ -779,7 +798,7 @@ if ( $tot_calls_raw ) {
 				<div class="jp-gui jp-interface">
 					<div class="jp-controls">
 						<i class="fa fa-play jp-play"></i>
-						<i class="fa fa-repeat jp-repeat"></i>
+						<i class="fa fa-undo jp-restart"></i>
 					</div>
 					<div class="jp-progress">
 						<div class="jp-seek-bar progress">
@@ -1087,7 +1106,7 @@ function cdr_formatSrc($src, $clid) {
 
 function cdr_formatCallerID($cnam, $cnum, $channel) {
 	$dcnum = $cnum == '' && $cnam == '' ? '' : htmlspecialchars('<' . $cnum . '>');
-	$dcnam = htmlspecialchars($cnam == '' ? '' : '"' . $cnam . ' "');
+	$dcnam = htmlspecialchars($cnam == '' ? '' : '"' . $cnam . '" ');
 	echo '<td title="' ._("Channel") . ": " . $channel . '">' . $dcnam . $dcnum . '</td>';
 }
 

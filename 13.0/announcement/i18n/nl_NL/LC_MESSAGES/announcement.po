@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
-"PO-Revision-Date: 2015-03-19 20:53+0200\n"
-"Last-Translator: Jan Peter <jpveldhuizen@gmail.com>\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
+"PO-Revision-Date: 2016-06-01 07:34+0200\n"
+"Last-Translator: Hans <info@hansvaneijsden.nl>\n"
 "Language-Team: Dutch <http://weblate.freepbx.org/projects/freepbx/"
 "announcement/nl_NL/>\n"
 "MIME-Version: 1.0\n"
@@ -19,27 +19,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: nl_NL\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2.2-dev\n"
+"X-Generator: Weblate 2.4\n"
 
 #: page.announcement.php:15
 msgid ": Add"
-msgstr ""
+msgstr ": Toevoegen"
 
 #: page.announcement.php:13
 msgid ": Edit"
-msgstr ""
+msgstr ": Bewerken"
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
-msgstr ""
+msgstr "Acties"
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
-msgstr ""
+msgstr "Toevoegen"
 
 #: views/rnav.php:3
 msgid "Add Announcements"
-msgstr ""
+msgstr "Aankondigingen Toevoegen"
 
 #: views/form.php:153
 msgid "Allow Skip"
@@ -47,36 +47,44 @@ msgstr "Overslaan toestaan"
 
 #: page.announcement.php:7
 msgid "Announcement"
-msgstr ""
+msgstr "Aankondiging"
 
 #: functions.inc.php:31 functions.inc.php:51 functions.inc.php:226
 #, php-format
 msgid "Announcement: %s"
 msgstr "Aankondiging: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Aankondigingen"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr "Aplicatie's"
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Controleren of opnames moeten worden gemigreerd.."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Verwijderen"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Omschrijving"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
-msgstr ""
+msgstr "Bestemming"
 
 #: views/form.php:234
 msgid "Destination after Playback"
-msgstr ""
+msgstr "Bestemming na weergave"
 
 #: views/rnav.php:8
 msgid "Destinations"
-msgstr ""
+msgstr "Bestemmingen"
 
 #: views/form.php:72
 msgid "Disable"
@@ -102,7 +110,7 @@ msgid ""
 "which may not be the expected behavior."
 msgstr ""
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Ongeldige omschrijving ingevoerd"
 
@@ -118,7 +126,7 @@ msgstr ""
 
 #: views/rnav.php:2
 msgid "List Announcements"
-msgstr ""
+msgstr "Lijst Aankondigingen"
 
 #: views/form.php:59
 msgid ""
@@ -128,11 +136,23 @@ msgstr ""
 
 #: views/form.php:160 views/form.php:187 views/form.php:214
 msgid "No"
+msgstr "Nee"
+
+#: assets/js/announcement.js:33
+msgid "No Destination"
 msgstr ""
 
 #: views/form.php:32
 msgid "None"
 msgstr "Geen"
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
+msgstr ""
+"Speelt een van de systeem opnames af (met mogelijkheid om over te slaan) en "
+"gaat dan naar een andere bestemming."
 
 #: views/form.php:45
 msgid "Recording"
@@ -142,11 +162,11 @@ msgstr "Opname"
 msgid "Repeat"
 msgstr "Herhalen"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
-msgstr ""
+msgstr "Herstellen"
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Terugkeren naar IVR"
 
@@ -160,13 +180,13 @@ msgid ""
 "answered the channel, that 1 second delay may not be desired."
 msgstr ""
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
-msgstr ""
+msgstr "Verzenden"
 
 #: views/form.php:114
 msgid "The name of this announcement."
-msgstr ""
+msgstr "De naam van deze aankondiging."
 
 #: views/form.php:246
 msgid "Where to send the caller after the announcement is played."
@@ -174,7 +194,7 @@ msgstr ""
 
 #: views/form.php:158 views/form.php:185 views/form.php:212
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: install.php:97
 msgid "adding recording_id field.."
@@ -212,19 +232,6 @@ msgstr "geen opname veld???"
 #: install.php:104 install.php:143
 msgid "ok"
 msgstr "ok"
-
-#~ msgid "Announcements"
-#~ msgstr "Aankondigingen"
-
-#~ msgid "Applications"
-#~ msgstr "Aplicatie's"
-
-#~ msgid ""
-#~ "Plays back one of the system recordings (optionally allowing the user to "
-#~ "skip it) and then goes to another destination."
-#~ msgstr ""
-#~ "Speelt een van de systeem opnames af (met mogelijkheid om over te slaan) "
-#~ "en gaat dan naar een andere bestemming."
 
 #~ msgid "Add Announcement"
 #~ msgstr "Voeg aankondiging toe"

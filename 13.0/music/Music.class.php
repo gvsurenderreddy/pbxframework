@@ -13,6 +13,7 @@ class Music implements \BMO {
 	public $convert = array(
 		"wav",
 		"sln",
+		"sln16",
 		"sln48",
 		"g722",
 		"ulaw",
@@ -48,6 +49,21 @@ class Music implements \BMO {
 		$request['view'] = isset($request['view'])?$request['view']:'';
 		$request['action'] = isset($request['action'])?$request['action']:'';
 		$request['category'] = isset($request['category'])?$this->stripCategory($request['category']):"";
+		$request['id'] = isset($_REQUEST['id']) ? $_REQUEST['id'] : '';
+
+		$display_mode = "advanced";
+		$mode = $this->FreePBX->Config->get("FPBXOPMODE");
+		if(!empty($mode)) {
+			$display_mode = $mode;
+		}
+		if($display_mode == "basic") {
+			$cat = $this->getCategoryByName("default");
+			if(empty($cat)) {
+				throw new \Exception("Error in Music on Hold. Cant find default class");
+			}
+			$request["action"] = 'edit';
+			$request['id'] = $cat['id'];
+		}
 		switch($request["action"]){
 			case "edit":
 				$media = $this->FreePBX->Media;
@@ -56,7 +72,11 @@ class Music implements \BMO {
 				ksort($supported['out']);
 				$supportedHTML5 = $media->getSupportedHTML5Formats();
 				$convertto = array_intersect($supported['out'], $mh->convert);
-				$data = $this->getCategoryByID($_REQUEST['id']);
+				$data = $this->getCategoryByID($request['id']);
+				if($display_mode == "basic") {
+					//only files allowed in this mode
+					$data['type'] = 'files';
+				}
 				$heading .= ' - '.$data['category'];
 				$path = $this->getCategoryPath($data['category']);
 				$files = array();
@@ -66,7 +86,8 @@ class Music implements \BMO {
 					$files[$fn] = strtolower($i['filename']);
 				}
 				$files = array_values($files);
-				$content = load_view(__DIR__.'/views/form.php', array("files" => $files, "convertto" => $convertto, "supportedHTML5" => implode(",",$supportedHTML5), "supported" => $supported, 'data' => $data));
+				$view = ($display_mode == "basic") ? __DIR__.'/views/basic_form.php' : __DIR__.'/views/advanced_form.php';
+				$content = load_view($view, array("display_mode" => $display_mode, "files" => $files, "convertto" => $convertto, "supportedHTML5" => implode(",",$supportedHTML5), "supported" => $supported, 'data' => $data));
 			break;
 			case "add":
 				$content = load_view(__DIR__.'/views/addcatform.php');
@@ -127,8 +148,30 @@ class Music implements \BMO {
 	}
 
 	public function genConfig() {
-		$ccc = \FreePBX::Config()->get("CACHERTCLASSES") ? "yes" : "no";
+		$ccc = $this->FreePBX->Config->get("CACHERTCLASSES") ? "yes" : "no";
 		$conf["musiconhold_additional.conf"]['general']['cachertclasses'] = $ccc;
+
+		$conf["musiconhold_additional.conf"]['none'] = array(
+			"mode" => "files",
+			"sort" => "alpha",
+			"directory" => $this->mohpath."/.nomusic_reserved"
+		);
+		if(!file_exists($this->mohpath."/.nomusic_reserved")) {
+			mkdir($this->mohpath."/.nomusic_reserved",0777,true);
+			copy(__DIR__."/silence.wav",$this->mohpath."/.nomusic_reserved/silence.wav");
+			$AMPASTERISKWEBUSER = $this->FreePBX->Config->get("AMPASTERISKWEBUSER");
+			$AMPASTERISKUSER = $this->FreePBX->Config->get("AMPASTERISKUSER");
+			$AMPASTERISKGROUP = $this->FreePBX->Config->get("AMPASTERISKGROUP");
+			$AMPASTERISKWEBGROUP = $this->FreePBX->Config->get("AMPASTERISKWEBGROUP");
+
+			$ampowner = $AMPASTERISKWEBUSER;
+			/* Address concerns carried over from amportal in FREEPBX-8268. If the apache user is different
+			 * than the Asterisk user we provide permissions that allow both.
+			 */
+			$ampgroup =  $AMPASTERISKWEBUSER != $AMPASTERISKUSER ? $AMPASTERISKGROUP : $AMPASTERISKWEBGROUP;
+			chown($this->mohpath."/.nomusic_reserved",$ampowner);
+			chown($this->mohpath."/.nomusic_reserved/silence.wav",$ampowner);
+		}
 
 		$categories = $this->getCategories();
 		foreach($categories as $cat) {
@@ -210,21 +253,48 @@ class Music implements \BMO {
 	}
 
 	public function install() {
-		$sql = 'CREATE TABLE IF NOT EXISTS `music` (
-			`id` INT NOT NULL AUTO_INCREMENT,
-			`category` VARCHAR(255) NULL,
-			`type` VARCHAR(100) NULL,
-			`random` TINYINT NULL,
-			`application` varchar(255) NULL,
-			`format` varchar(5) NULL,
-		PRIMARY KEY (`id`),
-		UNIQUE KEY `category_UNIQUE` (`category`));';
-
-		try {
-			$check = $this->db->query($sql);
-		} catch(\Exception $e) {
-			die_freepbx("Can not execute $statement : " . $check->getMessage() .  "\n");
-		}
+		$table = $this->FreePBX->Database->migrate("music");
+		$cols = array(
+			"id" => array(
+				"type" => "integer",
+				"primaryKey" => true,
+				"autoincrement" => true
+			),
+			"category" => array(
+				"type" => "string",
+				"length" => 255,
+				"notnull" => false,
+			),
+			"type" => array(
+				"type" => "string",
+				"length" => 100,
+				"notnull" => false,
+			),
+			"random" => array(
+				"type" => "boolean",
+				"notnull" => false,
+			),
+			"application" => array(
+				"type" => "string",
+				"length" => 255,
+				"notnull" => false,
+			),
+			"format" => array(
+				"type" => "string",
+				"length" => 10,
+				"notnull" => false,
+			),
+		);
+		$indexes = array(
+			"category_UNIQUE" => array(
+				"type" => "unique",
+				"cols" => array(
+					"category"
+				)
+			)
+		);
+		$table->modify($cols,$indexes);
+		unset($table);
 
 		$freepbx_conf = $this->FreePBX->Config;
 		if ($freepbx_conf->conf_setting_exists('AMPMPG123')) {
@@ -389,6 +459,17 @@ class Music implements \BMO {
 				return array("status" => true);
 			break;
 			case "upload":
+				// XXX If the posted file was too large,
+				// we will get here, but $_FILES is empty!
+				// Specifically, if the file that was posted is
+				// larger than 'post_max_size' in php.ini.
+				// So, php will throw an error, as index
+				// $_FILES["files"] does not exist, because
+				// $_FILES is empty.
+				if (!isset($_FILES)) {
+					return array("status" => false,
+						"message" => _("File upload failed"));
+				}
 				foreach ($_FILES["files"]["error"] as $key => $error) {
 					switch($error) {
 						case UPLOAD_ERR_OK:
@@ -548,8 +629,8 @@ class Music implements \BMO {
 	public function fileList($path){
 		$pattern = '';
 		$handle = opendir($path) ;
-		$supported = $this->FreePBX->Media->getSupportedFormats();
-		$extensions = array_intersect($supported['out'], $this->convert);
+		$supported = $this->FreePBX->Media->getSupportedFormats("AsteriskShell");
+		$extensions = $supported['out'];
 		//generate the pattern to look for.
 		$pattern = '/(\.'.implode('|\.',$extensions).')$/i';
 		//store file names that match pattern in an array
@@ -567,6 +648,14 @@ class Music implements \BMO {
 	}
 
 	public function getActionBar($request) {
+		$display_mode = "advanced";
+		$mode = $this->FreePBX->Config->get("FPBXOPMODE");
+		if(!empty($mode)) {
+			$display_mode = $mode;
+		}
+		if($display_mode == "basic") {
+			$request['action'] = 'edit';
+		}
 		$buttons = array();
 		switch($request['display']) {
 			case 'music':
@@ -587,7 +676,7 @@ class Music implements \BMO {
 						'value' => _('Submit')
 					)
 				);
-				if (empty($request['id'])||($request['id'] == '1')) {
+				if ($display_mode != "basic" && (empty($request['id'])||($request['id'] == '1'))) {
 					unset($buttons['delete']);
 				}
 				$request['action'] = isset($request['action'])?$request['action']:'';
@@ -656,6 +745,12 @@ class Music implements \BMO {
 			return $lc->ProcessedConfig;
 		} else {
 			return array();
+		}
+	}
+
+	public function getRightNav($request) {
+		if(isset($request['action']) && ($request['action'] == 'edit' || $request['action'] == 'add' || $request['action'] == 'updatecategory' || $request['action'] == 'addstream')){
+			return load_view(__DIR__."/views/bootnav.php",array('request' => $request));
 		}
 	}
 }

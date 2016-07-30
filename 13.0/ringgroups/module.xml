@@ -2,7 +2,7 @@
 	<rawname>ringgroups</rawname>
 	<repo>standard</repo>
 	<name>Ring Groups</name>
-	<version>13.0.10</version>
+	<version>13.0.21.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,17 @@
 		Creates a group of extensions that all ring together. Extensions can be rung all at once, or in various 'hunt' configurations. Additionally, external numbers are supported, and there is a call confirmation option where the callee has to confirm if they actually want to take the call before the caller is transferred.
 	</description>
 	<changelog>
+		*13.0.21.1* Ringfree branch
+		*13.0.21* FREEPBX-12570 Cant select inherit music group
+		*13.0.20* FREEPBX-12280 Inbound route destination link is incorrect
+		*13.0.19* FREEPBX-11915 Simulate ring if progressing
+		*13.0.18* Only send progress when there is no ringing
+		*13.0.17* FREEPBX-11915 Add progress
+		*13.0.16* Simple mode functionality
+		*13.0.15* Fix undefined error from non globalized amp_conf
+		*13.0.13* More simple mode changes
+		*13.0.12* Kludge around unset remotealert_id / toolate_id values by lidl
+		*13.0.11* Cleanup and create a basic mode
 		*13.0.10* FREEPBX-11233
 		*13.0.9* FREEPBX-11217
 		*13.0.8* Use Alert Info Drop down
@@ -27,7 +38,7 @@
 	<depends>
 		<module>callrecording ge 12.0.1</module>
 		<module>core ge 12.0.16</module>
-		<version>13.0.42</version>
+		<version>13.0.70</version>
 	</depends>
 	<menuitems>
 		<ringgroups>Ring Groups</ringgroups>
@@ -41,6 +52,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/ringgroups-13.0.10.tgz</location>
-	<md5sum>59fe9da5158175465ef3e96b3873673b</md5sum>
+	<location>release/13.0/ringgroups-13.0.21.1.tgz</location>
+	<md5sum></md5sum>
 </module>

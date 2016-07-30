@@ -6,6 +6,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 	private $drivers = array();
 	private $deviceCache = array();
 	private $getUserCache = array();
+	private $getDeviceCache = array();
 	private $listUsersCache = array();
 
 	public function __construct($freepbx = null) {
@@ -64,7 +65,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			$sth->execute(array("%".$query."%"));
 			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
 			foreach($rows as $row) {
-				$results[] = array("text" => $row['name'], "type" => "get", "dest" => "?display=routing&view=form&id=".$row['route_id']);
+				$results[] = array("text" => _("Outbound Route:")." ".$row['name'], "type" => "get", "dest" => "?display=routing&view=form&id=".$row['route_id']);
 			}
 
 			$sql = "SELECT * FROM trunks WHERE name LIKE ?";
@@ -72,22 +73,47 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			$sth->execute(array("%".$query."%"));
 			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
 			foreach($rows as $row) {
-				$results[] = array("text" => $row['name'], "type" => "get", "dest" => "?display=trunks&tech=".$row['tech']."&extdisplay=OUT_".$row['trunkid']);
+				$results[] = array("text" => _("Trunk:")." ".$row['name'], "type" => "get", "dest" => "?display=trunks&tech=".$row['tech']."&extdisplay=OUT_".$row['trunkid']);
+			}
+
+			$sql = "SELECT * FROM incoming WHERE description LIKE ?";
+			$sth = $this->database->prepare($sql);
+			$sth->execute(array("%".$query."%"));
+			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+			foreach($rows as $row) {
+				$display = urlencode($row['extension']."/".$row['cidnum']);
+				$results[] = array("text" => _("Inbound Route:")." ".$row['description'], "type" => "get", "dest" => "?display=did&view=form&extdisplay=".$display);
+			}
+		} else {
+			$sql = "SELECT * FROM incoming WHERE cidnum LIKE :search OR extension LIKE :search";
+			$sth = $this->database->prepare($sql);
+			$sth->execute(array("search" => "%".$query."%"));
+			$rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+			foreach($rows as $row) {
+				$display = urlencode($row['extension']."/".$row['cidnum']);
+				$results[] = array("text" => _("Inbound Route:")." ".$row['extension']."/".$row['cidnum'], "type" => "get", "dest" => "?display=did&view=form&extdisplay=".$display);
 			}
 		}
-
 	}
 
 	public function getRightNav($request) {
+		$display_mode = "advanced";
+		$mode = $this->freepbx->Config()->get("FPBXOPMODE");
+		if(!empty($mode)) {
+			$display_mode = $mode;
+		}
 		switch($request['display']){
 			case 'extensions':
 			case 'devices':
 				$popover = isset($request['fw_popover']) ? "&amp;fw_popover=".$request['fw_popover'] : '';
 				$show = isset($request['tech_hardware']) || (isset($request['view']) && $request['view'] == "add") || (isset($request['extdisplay']) && trim($request['extdisplay']) != "");
+				if($display_mode == "basic" && (!isset($request['extdisplay']) || trim($request['extdisplay']) == "")) {
+					return array();
+				}
 				return load_view(__DIR__."/views/rnav.php",array("show" => $show, "display" => $request['display'], "popover"=>$popover));
 			break;
 			case 'trunks':
-				if(isset($request['tech'])){
+				if(isset($request['tech'])||(isset($request['extdisplay']) && !empty($request['extdisplay']))){
 					$html = load_view(__DIR__.'/views/trunks/bootnav.php', array('trunk_types' => \FreePBX::Core()->listTrunkTypes()));
 					return $html;
 				}
@@ -218,7 +244,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 					);
 					$user['actions'] = '<a href="?display=users&amp;extdisplay='.$exten.'"><i class="fa fa-edit"></i></a><a class="clickable delete" data-id="'.$exten.'"><i class="fa fa-trash"></i></a>';
 				}
-				return $users;
+				return array_values($users);
 			break;
 			case "getExtensionGrid":
 				$ampuser = $this->astman->database_show("AMPUSER");
@@ -1104,7 +1130,6 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 				break;
 				case "editroute":
 					$extdisplay = $_REQUEST['id'];
-					dbug("EDITING:".$extdisplay);
 					core_routing_editbyid($extdisplay, $routename, $outcid, $outcid_mode, $routepass, $emergency, $intracompany, $mohsilence, $time_group_id, $dialpattern_insert, $trunkpriority, $route_seq, $dest);
 					needreload();
 				break;
@@ -1258,7 +1283,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			$alertinfo = htmlspecialchars(isset($request['alertinfo'])?$request['alertinfo']:'');
 			$mohclass = isset($request['mohclass'])?$request['mohclass']:'default';
 			$grppre = isset($request['grppre'])?$request['grppre']:'';
-			$delay_answer = isset($request['delay_answer'])&&$request['delay_answer']?$request['delay_answer']:'';
+			$delay_answer = isset($request['delay_answer'])&&$request['delay_answer']?$request['delay_answer']:'0';
 			$pricid = isset($request['pricid'])?$request['pricid']:'';
 			$rnavsort = isset($request['rnavsort'])?$request['rnavsort']:'description';
 			$didfilter = isset($request['didfilter'])?$request['didfilter']:'';
@@ -1354,7 +1379,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 	 * @param {int} &$flag   The Flag Number
 	 */
 	public function convertRequest2Array($account,$tech,&$flag = 2) {
-		if(empty($account)) {
+		if(!isset($account) || (trim($account) === "") || !ctype_digit($account)) {
 			throw new \Exception("Account must be set!");
 		}
 		if(empty($tech)) {
@@ -1414,6 +1439,8 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			"recording_out_internal" => "dontcare",
 			"recording_ondemand" => "disabled",
 			"recording_priority" => "10",
+			"answermode" => "disabled",
+			"intercommode" => "yes"
 		);
 	}
 	/**
@@ -1587,7 +1614,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		// create a voicemail symlink if needed
 		// TODO: This should be hooked from voicemail
 		if ( $this->FreePBX->Modules->moduleHasMethod('Voicemail','setupMailboxSymlinks') ) {
-			$this->FreePBX->Voicemail->setupMailboxSymlinks($id);
+			$this->FreePBX->Voicemail->setupMailboxSymlinks($settings['user']['value']);
 		}
 
 		// before calling device specifc funcitions, get rid of any bogus fields in the array
@@ -1608,6 +1635,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			return $this->drivers[$tech]->addDevice($id, $settings);
 		}
 
+		$this->deviceCache = array();
 		return true;
 	}
 	public function listDahdiChannels(){
@@ -1659,7 +1687,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 
 		//only allow extensions that are within administrator's allowed range
 		foreach($results as $result){
-			if ($get_all || checkRange($result[0])){
+			if ($get_all || \checkRange($result[0])){
 				$extens[] = array($result[0],$result[1],$result[2]);
 			}
 		}
@@ -1734,11 +1762,13 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		$tech = $devinfo['tech'];
 
 		//TODO should only delete the record for this device buuuutttt......
-		$this->deviceCache = array();
 		if(isset($this->drivers[$tech])) {
 			$this->drivers[$tech]->delDevice($account);
 		}
 		$this->freepbx->Hooks->processHooks($account, $editmode);
+		$this->getDeviceHeadersCache = array();
+		$this->deviceCache = array();
+		$this->getDeviceCache = array();
 		return true;
 	}
 
@@ -1801,16 +1831,19 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 				$final = array();
 				foreach($results as $res) {
 					$ext = $res['extension'];
-					$final[$ext] = $res;
+					$ret = checkRange($ext);
+					if($ret){
+						$final[$ext] = $res;
+					}
 				}
 				$this->allUsersCache = $final;
 			} catch(\Exception $e) {
 				return array();
 			}
 		} else {
-			$results = $this->allUsersCache;
+			$final = $this->allUsersCache;
 		}
-		return $results;
+		return $final;
 	}
 
 	/**
@@ -1844,6 +1877,9 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		//Virtual Extensions are strange
 		$final = array();
 		foreach($results as $result) {
+			if(!checkRange($result['extension'])){
+				continue;
+			}
 			if(empty($result['tech'])) {
 				$result['tech'] = 'virtual';
 			} elseif(!empty($result['tech']) && $type == "virtual") {
@@ -1855,7 +1891,8 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			$result['recording_out_internal'] = isset($dbfamily['/AMPUSER/'.$result['extension'].'/recording/out/internal']) ? $dbfamily['/AMPUSER/'.$result['extension'].'/recording/out/internal'] : "";
 			$result['recording_ondemand'] = isset($dbfamily['/AMPUSER/'.$result['extension'].'/recording/ondemand']) ? $dbfamily['/AMPUSER/'.$result['extension'].'/recording/ondemand'] : "";
 			$result['recording_priority'] = isset($dbfamily['/AMPUSER/'.$result['extension'].'/recording/priority']) ? (int) $dbfamily['/AMPUSER/'.$result['extension'].'/recording/priority'] : "10";
-			$result['answermode'] = function_exists('paging_get_config') && isset($dbfamily['/AMPUSER/'.$result['extension'].'/answermode']) ? $dbfamily['/AMPUSER/'.$result['extension'].'/answermode'] : "";
+			$result['answermode'] = $this->FreePBX->Modules->checkStatus("paging") && isset($dbfamily['/AMPUSER/'.$result['extension'].'/answermode']) ? $dbfamily['/AMPUSER/'.$result['extension'].'/answermode'] : "";
+			$result['intercom'] = $this->FreePBX->Modules->checkStatus("paging") && isset($dbfamily['/AMPUSER/'.$result['extension'].'/intercom']) ? $dbfamily['/AMPUSER/'.$result['extension'].'/intercom'] : "";
 
 			$final[] = $result;
 		}
@@ -1919,6 +1956,10 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		$settings['extension'] = trim(str_replace($invalidDIDChars, "", $settings['extension']));
 		$settings['cidnum'] = trim(str_replace($invalidDIDChars, "", $settings['cidnum']));
 
+		// XXX: Kludge for empty value
+		if ($settings['delay_answer'] == '') {
+			$settings['delay_answer'] = '0';
+		}
 		// Check to make sure the did is not being used elsewhere
 		//
 		$existing = $this->getDID($settings['extension'], $settings['cidnum']);
@@ -2170,18 +2211,21 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 
 		//write to astdb
 		$astman = $this->FreePBX->astman;
+		$fpc = $this->FreePBX->Config();
 		if ($astman->connected()) {
 			$astman->database_put("AMPUSER",$extension."/password",isset($settings['password']) ? $settings['password'] : '');
-			$astman->database_put("AMPUSER",$extension."/ringtimer",isset($settings['ringtimer']) ? $settings['ringtimer'] : '');
-			$astman->database_put("AMPUSER",$extension."/cfringtimer",isset($settings['cfringtimer']) ? $settings['cfringtimer'] : 0);
-			$astman->database_put("AMPUSER",$extension."/concurrency_limit",isset($settings['concurrency_limit']) ? $settings['concurrency_limit'] : 0);
+			$astman->database_put("AMPUSER",$extension."/ringtimer",isset($settings['ringtimer']) ? $settings['ringtimer'] : $fpc->get('RINGTIMER'));
+			$astman->database_put("AMPUSER",$extension."/cfringtimer",isset($settings['cfringtimer']) ? $settings['cfringtimer'] : $fpc->get('CFRINGTIMERDEFAULT'));
+			$astman->database_put("AMPUSER",$extension."/concurrency_limit",isset($settings['concurrency_limit']) ? $settings['concurrency_limit'] : $fpc->get('CONCURRENCYLIMITDEFAULT'));
 			$astman->database_put("AMPUSER",$extension."/noanswer",isset($settings['noanswer']) ? $settings['noanswer'] : '');
 			$astman->database_put("AMPUSER",$extension."/recording",isset($settings['recording']) ? $settings['recording'] : '');
 			$astman->database_put("AMPUSER",$extension."/outboundcid",isset($settings['outboundcid']) ? $settings['outboundcid'] : '');
 			$astman->database_put("AMPUSER",$extension."/cidname",isset($settings['name']) ? $settings['name'] : '');
 			$astman->database_put("AMPUSER",$extension."/cidnum",(isset($settings['cid_masquerade']) && trim($settings['cid_masquerade']) != "") ? trim($settings['cid_masquerade']) : $extension);
 			$astman->database_put("AMPUSER",$extension."/voicemail",isset($settings['voicemail']) ? $settings['voicemail'] : '');
+			//TODO need to be in paging soon
 			$astman->database_put("AMPUSER",$extension."/answermode",isset($settings['answermode']) ? $settings['answermode']: 'disabled');
+			$astman->database_put("AMPUSER",$extension."/intercom",isset($settings['intercom']) ? $settings['intercom']: 'enabled');
 
 			$astman->database_put("AMPUSER",$extension."/recording/in/external",$settings['recording_in_external']);
 			$astman->database_put("AMPUSER",$extension."/recording/out/external",$settings['recording_out_external']);
@@ -2204,10 +2248,10 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 					$astman->database_del("AMPUSER",$extension."/screen");
 				break;
 				case 'nomemory':
-					$astman->database_put("AMPUSER",$extension."/screen",'"nomemory"');
+					$astman->database_put("AMPUSER",$extension."/screen",'nomemory');
 				break;
 				case 'memory':
-					$astman->database_put("AMPUSER",$extension."/screen",'"memory"');
+					$astman->database_put("AMPUSER",$extension."/screen",'memory');
 				break;
 				default:
 				break;
@@ -2255,6 +2299,8 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			core_did_add($did_vars, $did_dest);
 		}
 
+		$this->getUserCache = array();
+		$this->listUsersCache = array();
 		return true;
 	}
 
@@ -2300,6 +2346,8 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		//        )
 		//
 		//)
+
+		$this->getUserCache = array();
 		$this->listUsersCache = array();
 		$this->freepbx->Hooks->processHooks($extension, $editmode);
 
@@ -2330,9 +2378,13 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 		$astman = $this->FreePBX->astman;
 		if ($astman->connected()) {
 
-			if (function_exists('paging_get_config')) {
+			if ($this->FreePBX->Modules->checkStatus("paging")) {
 				$answermode=$astman->database_get("AMPUSER",$extension."/answermode");
-				$results['answermode'] = (trim($answermode) == '') ? 'disabled' : $answermode;
+				$results['answermode'] = (trim($answermode) == '') ? $this->freepbx->Config->get("DEFAULT_INTERNAL_AUTO_ANSWER") : $answermode;
+				$astman->database_put("AMPUSER",$extension."/answermode",$results['answermode']); //incase it was updated from above
+
+				$intercom=$astman->database_get("AMPUSER",$extension."/intercom");
+				$results['intercom'] = (trim($intercom) == '') ? 'enabled' : $intercom;
 			}
 
 			$cw = $astman->database_get("CW",$extension);
@@ -2372,6 +2424,9 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 	 * @param {int} $account The Device ID
 	 */
 	public function getDevice($account) {
+		if (isset($this->getDeviceCache[$account])) {
+			return $this->getDeviceCache[$account];
+		}
 		$sql = "SELECT * FROM devices WHERE id = ?";
 		$sth = $this->database->prepare($sql);
 		try {
@@ -2393,7 +2448,8 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 
 		$results = array_merge($device,$tech);
 
-		return $results;
+		$this->getDeviceCache[$account] = $results;
+		return $this->getDeviceCache[$account];
 	}
 
 	public function hookTabs($page){
@@ -2544,6 +2600,12 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 				if (!is_numeric($data['extension'])) {
 					return array("status" => false, "message" => _("Extension is not numeric."));
 				}
+				if(empty($data['tech'])) {
+					return array("status" => false, "message" => _("Technology of device is undefined. Please specify a 'tech'"));
+				}
+				if(empty($data['name'])) {
+					return array("status" => false, "message" => _("Device 'name' can not be blank."));
+				}
 				$settings = $this->generateDefaultDeviceSettings($data['tech'], $data['extension'], $data['name']);
 				foreach ($settings as $key => $value) {
 					if (isset($data[$key])) {
@@ -2577,6 +2639,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 						$settings[$key] = $data[$key];
 					}
 				}
+				dbug($settings);
 
 				try {
 					if (!$this->addUser($data['extension'], $settings)) {
@@ -2684,6 +2747,41 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 			default:
 				return $stmt->fetchall(\PDO::FETCH_BOTH);
 			break;
+		}
+	}
+	public function addAMPUser($username, $password, $extension_low, $extension_high, $deptname, $sections){
+		if (strlen($password) == 40 && ctype_xdigit($password)) {
+			$password_sha1 = $password;
+		}else {
+			$password_sha1 = sha1($password);
+		}
+		$sections = implode(";",$sections);
+		$vars = array(
+			':username' => $username,
+			':password_sha1' => $password_sha1,
+			':extension_low' => $extension_low,
+			':extension_high' => $extension_high,
+			':deptname' => $deptname,
+			':sections' => $sections,
+		);
+		$sql = "INSERT INTO ampusers (username, password_sha1, extension_low, extension_high, deptname, sections) VALUES (:username,
+					:password_sha1,
+					:extension_low,
+					:extension_high,
+					:deptname,
+					:sections)";
+		$stmt = $this->database->prepare($sql);
+		try{
+			$stmt->execute($vars);
+			return true;
+		}catch(\PDOException $e){
+			//data colission
+			if($e->getCode() == '23000'){
+				return false;
+			}else{
+				echo $e->getMessage();
+        throw $e;
+			}
 		}
 	}
 	public function listTrunkTypes(){

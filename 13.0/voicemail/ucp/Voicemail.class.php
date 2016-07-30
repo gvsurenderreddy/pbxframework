@@ -81,7 +81,7 @@ class Voicemail extends Modules{
 		$displayvars['folders'] = $folders;
 
 		$sf = $this->UCP->FreePBX->Media->getSupportedFormats();
-		$html = "<script>var showDownload = ".json_decode($this->download)."; var showPlayback = ".json_decode($this->playback).";var supportedRegExp = '".implode("|",array_keys($sf['in']))."';var supportedHTML5 = '".implode(",",$this->UCP->FreePBX->Media->getSupportedHTML5Formats())."';var extension = '".$ext."'; var mailboxes = ".json_encode($this->extensions).";</script>";
+		$html = "<script>var showDownload = ".json_decode($this->download)."; var showPlayback = ".json_decode($this->playback).";var supportedRegExp = '".implode("|",array_keys($sf['in']))."';var supportedHTML5 = '".implode(",",$this->UCP->FreePBX->Media->getSupportedHTML5Formats())."';var extension = '".htmlentities($ext)."'; var mailboxes = ".json_encode($this->extensions).";</script>";
 		$html .= $this->load_view(__DIR__.'/views/header.php',$displayvars);
 
 		if(!empty($this->UCP->FreePBX->Voicemail->displayMessage['message'])) {
@@ -131,7 +131,7 @@ class Voicemail extends Modules{
 
 	function poll() {
 		$boxes = $this->getMailboxCount($this->extensions);
-		return array("status" => ($boxes['total'] > 0), "total" => $boxes['total'], "boxes" => isset($boxes['extensions']) ? $boxes['extensions'] : '');
+		return array("status" => !empty($boxes['extensions']), "total" => $boxes['total'], "boxes" => isset($boxes['extensions']) ? $boxes['extensions'] : '');
 	}
 
 	public function getSettingsDisplay($ext) {
@@ -244,9 +244,17 @@ class Voicemail extends Modules{
 				$search = !empty($_REQUEST['search']) ? $_REQUEST['search'] : "";
 				$offset = $_REQUEST['offset'];
 				$data = $this->UCP->FreePBX->Voicemail->getMessagesByExtensionFolder($ext,$folder,$order,$orderby,$offset,$limit);
+				$messages = array();
+				if(!empty($data['messages'])) {
+					foreach($data['messages'] as $message) {
+						$message['callerid'] = htmlentities($message['callerid'],ENT_COMPAT | ENT_HTML401, "UTF-8");
+						$message['callerid'] = preg_replace("/&lt;(.*)&gt;/i","&lt;<span class='clickable' data-type='number' data-primary='phone'>$1</span>&gt;",$message['callerid']);
+						$messages[] = $message;
+					}
+				}
 				return array(
 					"total" => $this->UCP->FreePBX->Voicemail->getMessagesCountByExtensionFolder($ext,$folder),
-					"rows" => !empty($data['messages']) ? $data['messages'] : array()
+					"rows" => $messages
 				);
 			break;
 			case 'callme':
@@ -389,6 +397,7 @@ class Voicemail extends Modules{
 				$return = array("status" => $status, "message" => "");
 			break;
 			case "upload":
+				$return = array("status" => true, "message" => "");
 				foreach ($_FILES["files"]["error"] as $key => $error) {
 					if ($error == UPLOAD_ERR_OK) {
 						$tmp_path = \FreePBX::Config()->get("ASTSPOOLDIR") . "/tmp";
@@ -416,13 +425,13 @@ class Voicemail extends Modules{
 						}
 					}
 				}
-				$return = array("status" => true, "message" => "");
 			break;
 			case "copy":
 				$status = $this->UCP->FreePBX->Voicemail->copyVMGreeting($_POST['ext'],$_POST['source'],$_POST['target']);
 				$return = array("status" => $status, "message" => "");
 			break;
 			case "record":
+				$return = array("status" => true, "message" => "");
 				if ($_FILES["file"]["error"] == UPLOAD_ERR_OK) {
 					$tmp_path = sys_get_temp_dir();
 					$tmp_path = !empty($tmp_path) ? $tmp_path : '/tmp';
@@ -447,7 +456,6 @@ class Voicemail extends Modules{
 					$return = array("status" => false, "message" => _("Unknown Error"));
 					break;
 				}
-				$return = array("status" => true, "message" => "");
 			break;
 			default:
 				return false;
@@ -544,12 +552,14 @@ class Voicemail extends Modules{
 		$message = $this->UCP->FreePBX->Voicemail->getMessageByMessageIDExtension($msgid,$ext);
 		if(!empty($message)) {
 			$file = $message['path'] . "/" . $message['file'];
-
+			$media = $this->UCP->FreePBX->Media;
+			$mimetype = $media->getMIMEtype($file);
 			if (is_file($file)){
 				header("Content-length: " . filesize($file));
 				header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 				header('Content-Disposition: attachment;filename="' . $message['file'].'"');
+				header('Content-type: ' . $mimetype);
 				readfile($file);
 				return;
 			}

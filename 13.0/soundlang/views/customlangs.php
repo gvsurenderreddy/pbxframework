@@ -1,16 +1,16 @@
 <div class="container-fluid">
 	<div class="row">
-		<div class="col-sm-9">
+		<div class="col-sm-12">
 			<div class="fpbx-container">
 				<div class="display no-border">
 					<div class="container-fluid">
 						<div class="table-responsive">
 							<div id="toolbar-customlangs">
-								<a href="config.php?display=soundlang&amp;action=addcustomlang" id="add-customlangs" class="btn btn-danger btn-add" data-type="customlangs" data-section="customlangs">
-									<i class="fa fa-plus"></i> <span><?php echo _('Add')?></span>
+								<a href="config.php?display=soundlang&amp;action=addcustomlang" data-cookie="true" data-cookie-id-table="soundlang-customlangs-grid" id="add-customlangs" class="btn btn-primary btn-add" data-type="customlangs" data-section="customlangs">
+									<i class="fa fa-plus"></i> <span><?php echo _('Add New Custom Language')?></span>
 								</a>
 								<button id="remove-customlangs" class="btn btn-danger btn-remove" data-type="customlangs" disabled data-section="customlangs">
-									<i class="fa fa-remove"></i> <span><?php echo _('Delete')?></span>
+									<i class="fa fa-remove"></i> <span><?php echo _('Delete Custom Language')?></span>
 								</button>
 							</div>
 							<table data-toolbar="#toolbar-customlangs" data-toggle="table" data-pagination="true" data-show-columns="true" data-show-toggle="true" data-search="true" class="table table-striped" id="table-customlangs">
@@ -45,9 +45,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="col-sm-3 hidden-xs bootnav">
-			<?php echo load_view(dirname(__FILE__).'/rnav.php',array()); ?>
 		</div>
 	</div>
 </div>

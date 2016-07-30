@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
 "PO-Revision-Date: 2008-11-06 14:48+0100\n"
 "Last-Translator: Francesco Romano <francesco.romano@alteclab.it>\n"
 "Language-Team: Italian\n"
@@ -25,11 +25,11 @@ msgstr ""
 msgid ": Edit"
 msgstr ""
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
 msgstr ""
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
 msgstr ""
 
@@ -50,19 +50,27 @@ msgstr ""
 msgid "Announcement: %s"
 msgstr "Annuncio: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Annunci"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr ""
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Controllo se le registrazioni hanno bisogno di una migrazione.."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Elimina"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Descrizione"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
 msgstr ""
 
@@ -100,7 +108,7 @@ msgid ""
 "which may not be the expected behavior."
 msgstr ""
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Descrizione specificata non valida"
 
@@ -125,8 +133,18 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+#: assets/js/announcement.js:33
+msgid "No Destination"
+msgstr ""
+
 #: views/form.php:32
 msgid "None"
+msgstr ""
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
 msgstr ""
 
 #: views/form.php:45
@@ -137,11 +155,11 @@ msgstr "Registrazione"
 msgid "Repeat"
 msgstr "Ripeti"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
 msgstr ""
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Ritorna all'IVR"
 
@@ -155,7 +173,7 @@ msgid ""
 "answered the channel, that 1 second delay may not be desired."
 msgstr ""
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
 msgstr ""
 
@@ -207,9 +225,6 @@ msgstr "nessun campo registrazione??"
 #: install.php:104 install.php:143
 msgid "ok"
 msgstr "ok"
-
-#~ msgid "Announcements"
-#~ msgstr "Annunci"
 
 #~ msgid "Add Announcement"
 #~ msgstr "Aggiungi Annuncio"

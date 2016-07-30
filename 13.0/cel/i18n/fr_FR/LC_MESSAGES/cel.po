@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-11 11:02-0800\n"
-"PO-Revision-Date: 2015-06-01 19:52+0200\n"
-"Last-Translator: philippebolduc <philippe@florenceinc.com>\n"
+"POT-Creation-Date: 2016-06-20 11:16-0700\n"
+"PO-Revision-Date: 2016-02-04 23:02+0200\n"
+"Last-Translator: Nicolas Riendeau <freepbx@riendeau.org>\n"
 "Language-Team: French <http://weblate.freepbx.org/projects/freepbx/cel/fr_FR/"
 ">\n"
 "MIME-Version: 1.0\n"
@@ -24,6 +24,10 @@ msgstr ""
 #: ucp/assets/js/global.js:42
 #, perl-format
 msgid "%s seconds"
+msgstr "%s secondes"
+
+#: install.php:109
+msgid "Adding (this might take a long time)"
 msgstr ""
 
 #: views/ucp_config.php:7
@@ -50,6 +54,14 @@ msgstr ""
 msgid "Allowed CEL"
 msgstr ""
 
+#: install.php:101
+msgid "Already Removed"
+msgstr ""
+
+#: install.php:118
+msgid "Already indexed"
+msgstr ""
+
 #: views/search.php:106
 msgid "Application"
 msgstr "Application"
@@ -62,7 +74,7 @@ msgstr "Application exécutée par un participant à un appel"
 msgid "Call Detail"
 msgstr ""
 
-#: Cel.class.php:182 /usr/src/freepbx/cel/cel.i18n.php:4 cel.i18n.php:8
+#: Cel.class.php:183 /usr/src/freepbx/cel/cel.i18n.php:4 cel.i18n.php:8
 #: /usr/src/freepbx/cel/cel.i18n.php:10 page.cel.php:10
 msgid "Call Event Logging"
 msgstr ""
@@ -77,15 +89,24 @@ msgstr ""
 
 #: views/search.php:58
 msgid "Caller ID"
-msgstr ""
+msgstr "ID Appelant"
 
 #: views/search.php:70
 msgid "Caller ID of a call participant"
 msgstr ""
 
+#: install.php:88
+#, php-format
+msgid "Checking for %s field to remove.."
+msgstr ""
+
+#: install.php:105
+msgid "Checking for context index.."
+msgstr ""
+
 #: ucp/views/table.php:71
 msgid "Close"
-msgstr ""
+msgstr "Fermer"
 
 #: views/search.php:4
 msgid "Conference"
@@ -93,11 +114,11 @@ msgstr ""
 
 #: ucp/views/table.php:36
 msgid "Controls"
-msgstr ""
+msgstr "Contrôles"
 
 #: ucp/views/table.php:28
 msgid "Date"
-msgstr ""
+msgstr "Date"
 
 #: views/search.php:27
 msgid "Date Range"
@@ -127,16 +148,17 @@ msgstr ""
 msgid "Duration"
 msgstr ""
 
-#: install.php:109
+#: install.php:113
 msgid "ERROR failed to add context index"
 msgstr ""
 
-#: install.php:80
-msgid "ERROR failed to update extra field"
+#: install.php:96
+#, php-format
+msgid "ERROR failed to delete %s field"
 msgstr ""
 
-#: install.php:94
-msgid "ERROR failed to update userfield field"
+#: install.php:77
+msgid "ERROR failed to update extra field"
 msgstr ""
 
 #: views/ucp_config.php:28
@@ -149,11 +171,11 @@ msgstr ""
 
 #: ucp/Cel.class.php:119 ucp/Cel.class.php:122
 msgid "File does not exist"
-msgstr ""
+msgstr "Le fichier n'existe pas"
 
 #: ucp/Cel.class.php:216 ucp/Cel.class.php:227
 msgid "Forbidden"
-msgstr ""
+msgstr "Interdit"
 
 #: views/search.php:33
 msgid "From"
@@ -161,11 +183,11 @@ msgstr ""
 
 #: views/ucp_config.php:18 views/ucp_config.php:75 views/ucp_config.php:106
 msgid "Inherit"
-msgstr ""
+msgstr "Hérite"
 
 #: views/ucp_config.php:15 views/ucp_config.php:72 views/ucp_config.php:103
 msgid "No"
-msgstr ""
+msgstr "Non"
 
 #: ucp/Cel.class.php:62
 msgid "Not Authorized"
@@ -173,34 +195,37 @@ msgstr ""
 
 #: ucp/Cel.class.php:221
 msgid "Not Found"
-msgstr ""
+msgstr "Non trouvé"
 
-#: install.php:71 /usr/src/freepbx/cel/install.php:82 install.php:96
-#: /usr/src/freepbx/cel/install.php:111
+#: install.php:67 /usr/src/freepbx/cel/install.php:79 install.php:115
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: ucp/views/table.php:34
 msgid "Playback"
-msgstr ""
+msgstr "Écouter"
 
 #: views/search.php:5
 msgid "Queue"
 msgstr ""
 
+#: install.php:98
+msgid "Removed"
+msgstr ""
+
 #: cel.i18n.php:6 /usr/src/freepbx/cel/cel.i18n.php:12
 msgid "Reports"
-msgstr ""
+msgstr "Rapports"
 
-#: Cel.class.php:210
+#: Cel.class.php:211
 msgid "Reset"
-msgstr ""
+msgstr "Réinitialiser"
 
-#: Cel.class.php:215 views/search.php:16
+#: Cel.class.php:216 views/search.php:16
 msgid "Search"
 msgstr ""
 
-#: Cel.class.php:231
+#: Cel.class.php:232
 msgid "The CEL module requires an Asterisk version of 12.0 or higher."
 msgstr ""
 
@@ -214,15 +239,15 @@ msgstr ""
 
 #: ucp/views/table.php:64
 msgid "Time"
-msgstr ""
+msgstr "Heure"
 
 #: views/search.php:36
 msgid "To"
-msgstr ""
+msgstr "À"
 
-#: Cel.class.php:173
+#: Cel.class.php:174
 msgid "User Primary Extension"
-msgstr ""
+msgstr "Poste primaire de l'utilisateur"
 
 #: views/search.php:6
 msgid "Voicemail"
@@ -234,7 +259,7 @@ msgstr ""
 
 #: views/ucp_config.php:13 views/ucp_config.php:70 views/ucp_config.php:101
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 #: ucp/assets/js/global.js:95
 #, perl-format
@@ -244,6 +269,10 @@ msgid ""
 "distributed with the PBX. If you'd like to install the binaries needed for "
 "these conversions click <a href='%s'>here</a>"
 msgstr ""
+"Le support pour l'écoute dans ce navigateur est absent. Pour supporter "
+"l'écoute en HTML5, vous devez installer des programmes qui ne peuvent pas "
+"être distribués avec le PBX. Si vous désirez installer les exécutables "
+"requis pour ces conversions cliquer <a href='%s'>ici</a>"
 
 #: page.cel.php:12
 msgid ""
@@ -251,28 +280,16 @@ msgid ""
 "in the more refined the report."
 msgstr ""
 
-#: install.php:99
-msgid "already deleted"
-msgstr ""
-
-#: install.php:85
+#: install.php:82
 msgid "already exists"
-msgstr ""
+msgstr "existe déjà"
 
-#: install.php:114
-msgid "already indexed"
-msgstr ""
-
-#: install.php:102
-msgid "checking for context index.."
-msgstr ""
-
-#: install.php:74
+#: install.php:70
 msgid "checking for extra field.."
 msgstr ""
 
-#: install.php:88
-msgid "checking for userfield field.."
+#: install.php:92
+msgid "removing (this might take a long time)"
 msgstr ""
 
 #~ msgid "CEL Report Module"

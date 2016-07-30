@@ -268,12 +268,14 @@ class AGI_AsteriskManager {
 	* Wait for a response
 	*
 	* If a request was just sent, this will return the response.
-	* Otherwise, it will loop forever, handling events.
+	* Otherwise, it will loop forever, handling events
+	* unless $return_on_event is set to true
 	*
 	* @param boolean $allow_timeout if the socket times out, return an empty array
+	* @param boolean $return_on_event return on event as if it was a message or response
 	* @return array of parameters, empty on timeout
 	*/
-	function wait_response($allow_timeout = false) {
+	function wait_response($allow_timeout = false, $return_on_event = false) {
 		$timeout = false;
 
 		set_error_handler("phpasmanager_error_handler");
@@ -324,7 +326,7 @@ class AGI_AsteriskManager {
 					$this->log('Unhandled response packet ('.$type.') from Manager: ' . print_r($parameters, true));
 					break;
 			}
-		} while($type != 'response' && $type != 'message' && !$timeout);
+		} while(($return_on_event && ($type != 'event' && $type != 'response' && $type != 'message' && !$timeout)) || (!$return_on_event && ($type != 'response' && $type != 'message' && !$timeout)));
 		$this->log("returning from wait_response with with type: $type",10);
 		$this->log('$parmaters: '.print_r($parameters,true),10);
 		$this->log('$buffer: '.print_r($buffer,true),10);
@@ -336,6 +338,56 @@ class AGI_AsteriskManager {
 	}
 
 	/**
+	 * Attempt to reconnect to Asterisk
+	 * @param string $events whether events are on or off for this connection
+	 */
+	function reconnect($events = null) {
+		if($this->connected()) {
+			return true; //we are already connected
+		}
+		$this->events = !empty($events) ? $events : $this->events;
+		set_error_handler("phpasmanager_error_handler");
+		if(empty($this->username) || empty($this->secret) || empty($this->server)) {
+			throw new \Exception("Unable to reconnect, try using connect first");
+		}
+
+		// connect the socket
+		$errno = $errstr = NULL;
+
+		$this->socket = stream_socket_client("tcp://".$this->server.":".$this->port, $errno, $errstr);
+		stream_set_timeout($this->socket,30);
+		if(!$this->socket) {
+			$this->log("Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
+			restore_error_handler();
+			return false;
+		}
+
+		// read the header
+		$str = fgets($this->socket);
+		if($str == false) {
+			// a problem.
+			$this->log("Asterisk Manager header not received.");
+			restore_error_handler();
+			return false;
+		} else {
+			// note: don't $this->log($str) until someone looks to see why it mangles the logging
+		}
+
+		// login
+		$res = $this->send_request('login',
+							array('Username'=>$this->username, 'Secret'=>$this->secret, 'Events'=>$events),
+							false);
+		if($res['Response'] != 'Success') {
+			$this->log("Failed to login.");
+			$this->disconnect();
+			restore_error_handler();
+			return false;
+		}
+		restore_error_handler();
+		return true;
+	}
+
+	/**
 	* Connect to Asterisk
 	*
 	* @example examples/sip_show_peer.php Get information about a sip peer
@@ -343,6 +395,7 @@ class AGI_AsteriskManager {
 	* @param string $server
 	* @param string $username
 	* @param string $secret
+	* @param string $events whether events are on or off for this connection
 	* @return boolean true on success
 	*/
 	function connect($server=NULL, $username=NULL, $secret=NULL, $events='on') {
@@ -462,17 +515,27 @@ class AGI_AsteriskManager {
 		return $this->send_request('AgentLogoff');
 	}
 
+	function AGI($channel, $command, $commandid) {
+		return $this->send_request('AGI', array('Channel'=>$channel, 'Command'=>$command, "CommandID" => $commandid));
+	}
+
 	/**
-	* Add an AGI command to execute by Async AGI.
+	* Send an arbitrary event.
 	*
-	* Add an AGI command to the execute queue of the channel in Async AGI.
+	* Send an event to manager sessions.
 	*
-	* @link https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+ManagerAction_AGI
+	* @link https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+ManagerAction_UserEvent
 	* @param string $channel
 	* @param string $file
 	*/
-	function AGI($channel, $command, $commandid) {
-		return $this->send_request('AGI', array('Channel'=>$channel, 'Command'=>$command, "CommandID" => $commandid));
+	function UserEvent($event, $headers=array()) {
+		$d = array('UserEvent'=>$event);
+		$i = 1;
+		foreach($headers as $header) {
+			$d['Header'.$i] = $header;
+			$i++;
+		}
+		return $this->send_request('UserEvent', $d);
 	}
 
 	/**
@@ -504,6 +567,46 @@ class AGI_AsteriskManager {
 	}
 
 	/**
+	* Tell Asterisk to poll mailboxes for a change
+	*
+	* Normally, MWI indicators are only sent when Asterisk itself changes a mailbox.
+	* With external programs that modify the content of a mailbox from outside the
+	* application, an option exists called pollmailboxes that will cause voicemail
+	* to continually scan all mailboxes on a system for changes. This can cause a
+	* large amount of load on a system. This command allows external applications
+	* to signal when a particular mailbox has changed, thus permitting external
+	* applications to modify mailboxes and MWI to work without introducing
+	* considerable CPU load.
+	*
+	* If Context is not specified, all mailboxes on the system will be polled for
+	* changes. If Context is specified, but Mailbox is omitted, then all mailboxes
+	* within Context will be polled. Otherwise, only a single mailbox will be
+	* polled for changes.
+	*
+	* @link https://wiki.asterisk.org/wiki/display/AST/Asterisk+12+ManagerAction_VoicemailRefresh
+	* @param string $context
+	* @param string $mailbox
+	* @param string $actionid ActionID for this transaction. Will be returned.
+	*/
+	function VoicemailRefresh($context=NULL,$mailbox=NULL, $actionid=NULL) {
+		global $amp_conf;
+		if(version_compare($amp_conf['ASTVERSION'], "12.0", "lt")) {
+			return false;
+		}
+		$parameters = array();
+		if(!empty($context)) {
+			$parameters['Context'] = $context;
+		}
+		if(!empty($mailbox)) {
+			$parameters['Mailbox'] = $mailbox;
+		}
+		if(!empty($actionid)) {
+			$parameters['ActionID'] = $actionid;
+		}
+		return $this->send_request('VoicemailRefresh', $parameters);
+	}
+
+	/**
 	 * Get and parse codecs
 	 * @param {string} $type='audio' Type of codec to look up
 	 */
@@ -515,7 +618,6 @@ class AGI_AsteriskManager {
 			break;
 			case 'text':
 				$ret = $this->Command('core show codecs text');
-				dbug($ret['data']);
 			break;
 			case 'image':
 				$ret = $this->Command('core show codecs image');
@@ -972,7 +1074,7 @@ class AGI_AsteriskManager {
 	* @param string $priority
 	* @param integer $timeout
 	* @param string $callerid
-	* @param string $variable
+	* @param string $variable (Supports an array of values)
 	* @param string $account
 	* @param string $application
 	* @param string $data
@@ -1376,10 +1478,14 @@ class AGI_AsteriskManager {
 			if ($family == '') {
 				return $this->memAstDB;
 			} else {
-				 $key = '/'.$family;
+				$key = '/'.$family;
 				if (isset($this->memAstDB[$key])) {
 					return array($key => $this->memAstDB[$key]);
+				} elseif(isset($this->memAstDBArray[$key])) {
+					return $this->memAstDBArray[$key];
 				} else {
+					//TODO: this is intensive cache results
+					$k = $key;
 					$key .= '/';
 					$len = strlen($key);
 					$fam_arr = array();
@@ -1388,6 +1494,7 @@ class AGI_AsteriskManager {
 							$fam_arr[$this_key] = $value;
 						}
 					}
+					$this->memAstDBArray[$k] = $fam_arr;
 					return $fam_arr;
 				}
 			}
@@ -1421,12 +1528,14 @@ class AGI_AsteriskManager {
 	 */
 	function database_put($family, $key, $value) {
 		$write_through = false;
-
 		if (!empty($this->memAstDB)){
 			$keyUsed="/".str_replace(" ","/",$family)."/".str_replace(" ","/",$key);
 			if (!isset($this->memAstDB[$keyUsed]) || $this->memAstDB[$keyUsed] != $value) {
 				$this->memAstDB[$keyUsed] = $value;
 				$write_through = true;
+			}
+			if(isset($this->memAstDBArray[$keyUsed])) {
+				unset($this->memAstDBArray[$keyUsed]);
 			}
 		} else {
 			$write_through = true;
@@ -1450,7 +1559,7 @@ class AGI_AsteriskManager {
 				$this->LoadAstDB();
 			}
 			$keyUsed="/".str_replace(" ","/",$family)."/".str_replace(" ","/",$key);
-			if (array_key_exists($keyUsed,$this->memAstDB)){
+			if (isset($this->memAstDB[$keyUsed])){
 				return $this->memAstDB[$keyUsed];
 			}
 		} else {
@@ -1470,12 +1579,16 @@ class AGI_AsteriskManager {
 	 * @return bool True if successful
 	 */
 	function database_del($family, $key) {
-		 if (!empty($this->memAstDB)){
+		$r = $this->command("database del ".str_replace(" ","/",$family)." ".str_replace(" ","/",$key));
+		$status = (bool)strstr($r["data"], "removed");
+		if ($status && !empty($this->memAstDB)){
 			$keyUsed="/".str_replace(" ","/",$family)."/".str_replace(" ","/",$key);
 			unset($this->memAstDB[$keyUsed]);
+			if(isset($this->memAstDBArray[$keyUsed])) {
+				unset($this->memAstDBArray[$keyUsed]);
+			}
 		}
-		$r = $this->command("database del ".str_replace(" ","/",$family)." ".str_replace(" ","/",$key));
-		return (bool)strstr($r["data"], "removed");
+		return $status;
 	}
 
 	/** Delete a family from the asterisk database
@@ -1483,12 +1596,21 @@ class AGI_AsteriskManager {
 	 * @return bool True if successful
 	 */
 	function database_deltree($family) {
-		if (!empty($this->memAstDB)){
-			$keyUsed="/".str_replace(" ","/",$family);
-			unset($this->memAstDB[$keyUsed]);
-		}
 		$r = $this->command("database deltree ".str_replace(" ","/",$family));
-		return (bool)strstr($r["data"], "removed");
+		$status = (bool)strstr($r["data"], "removed");
+		if ($status && !empty($this->memAstDB)){
+			$keyUsed="/".str_replace(" ","/",$family);
+			foreach($this->memAstDB as $key => $val) {
+				$reg = preg_quote($keyUsed,"/");
+				if(preg_match("/^".$reg.".*/",$key)) {
+					unset($this->memAstDB[$key]);
+					if(isset($this->memAstDBArray[$key])) {
+						unset($this->memAstDBArray[$key]);
+					}
+				}
+			}
+		}
+		return $status;
 	}
 
 	/** Returns whether a give function exists in this Asterisk install
@@ -1557,8 +1679,15 @@ class AGI_AsteriskManager {
 		}
 		if ($module) {
 			$parameters['Module'] = $module;
+			return $this->send_request('Reload', $parameters);
+		} else {
+			//Until https://issues.asterisk.org/jira/browse/ASTERISK-25996 is fixed
+			$a = function_exists("fpbx_which") ? fpbx_which("asterisk") : "asterisk";
+			if(!empty($a)) {
+				return exec($a . " -rx 'core reload'");
+			}
 		}
-		return $this->send_request('Reload', $parameters);
+
 	}
 
 	/** Starts mixmonitor

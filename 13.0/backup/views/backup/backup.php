@@ -79,6 +79,33 @@ if (!isset($id)) {
 		</div>
 	</div>
 	<!--END Status Email-->
+	<!--On Failure Only-->
+	<div class="element-container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="row">
+					<div class="form-group">
+						<div class="col-md-3">
+							<label class="control-label" for="emailfailonly"><?php echo _("On Failure Only") ?></label>
+							<i class="fa fa-question-circle fpbx-help-icon" data-for="emailfailonly"></i>
+						</div>
+						<div class="col-md-9 radioset">
+	            <input type="radio" name="emailfailonly" id="emailfailonlyes" value="true" <?php echo ($emailfailonly?"CHECKED":"") ?>>
+	            <label for="emailfailonlyes"><?php echo _("Yes");?></label>
+	            <input type="radio" name="emailfailonly" id="emailfailonlyno" value="false" <?php echo ($emailfailonly?"":"CHECKED") ?>>
+	            <label for="emailfailonlyno"><?php echo _("No");?></label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<span id="emailfailonly-help" class="help-block fpbx-help-block"><?php echo _("Only send an email on failure")?></span>
+			</div>
+		</div>
+	</div>
+	<!--END On Failure Only-->
 <div class="row">
 	<div class="col-md-12">
 		<div class="well well-default">
@@ -275,9 +302,9 @@ if ($restore == "true" || $restore == "on") {
 }
 ?>
 			<div class="col-md-9 radioset">
-				<input type="radio" name="restore" id="restoreyes" value="on" <?php echo $restyes; ?>>
+				<input type="radio" name="restore" id="restoreyes" value="true" <?php echo $restyes; ?>>
 				<label for="restoreyes"><?php echo _("Yes");?></label>
-				<input type="radio" name="restore" id="restoreno" value="off" <?php echo $restno; ?>>
+				<input type="radio" name="restore" id="restoreno" value="" <?php echo $restno; ?>>
 				<label for="restoreno"><?php echo _("No");?></label>
 			</div>
 		</div>
@@ -302,7 +329,7 @@ if ($restore == "true" || $restore == "on") {
 					<div class="col-md-9 radioset">
             <input type="radio" name="disabletrunks" id="disabletrunksyes" value="true" <?php echo ($disabletrunks == "true"?"CHECKED":"") ?>>
             <label for="disabletrunksyes"><?php echo _("Yes");?></label>
-            <input type="radio" name="disabletrunks" id="disabletrunksno" <?php echo ($disabletrunks == "true"?"":"CHECKED") ?>>
+            <input type="radio" name="disabletrunks" id="disabletrunksno" value="" <?php echo ($disabletrunks == "true"?"":"CHECKED") ?>>
             <label for="disabletrunksno"><?php echo _("No");?></label>
 					</div>
 				</div>
@@ -329,7 +356,7 @@ if ($restore == "true" || $restore == "on") {
 					<div class="col-md-9 radioset">
             <input type="radio" name="skipnat" id="skipnatyes" value="true" <?php echo ($skipnat == "true"?"CHECKED":"") ?>>
             <label for="skipnatyes"><?php echo _("Yes");?></label>
-            <input type="radio" name="skipnat" id="skipnatno" <?php echo ($skipnat == "true"?"":"CHECKED") ?>>
+            <input type="radio" name="skipnat" id="skipnatno" value = "" <?php echo ($skipnat == "true"?"":"CHECKED") ?>>
             <label for="skipnatno"><?php echo _("No");?></label>
 					</div>
 				</div>
@@ -356,7 +383,7 @@ if ($restore == "true" || $restore == "on") {
 					<div class="col-md-9 radioset">
             <input type="radio" name="applyconfigs" id="applyconfigsyes" value="true" <?php echo ($applyconfigs == "true"?"CHECKED":"") ?>>
             <label for="applyconfigsyes"><?php echo _("Yes");?></label>
-            <input type="radio" name="applyconfigs" id="applyconfigsno" <?php echo ($applyconfigs == "true"?"":"CHECKED") ?>>
+            <input type="radio" name="applyconfigs" id="applyconfigsno" value="" <?php echo ($applyconfigs == "true"?"":"CHECKED") ?>>
             <label for="applyconfigsno"><?php echo _("No");?></label>
 					</div>
 				</div>

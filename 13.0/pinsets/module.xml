@@ -2,13 +2,17 @@
 	<rawname>pinsets</rawname>
 	<repo>standard</repo>
 	<name>PIN Sets</name>
-	<version>13.0.4</version>
+	<version>13.0.7.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<category>Settings</category>
 	<description>Allow creation of lists of PINs (numbers for passwords) that can be used by other modules (eg, trunks).</description>
 	<changelog>
+		*13.0.7.1* Ringfree branch
+		*13.0.7* FREEPBX-11397 still referencing old value for some reason
+		*13.0.6* FREEPBX-11397 FREEPBX-11397 Pass v option to reset CDR to keep custom vars
+		*13.0.5* Lowercase opening PHP tag for consistancy
 		*13.0.4* FREEPBX-10652 Use correct directory for passwords
 		*13.0.3* FREEPBX-10239 Fix pinless dialing
 		*13.0.2* Version bump Beta
@@ -38,9 +42,9 @@
 	<depends>
 		<module>core</module>
 	</depends>
-	<location>release/13.0/pinsets-13.0.4.tgz</location>
+	<location>release/13.0/pinsets-13.0.7.1.tgz</location>
 	<methods>
 		<get_config pri="481">pinsets_get_config</get_config>
 	</methods>
-	<md5sum>dfeb772cb5a11b38e636db87cfdc82b4</md5sum>
+	<md5sum></md5sum>
 </module>

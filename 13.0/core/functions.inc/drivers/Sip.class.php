@@ -82,6 +82,14 @@ class Sip extends \FreePBX\modules\Core\Driver {
 				"value" => "no",
 				"flag" => $flag++
 			),
+			"sessiontimers" => array(
+				"value" => "accept",
+				"flag" => $flag++
+			),
+			"videosupport" => array(
+				"value" => "inherit",
+				"flag" => $flag++
+			),
 			"icesupport" => array(
 				"value" => "no",
 				"flag" => $flag++
@@ -90,11 +98,11 @@ class Sip extends \FreePBX\modules\Core\Driver {
 				"value" => $this->freepbx->Config->get('DEVICE_SIP_ENCRYPTION'),
 				"flag" => $flag++
 			),
-			"callgroup" => array(
+			"namedcallgroup" => array(
 				"value" => $this->freepbx->Config->get('DEVICE_CALLGROUP'),
 				"flag" => $flag++
 			),
-			"pickupgroup" => array(
+			"namedpickupgroup" => array(
 				"value" => $this->freepbx->Config->get('DEVICE_PICKUPGROUP'),
 				"flag" => $flag++
 			),
@@ -161,23 +169,66 @@ class Sip extends \FreePBX\modules\Core\Driver {
 	public function getDeviceDisplay($display, $deviceInfo, $currentcomponent, $primarySection) {
 		$section = _("Settings");
 		$category = "general";
-		$pport = '';
+		$pports = array();
 		$techd = ($deviceInfo['tech'] == 'sip') ? 'CHAN_SIP' : strtoupper($deviceInfo['tech']);
 		$devinfo_tech = $deviceInfo['tech'];
 		if($this->freepbx->Modules->moduleHasMethod("sipsettings","getBinds")) {
 			$out = $this->freepbx->Sipsettings->getBinds();
-			foreach($out[$devinfo_tech] as $ip => $data1) {
-				foreach($data1 as $protocol => $port)
-				$pport .= $ip.":".$port.', ';
+			if (isset($out[$devinfo_tech])) {
+				foreach($out[$devinfo_tech] as $ip => $data1) {
+					foreach($data1 as $protocol => $port) {
+						if ($protocol == "ws" || $protocol == "wss") {
+							continue;
+						}
+						// Is this the default port for this protocol?
+						$defaultport = false;
+						if ($protocol == "udp" && $port == 5060) {
+							$defaultport = true;
+						} elseif ($protocol == "tcp" && $port == 5060) {
+							$defaultport = true;
+						} elseif ($protocol == "tls" && $port == 5061) {
+							$defaultport = true;
+						}
+
+						// If the bind address is 0.0.0.0 (or :: or [::]), we don't need to say
+						// that it's listening on a specific address.
+						if ($ip == "0.0.0.0" || $ip == "::" || $ip = "[::]") {
+							if ($defaultport) {
+								$pports[] = sprintf(_("Port %s (%s)"), $port, strtoupper($protocol));
+							} else {
+								$pports[] = sprintf(_("Port %s (%s - this is a <strong>NON STANDARD</strong> port)"), $port, strtoupper($protocol));
+							}
+						} else {
+							if ($defaultport) {
+								$pports[] = sprintf(_("Interface %s, Port %s (%s)"), $ip, $port, strtoupper($protocol));
+							} else {
+								$pports[] = sprintf(_("Interface %s, Port %s (%s - this is a <strong>NON STANDARD</strong> port)"), $ip, $port, strtoupper($protocol));
+							}
+						}
+					}
+				}
 			}
-			$pport = rtrim($pport,", ");
+			if (!$pports) {
+				$pport = "(SipSettings Error)";
+			} else {
+				$pport = join(", ", $pports);
+			}
+
+			$display_mode = "advanced";
+			$mode = \FreePBX::Config()->get("FPBXOPMODE");
+			if(!empty($mode)) {
+				$display_mode = $mode;
+			}
+			if ($display_mode != 'basic') {
+				$extrac = !empty($pport) ? sprintf(_('listening on %s'),$pport) : '';
+				$device_uses = sprintf(_("This device uses %s technology %s"),"<strong>".$techd."</strong>",$extrac);
+				$currentcomponent->addguielem($primarySection, new \gui_label('techlabel', '<div class="alert alert-info" role="alert" style="width:100%">'.$device_uses.'</div>'),1, null, $category);
+			}
 		} else {
-			$pport = '';
+			$currentcomponent->addguielem($primarySection, new \gui_label('techlabel', '<div class="alert alert-danger" role="alert" style="width:100%">'._("The Asterisk SIP Setting Module is not installed or is disabled. Please install it.").'</div>'),1, null, $category);
 		}
 
-		$extrac = !empty($pport) ? sprintf(_('listening on <strong>%s</strong>'),$pport) : '';
-		$device_uses = sprintf(_("This device uses %s technology %s"),"<strong>".$techd."</strong>",$extrac);
-		$currentcomponent->addguielem($primarySection, new \gui_label('techlabel', '<div class="alert alert-info" role="alert" style="width:100%">'.$device_uses.'</div>'),1, null, $category);
+
 		// We need to scream loudly if this device is using a channel driver that's disabled.
 		if ($devinfo_tech == "pjsip" || $devinfo_tech == "sip") {
 			$sipdriver = $this->freepbx->Config->get_conf_setting('ASTSIPDRIVER');
@@ -292,6 +343,13 @@ class Sip extends \FreePBX\modules\Core\Driver {
 		$tmparr['type'] = array('prompttext' => _('Connection Type'),'value' => 'friend', 'tt' => $tt, 'select' => $select, 'level' => 1);
 
 		unset($select);
+		$select[] = array('value' => 'accept', 'text' => _('Accept'));
+		$select[] = array('value' => 'originate', 'text' => _('originate'));
+		$select[] = array('value' => 'refuse', 'text' => _('Refuse'));
+		$tt = _("The sessions are kept alive by sending a RE-INVITE or UPDATE request at a negotiated interval. If a session refresh fails then all the entities that support Session-Timers clear their internal session state. Default is Accept.").'[session-timers]';
+		$tmparr['sessiontimers'] = array('prompttext' => _('Session Timers'),'value' => 'accept', 'tt' => $tt, 'select' => $select, 'level' => 1);
+
+		unset($select);
 		$select[] = array('value' => 'yes', 'text' => sprintf(_('Yes - (%s)'),'force_rport,comedia'));
 		$select[] = array('value' => 'no', 'text' => sprintf(_('No - (%s)'),'no'));
 
@@ -371,10 +429,18 @@ class Sip extends \FreePBX\modules\Core\Driver {
 			$tmparr['encryption'] = array('prompttext' => _('Enable Encryption'), 'value' => $this->freepbx->Config->get_conf_setting('DEVICE_SIP_ENCRYPTION'), 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
 		}
 
-		$tt = _("Callgroup(s) that this device is part of, can be one or more callgroups, e.g. '1,3-5' would be in groups 1,3,4,5.");
-		$tmparr['callgroup'] = array('prompttext' => _('Call Groups'),'value' => $this->freepbx->Config->get_conf_setting('DEVICE_CALLGROUP'), 'tt' => $tt, 'level' => 1, 'jsvalidation' => "frm_".$display."_pickupGroup()");
-		$tt = _("Pickupgroups(s) that this device can pickup calls from, can be one or more groups, e.g. '1,3-5' would be in groups 1,3,4,5. Device does not have to be in a group to be able to pickup calls from that group.");
-		$tmparr['pickupgroup'] = array('prompttext' => _('Pickup Groups'),'value' => $this->freepbx->Config->get_conf_setting('DEVICE_PICKUPGROUP'), 'tt' => $tt, 'level' => 1, 'jsvalidation' => "frm_".$display."_pickupGroup()");
+		unset($select);
+		$select[] = array('value' => 'no', 'text' => _('No'));
+		$select[] = array('value' => 'yes', 'text' => _('Yes'));
+		$select[] = array('value' => 'inherit', 'text' => _('Inherit'));
+		$tt = _("Enable or disable video support for this extension. If set to inherit it will use the global value from SIP Settings. Default is inherit");
+		$tmparr['videosupport'] = array('prompttext' => _('Video Support'),'value' => 'inherit', 'tt' => $tt, 'select' => $select, 'level' => 1, 'type' => 'radio');
+		//videosupport
+
+		$tt = _("Callgroup(s) that this device is part of, can be one or more alpha/numeric callgroups, e.g. '1,3000-3005,sales,sales2'.");
+		$tmparr['namedcallgroup'] = array('prompttext' => _('Call Groups'),'value' => $this->freepbx->Config->get_conf_setting('DEVICE_CALLGROUP'), 'tt' => $tt, 'level' => 1, 'jsvalidation' => "frm_".$display."_pickupGroup()");
+		$tt = _("Pickupgroups(s) that this device can pickup calls from, can be one or more alpha/numeric callgroups, e.g. '1,3000-3005,sales,sales2'. Device does not have to be in a group to be able to pickup calls from that group.");
+		$tmparr['namedpickupgroup'] = array('prompttext' => _('Pickup Groups'),'value' => $this->freepbx->Config->get_conf_setting('DEVICE_PICKUPGROUP'), 'tt' => $tt, 'level' => 1, 'jsvalidation' => "frm_".$display."_pickupGroup()");
 		$tt = _("Disallowed codecs. Set this to all to remove all codecs defined in the general settings and then specify specific codecs separated by '&' on the 'allow' setting, or just disallow specific codecs separated by '&'.");
 		$tmparr['disallow'] = array('prompttext' => _('Disallowed Codecs'), 'value' => $this->freepbx->Config->get_conf_setting('DEVICE_DISALLOW'), 'tt' => $tt, 'level' => 1);
 		$tt = _("Allow specific codecs, separated by the '&' sign and in priority order. E.g. 'ulaw&g729'. Codecs allowed in the general settings will also be allowed unless removed with the 'disallow' directive.");
@@ -387,9 +453,9 @@ class Sip extends \FreePBX\modules\Core\Driver {
 		$tmparr['mailbox'] = array('prompttext' => _('Mailbox'), 'value' => '', 'tt' => $tt, 'level' => 2);
 		$tt = _("Asterisk dialplan extension to reach voicemail for this device. Some devices use this to auto-program the voicemail button on the endpoint. If left blank, the default vmexten setting is automatically configured by the voicemail module. Only change this on devices that may have special needs.");
 		$tmparr['vmexten'] = array('prompttext' => _('Voicemail Extension'), 'value' => '', 'tt' => $tt, 'level' => 1);
-		$tt = _("IP Address range to deny access to, in the form of network/netmask.");
+		$tt = _("IP Address range to deny access to, in the form of network/netmask.")." "._("You may add multiple subnets, separate them with an &amp;.");
 		$tmparr['deny'] = array('prompttext' => _('Deny'), 'value' => '0.0.0.0/0.0.0.0', 'tt' => $tt, 'level' => 1);
-		$tt = _("IP Address range to allow access to, in the form of network/netmask. This can be a very useful security option when dealing with remote extensions that are at a known location (such as a branch office) or within a known ISP range for some home office situations.");
+		$tt = _("IP Address range to allow access to, in the form of network/netmask. This can be a very useful security option when dealing with remote extensions that are at a known location (such as a branch office) or within a known ISP range for some home office situations.")." "._("You may add multiple subnets, separate them with an &amp;.");
 		$tmparr['permit'] = array('prompttext' => _('Permit'), 'value' => '0.0.0.0/0.0.0.0', 'tt' => $tt, 'level' => 1);
 		$currentcomponent->addjsfunc('changeDriver()',"
 		if(confirm('"._('Are you Sure you want to Change the SIP Channel Driver? (The Page will Refresh, then you MUST hit submit to resave the device when you are done to propagate the new settings)')."')) {

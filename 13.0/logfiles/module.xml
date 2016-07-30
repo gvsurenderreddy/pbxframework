@@ -3,12 +3,16 @@
 	<repo>standard</repo>
 	<name>Asterisk Logfiles</name>
 	<canuninstall>no</canuninstall>
-	<version>13.0.7</version>
+	<version>13.0.10.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
-		*13.0.7 FREEPBX-10831
+		*13.0.10.1* Ringfree branch
+		*13.0.10* FREEPBX-12181 Change verbose dropdown to be in line with asterisk docs
+		*13.0.9* FREEPBX-11785 Add PCRE Filtering to log page
+		*13.0.8* FREEPBX-11578 Add js and server validation
+		*13.0.7* FREEPBX-10831
 		*13.0.6* FREEPBX-10831 FREEPBX-10922
 		*13.0.5* FREEPBX-10209 htmlentities need to use UTF-8
 		*13.0.4* FREEPBX-8790 Log verbosity level
@@ -45,6 +49,6 @@
 	<supported>
 		<version>13.0</version>
 	</supported>
-	<location>release/13.0/logfiles-13.0.7.tgz</location>
-	<md5sum>73d7522abd251de95d3ddd72fa442988</md5sum>
+	<location>release/13.0/logfiles-13.0.10.1.tgz</location>
+	<md5sum></md5sum>
 </module>

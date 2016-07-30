@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
 "PO-Revision-Date: 2015-09-01 03:13+0200\n"
 "Last-Translator: Vidar Skjelanger <vidar@unimicro.no>\n"
 "Language-Team: Norwegian Bokmål <http://weblate.freepbx.org/projects/freepbx/"
@@ -29,11 +29,11 @@ msgstr ""
 msgid ": Edit"
 msgstr ""
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
 msgstr ""
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
 msgstr ""
 
@@ -54,19 +54,27 @@ msgstr ""
 msgid "Announcement: %s"
 msgstr "Kunngjøring: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Kunngjøringer"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr "Anvendelser"
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Kontrollerer om lydopptak trenger å migreres..."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Slett"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Beskrivelse"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
 msgstr ""
 
@@ -103,7 +111,7 @@ msgid ""
 "which may not be the expected behavior."
 msgstr ""
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Ugyldig beskrivelse angitt"
 
@@ -131,9 +139,21 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+#: assets/js/announcement.js:33
+msgid "No Destination"
+msgstr ""
+
 #: views/form.php:32
 msgid "None"
 msgstr "Ingen"
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
+msgstr ""
+"Spiller av en av systeminnspillingene (eventuelt med mulighet for å hoppe "
+"over) og fortsetter så til en annen destinasjon."
 
 #: views/form.php:45
 msgid "Recording"
@@ -143,11 +163,11 @@ msgstr "Lydopptak"
 msgid "Repeat"
 msgstr "Gjenta"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
 msgstr ""
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Returnere til IVR"
 
@@ -161,7 +181,7 @@ msgid ""
 "answered the channel, that 1 second delay may not be desired."
 msgstr ""
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
 msgstr ""
 
@@ -217,12 +237,6 @@ msgstr "ok"
 #~ msgid "Add Announcement"
 #~ msgstr "Legg til kunngjøring"
 
-#~ msgid "Announcements"
-#~ msgstr "Kunngjøringer"
-
-#~ msgid "Applications"
-#~ msgstr "Anvendelser"
-
 #~ msgid ""
 #~ "Check this to keep the channel from explicitly being answered. When "
 #~ "checked, the message will be played and if the channel is not already "
@@ -266,13 +280,6 @@ msgstr "ok"
 #~ msgstr ""
 #~ "Melding som skal spilles av.<br>For å legge til flere lydopptak velger du "
 #~ "\"Systeminnspillinger\" i menyen til venstre"
-
-#~ msgid ""
-#~ "Plays back one of the system recordings (optionally allowing the user to "
-#~ "skip it) and then goes to another destination."
-#~ msgstr ""
-#~ "Spiller av en av systeminnspillingene (eventuelt med mulighet for å hoppe "
-#~ "over) og fortsetter så til en annen destinasjon."
 
 #~ msgid "Submit Changes"
 #~ msgstr "Lagre endringer"

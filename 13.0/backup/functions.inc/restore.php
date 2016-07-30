@@ -1,4 +1,19 @@
 <?php
+require __DIR__ . '/../vendor/autoload.php';
+use Touki\FTP\FTP;
+use Touki\FTP\FTPWrapper;
+use Touki\FTP\Connection\Connection;
+use Touki\FTP\PermissionsFactory;
+use Touki\FTP\FilesystemFactory;
+use Touki\FTP\WindowsFilesystemFactory;
+use Touki\FTP\DownloaderVoter;
+use Touki\FTP\UploaderVoter;
+use Touki\FTP\CreatorVoter;
+use Touki\FTP\DeleterVoter;
+use Touki\FTP\Manager\FTPFilesystemManager;
+use Touki\FTP\Model\File;
+use Touki\FTP\Model\Directory;
+use Touki\FTP\Exception\DirectoryException;
 /*
  * returns a json object of a directory in a jstree compatiable way
  *
@@ -62,25 +77,57 @@ function backup_jstree_list_dir($id, $path = '') {
 			$s['port'] = backup__($s['port']);
 			$s['user'] = backup__($s['user']);
 			$s['password'] = backup__($s['password']);
-			$s['path'] = backup__($s['path']);
-			$path = trim($path, '/') . '/';
-			$ftp = ftp_connect($s['host'], $s['port']);
-			if (ftp_login($ftp, $s['user'], $s['password'])) {
-				ftp_pasv($ftp, ($s['transfer'] == 'passive'));
-				ftp_chdir($ftp, $s['path'] . '/' . $path);
-				$pwd = ftp_pwd($ftp);
-				$ls = ftp_nlist($ftp,  '');
-				$dir = ftp_rawlist($ftp, '-d1 */');
+			$fstype = isset($s['fstype'])?$s['fstype']:'auto';
+			$connection = new Connection($s['host'], $s['user'], $s['password'], $s['port'], 90, ($s['transfer'] == 'passive'));
+			try{
+				$connection->open();
+			}catch (\Exception $e){
+				$this->b['error'] = $e->getMessage();
+				backup_log($this->b['error']);
+				return;
+			}
+			$wrapper = new FTPWrapper($connection);
+			$permFactory = new PermissionsFactory;
+			switch ($fstype) {
+				case 'auto':
+					$ftptype = $wrapper->systype();
+					if(strtolower($ftptype) == "unix"){
+						$fsFactory = new FilesystemFactory($permFactory);
+					}else{
+						$fsFactory = new WindowsFilesystemFactory;
+					}
+				break;
+				case 'unix':
+					$fsFactory = new FilesystemFactory($permFactory);
+				break;
+				case 'windows':
+					$fsFactory = new WindowsFilesystemFactory;
+				break;
+			}
+			$manager = new FTPFilesystemManager($wrapper, $fsFactory);
+			$dlVoter = new DownloaderVoter;
+			$ulVoter = new UploaderVoter;
+			$ulVoter->addDefaultFTPUploaders($wrapper);
+			$crVoter = new CreatorVoter;
+			$crVoter->addDefaultFTPCreators($wrapper, $manager);
+			$deVoter = new DeleterVoter;
+			$deVoter->addDefaultFTPDeleters($wrapper, $manager);
+			$ftp = new FTP($manager, $dlVoter, $ulVoter, $crVoter, $deVoter);
+			if(!$ftp){
+				$this->b['error'] = _("Error creating the FTP object");
+			}
+			$ftpdirs = $ftp->findFilesystems(new Directory($s['path']));
+			$ls = array();
+			foreach($ftpdirs as $thisdir){
+				$files = $ftp->findFilesystems(new Directory($thisdir->getRealPath()));
+				foreach ($files as $f) {
+					$ls[] = $thisdir->getRealPath().'/'.$f->getRealpath();
+				}
+
+			}
 				foreach ($ls as $file) {
 					$file = basename($file);
 					//determine if we are a directory or not, rather than using rawlist
-					if (@ftp_chdir($ftp, $pwd.'/'.$file)) {
-						$ret[] = array(
-									'attr'	=> array('data-path' => $path . '/' . $file),
-									'data'	=> $file,
-									'state'	=> 'closed'
-									);
-					} else {
 						if (substr($file, -7) == '.tar.gz' || substr($file, -4) == '.tgz') {
 							$ret[] = array(
 										'attr' => array(
@@ -91,15 +138,9 @@ function backup_jstree_list_dir($id, $path = '') {
 										);
 						}
 					}
-				}
 				//dbug('ftp ls', $ls);
 				//dbug('ftp dir ' . $s['path'] . '/' . $path, $dir);
 				//release handel
-				ftp_close($ftp);
-			} else {
-				$ret[] = array('data' => _('FTP Connection error!'));
-				dbug('ftp connect error');
-			}
 			break;
 		case 'ssh':
 			$s['path'] = backup__($s['path']);
@@ -294,17 +335,53 @@ function backup_restore_locate_file($id, $path) {
 			$s['user'] = backup__($s['user']);
 			$s['password'] = backup__($s['password']);
 			$s['path'] = backup__($s['path']);
-			$ftp = ftp_connect($s['host'], $s['port']);
-			if (ftp_login($ftp, $s['user'], $s['password'])) {
-				ftp_pasv($ftp, ($s['transfer'] == 'passive'));
-				if (ftp_get($ftp, $dest, $s['path'] . '/' . $path, FTP_BINARY)) {
-					$path = $dest;
-				} else {
-					return array('error_msg' => _('Failed to retrieve file from server!'));
+			$path = ltrim($path,'/');
+			$connection = new Connection($s['host'], $s['user'], $s['password'], $s['port'], 90, ($s['transfer'] == 'passive'));
+			try{
+				$connection->open();
+			}catch (\Exception $e){
+				$this->b['error'] = $e->getMessage();
+				backup_log($this->b['error']);
+				return;
+			}
+			$wrapper = new FTPWrapper($connection);
+			$permFactory = new PermissionsFactory;
+			$ftptype = $wrapper->systype();
+			if(strtolower($ftptype) == "unix"){
+				$fsFactory = new FilesystemFactory($permFactory);
+			}else{
+				$fsFactory = new WindowsFilesystemFactory;
+			}
+			$manager = new FTPFilesystemManager($wrapper, $fsFactory);
+			$dlVoter = new DownloaderVoter;
+			$dlVoter->addDefaultFTPDownloaders($wrapper);
+			$ulVoter = new UploaderVoter;
+			$ulVoter->addDefaultFTPUploaders($wrapper);
+			$crVoter = new CreatorVoter;
+			$crVoter->addDefaultFTPCreators($wrapper, $manager);
+			$deVoter = new DeleterVoter;
+			$deVoter->addDefaultFTPDeleters($wrapper, $manager);
+			$ftp = new FTP($manager, $dlVoter, $ulVoter, $crVoter, $deVoter);
+			if(!$ftp){
+				$this->b['error'] = _("Error creating the FTP object");
+			}
+			$ftpdirs = $ftp->findFilesystems(new \Touki\FTP\Model\Directory($s['path']));
+			 $file = null;
+			foreach($ftpdirs as $thisdir){
+				if($ftp->fileExists(new \Touki\FTP\Model\File($thisdir->getRealPath().'/'.$path))){
+					$file = $ftp->findFileByName($thisdir->getRealPath().'/'.$path);
 				}
-				ftp_close($ftp);
-			} else {
-				dbug('ftp connect error');
+			}
+
+			try{
+				$options = array(
+    			FTP::NON_BLOCKING  => false,     // Whether to deal with a callback while downloading
+    			FTP::TRANSFER_MODE => FTP_BINARY // Transfer Mode
+				);
+				$ftp->download($dest,$file,$options);
+				$path = $dest;
+			}catch(\Exception $e){
+					return array('error_msg' => _('Failed to retrieve file from server!'));
 			}
 			break;
 		case 'ssh':
@@ -341,7 +418,6 @@ function backup_restore_locate_file($id, $path) {
 			}
 			break;
 	}
-
 	if (file_exists($path)) {
 		return $path;
 	} else {

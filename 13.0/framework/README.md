@@ -1,9 +1,9 @@
-Ringfree PBX
+FreePBX
 =========
 
-Ringfree PBX is an Open Source GUI (graphical user interface) that controls and manages [Asterisk (PBX)].
+FreePBX is an Open Source GUI (graphical user interface) that controls and manages [Asterisk (PBX)].
 Please see the included license file in the module for license information
-Ringfree PBX is a Registered Trademark of [Sangoma Technologies, Inc].
+FreePBX is a Registered Trademark of [Sangoma Technologies, Inc].
 
 Version
 ----
@@ -12,13 +12,13 @@ Version
 
 Tech
 -----------
-Ringfree PBX uses a number of open source projects to work properly:
+FreePBX uses a number of open source projects to work properly:
 
 #### Backend
 * [Asterisk] - Asterisk is a software implementation of a telephone private branch exchange (PBX) (Supported Versions 11 through 13). License GPL
 * [Pear Console::Getopt] - This is a PHP implementation of "getopt" supporting both short and long options. License PHP License
 * [PHP Data Objects] - The PHP Data Objects (PDO) extension defines a lightweight, consistent interface for accessing databases in PHP. License PHP License
-* [dialparties.agi] - Ported to PHP by the Ringfree PBX community, Originally by Zac Sprackett.  License GPL
+* [dialparties.agi] - Ported to PHP by the FreePBX community, Originally by Zac Sprackett.  License GPL
 * [CDR (Call Detail Records) Application] - Originally by Arezqui Belaid, License GPL (depends on JPGraph which is QPL)
 * [CssMin] - A (simple) css minifier with benefits. By Joe Scylla, Copyright (c) 2008 - 2010. License MIT
 * [Codeigniter helpers/librarires] - Copyright (c) 2008 - 2011, EllisLab, Inc., All rights reserved. License GPL
@@ -55,14 +55,14 @@ Ringfree PBX uses a number of open source projects to work properly:
 
 Visuals
 -----------
-Ringfree PBX uses a number of visual graphics packages to render properly:
+FreePBX uses a number of visual graphics packages to render properly:
 * [Bootstrap] - a free collection of tools for creating websites and web applications. It contains HTML and CSS-based design templates for typography, forms, buttons, navigation and other interface components, as well as optional JavaScript extensions. License MIT
 * [Silk Icon Set] - Version 1.3, Creative Commons Attribution 2.5 License: http://creativecommons.org/licenses/by/2.5/, Originally by Mark James
 * [Font Awesome] Font Awesome by Dave Gandy. Licence(s) http://fontawesome.io/license/
 
 Music
 -----------
-Ringfree PBX incorporates a number of royalty-free, creative commons licensed music files. These files are distributed under the Creative Commons Attribution-ShareAlike 3.0 license through explicit permission from their authors. The license can be found at: http://creativecommons.org/licenses/by-sa/3.0/
+FreePBX incorporates a number of royalty-free, creative commons licensed music files. These files are distributed under the Creative Commons Attribution-ShareAlike 3.0 license through explicit permission from their authors. The license can be found at: http://creativecommons.org/licenses/by-sa/3.0/
 
 * [macroform-cold_day] - Paul Shuler (Macroform), paulshuler@gmail.com
 
@@ -74,12 +74,18 @@ Ringfree PBX incorporates a number of royalty-free, creative commons licensed mu
 
 * [reno_project-system] - Reno Project, renoproject@hotmail.com
 
+Installation
+--------------
 
+```sh
+./install
+```
 
 License
 ----
 Please see the included license file in the module for license information
 
+*Free Software, Hell Yeah!*
 
   [asterisk]: http://www.asterisk.org
   [jQueryUI]: http://jqueryui.com

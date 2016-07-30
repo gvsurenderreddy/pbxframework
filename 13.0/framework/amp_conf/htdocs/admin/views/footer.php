@@ -16,7 +16,8 @@ if ($amp_conf['FORCE_JS_CSS_IMG_DOWNLOAD']) {
 
 $html = '';
 
-$html .= '</div></div>';//page_body
+$html .= '</div>';//page_body
+$html .= '</div>'; //page
 $html .= '<div id="footer">';
 // If displaying footer content, force the <hr /> tag to enforce clear separation of page vs. footer
 if ($footer_content) {
@@ -46,7 +47,6 @@ $html .= '<div id="footer_content" class="row">';
 $html .= $footer_content;
 $html .= '</div>'; //footer_content
 $html .= '</div>'; //footer
-$html .= '</div>'; //page
 //add javascript
 
 //localized strings and other javascript values that need to be set dynamically
@@ -196,7 +196,7 @@ $html .= '<script type="text/javascript" src="assets/js/toastr-2.1.2.js'.$versio
 
 $html .= '<script type="text/javascript" src="assets/js/jquery.form.min.js'.$version_tag.'"></script>';
 
-$html .= '<script type="text/javascript" src="assets/js/selectize.min.js'.$version_tag.'"></script>';
+$html .= '<script type="text/javascript" src="assets/js/recorder.js'.$version_tag.'"></script>';
 
 // Production versions should include the packed consolidated javascript library but if it
 // is not present (useful for development, then include each individual library below
@@ -235,24 +235,25 @@ if (isset($module_name) && $module_name != '') {
 }
 
 if ($amp_conf['BROWSER_STATS']) {
-	$ga = "<script type=\"text/javascript\">
-			var _gaq=_gaq||[];
-			_gaq.push(['_setAccount','UA-25724109-1'],
-					['_setCustomVar',1,'type',fpbx.conf.dist.pbx_type,2],
-					['_setCustomVar',2,'typever',fpbx.conf.dist.pbx_version,3],
-					['_setCustomVar',3,'astver',fpbx.conf.ASTVERSION,3],
-					['_setCustomVar',4,'fpbxver',fpbx.conf.ver,3],
-					['_setCustomVar',5,'display',$.urlParam('display'),3],
-					/*['_setCustomVar',1,'uniqueid',fpbx.conf.uniqueid,1],
-					['_setCustomVar',1,'lang',$.cookie('lang')||'en_US',3],
-					*/['_trackPageview']);
-			(function(){
-				var ga=document.createElement('script');ga.type='text/javascript';ga.async=true;
-				ga.src=('https:'==document.location.protocol
-							?'https://ssl':'http://www')
-							+'.google-analytics.com/ga.js';
-				var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga,s);
-			})();</script>";
+	$ga = "<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-25724109-1', 'auto');  // Replace with your property ID.
+
+			ga('set', 'type', fpbx.conf.dist.pbx_type);
+			ga('set', 'typever', fpbx.conf.dist.pbx_version);
+			ga('set', 'astver', fpbx.conf.ASTVERSION);
+			ga('set', 'fpbxver', fpbx.conf.ver);
+			ga('set', 'display', $.urlParam('display'));
+			ga('set', 'uniqueid', fpbx.conf.uniqueid);
+
+			ga('send', 'pageview');
+
+		</script>";
+
 	$html .= str_replace(array("\t", "\n"), '', $ga);
 }
 
@@ -305,5 +306,32 @@ addLoadEvent(function(){
   <p><?php echo sprintf(_("%s requires a new browser to function correctly. You can still use %s with the browser you currently have but your experience may be diminished and is not supported"),FreePBX::Config()->get("DASHBOARD_FREEPBX_BRAND"),FreePBX::Config()->get("DASHBOARD_FREEPBX_BRAND"))?><a id="btnUpdateBrowser" href="http://outdatedbrowser.com/"><?php echo _("Update my browser now")?></a></p>
   <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
 </div>
+  <?php
+  $consolealert = '
+  <script>
+  $(window.console).ready(function(){
+    console.log(("%c%s"), "color: green; font-size: large","'. $amp_conf['DASHBOARD_FREEPBX_BRAND'].'");
+    console.log(("Thankyou for using %s"),"'.$amp_conf['DASHBOARD_FREEPBX_BRAND'].'");
+    ';
+  if($amp_conf['DASHBOARD_FREEPBX_BRAND'] == 'FreePBX'){
+  $consolealert .= '
+    console.log("If you find bugs you may file a report at http://issues.freepbx.org");
+    console.log("For developer resources visit: http://wiki.freepbx.org/x/BAAQ");
+    ';
+  }
+  if(!empty($module_name)){
+  $consolealert .='
+    console.log(("Framework: %s"),"'. $version .'");
+    console.log(("Module Name: %s"),"'. $module_name .'");
+    console.log(("Module Version: %s"),"'. $active_modules[$module_name]["version"].'");
+    ';
+  }
+  $consolealert .='
+  });
+  </script>';
+  if (isset($_SESSION['AMP_user']) ){
+    echo $consolealert;
+  }
+?>
 </body>
 </html>

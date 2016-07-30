@@ -2,11 +2,21 @@
 	<rawname>findmefollow</rawname>
 	<repo>standard</repo>
 	<name>Follow Me</name>
-	<version>13.0.26</version>
+	<version>13.0.35.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
+		*13.0.35.1* Ringfree branch
+		*13.0.35* Add sound languages: it,fr,en_GB
+		*13.0.34* Quicken reload time. This signifcantly changes findme/followme, please check your systems!!
+		*13.0.33* FREEPBX-12493 Fix link to be relative
+		*13.0.32* FREEPBX-8768 add new component to allow quick picks
+		*13.0.31* Fix bug when saving
+		*13.0.30* FREEPBX-10685 Follow me list in UCP does not display # suffix when entered
+		*13.0.29* FREEPBX-11995 Make enabled button act in accordance with the labeling
+		*13.0.28* FREEPBX-11743 fix followmeform enable toggle
+		*13.0.27* FREEPBX-11215 Fix dynamic element binding
 		*13.0.26* FREEPBX-10961
 		*13.0.25* Support Alert Info in Extensions
 		*13.0.24* Support Alert Info Drop down
@@ -40,7 +50,7 @@
 	</changelog>
 	<depends>
 		<module>core ge 13.0.1beta1.11</module>
-		<module>framework ge 13.0.47</module>
+		<module>framework ge 13.0.117</module>
 		<module>recordings ge 3.3.8</module>
 	</depends>
 	<category>Applications</category>
@@ -65,6 +75,6 @@
 			<method callingMethod="delUser" class="Findmefollow" namespace="FreePBX\modules">delUser</method>
 		</core>
 	</hooks>
-	<location>release/13.0/findmefollow-13.0.26.tgz</location>
-	<md5sum>938cbd55c0948955d2999628cbbf373b</md5sum>
+	<location>release/13.0/findmefollow-13.0.35.1.tgz</location>
+	<md5sum></md5sum>
 </module>

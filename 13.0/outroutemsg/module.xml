@@ -2,7 +2,7 @@
   <rawname>outroutemsg</rawname>
   <repo>standard</repo>
   <name>Route Congestion Messages</name>
-  <version>13.0.2</version>
+  <version>13.0.2.1</version>
   <publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -13,6 +13,7 @@
     <outroutemsg>Route Congestion Messages</outroutemsg>
   </menuitems>
   <changelog>
+		*13.0.2.1* Ringfree branch
 		*13.0.2* Version bump Beta
     *13.0.1alpha1* 13 Visual conformity
   	*2.11.0.2* Add license file
@@ -25,8 +26,8 @@
   <depends>
     <module>recordings ge 3.3.8</module>
   </depends>
-  <location>release/13.0/outroutemsg-13.0.2.tgz</location>
-  <md5sum>4efb5efe31f68c7543d5c75817c6e25d</md5sum>
+  <location>release/13.0/outroutemsg-13.0.7.1.tgz</location>
+  <md5sum></md5sum>
   <supported>
     <version>13.0</version>
   </supported>

@@ -21,7 +21,8 @@ $sql[]='CREATE TABLE IF NOT EXISTS `fax_incoming` (
   `detection` varchar(20) default NULL,
   `detectionwait` varchar(5) default NULL,
   `destination` varchar(50) default NULL,
-  `legacy_email` varchar(50) default NULL
+  `legacy_email` varchar(50) default NULL,
+	`ring` int(1) default 0
 )';
 
 $sql[]='CREATE TABLE IF NOT EXISTS `fax_users` (
@@ -38,6 +39,12 @@ foreach ($sql as $statement){
 	if (DB::IsError($check)){
 		die_freepbx( "Can not execute $statement : " . $check->getMessage() .  "\n");
 	}
+}
+
+$inst=$db->getAll('SELECT `ring` FROM `fax_incoming`');
+if($db->IsError($inst)){//assume that this column doesn't exist
+  $sql='ALTER TABLE `fax_incoming` ADD `ring` int(10) default 0';
+	$db->query($sql);
 }
 
 //check for 2.6-style tables
@@ -347,7 +354,13 @@ if(!\FreePBX::Fax()->getConfig("usermanMigrate")) {
         continue;
       }
       $o = $user;
-    }
+    } elseif(empty($o['email'])) {
+			//no email set for this user so now update user with the fax email
+			\FreePBX::Userman()->updateUserExtraData($o['id'],array("email" => $res['faxemail']));
+		} elseif($o['email'] != $res['faxemail']) {
+			//email was set in userman and it's different than this extension so we keep the usermanager email
+			out(sprintf(_("Migrated user %s but unable to set email address to %s because an email [%s] was already set for User Manager User %s"),$res['user'],$res['faxemail'],$o['email'],$o['username']));
+		}
 
     $sql = "UPDATE fax_users SET user = ? WHERE user = ?";
     $sth = \FreePBX::Database()->prepare($sql);

@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-29 18:12-0700\n"
+"POT-Creation-Date: 2016-06-17 17:57-0700\n"
 "PO-Revision-Date: 2014-07-26 00:02+0200\n"
 "Last-Translator: Rafael <rafael@ibinetwork.com.br>\n"
 "Language-Team: Portuguese (Brazil) <http://git.freepbx.org/projects/freepbx/"
@@ -40,11 +40,11 @@ msgstr ""
 msgid ": Edit"
 msgstr ""
 
-#: views/grid.php:16
+#: views/grid.php:18
 msgid "Actions"
 msgstr ""
 
-#: views/grid.php:9
+#: views/grid.php:11
 msgid "Add"
 msgstr ""
 
@@ -65,19 +65,27 @@ msgstr ""
 msgid "Announcement: %s"
 msgstr "Anuncio: %s"
 
+#: announcement.i18n.php:4 announcement.i18n.php:10
+msgid "Announcements"
+msgstr "Anuncios"
+
+#: announcement.i18n.php:6 announcement.i18n.php:12
+msgid "Applications"
+msgstr "Aplicações"
+
 #: install.php:90
 msgid "Checking if recordings need migration.."
 msgstr "Checando se a gravação precisa migrar..."
 
-#: Announcement.class.php:54
+#: Announcement.class.php:59
 msgid "Delete"
 msgstr "Apagar"
 
-#: views/form.php:102 views/grid.php:14
+#: views/form.php:102 views/grid.php:16
 msgid "Description"
 msgstr "Descrição"
 
-#: views/grid.php:15
+#: views/grid.php:17
 msgid "Destination"
 msgstr ""
 
@@ -113,7 +121,7 @@ msgid ""
 "which may not be the expected behavior."
 msgstr ""
 
-#: page.announcement.php:45
+#: assets/js/announcement.js:6
 msgid "Invalid description specified"
 msgstr "Descrição especificada invalida"
 
@@ -138,9 +146,19 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+#: assets/js/announcement.js:33
+msgid "No Destination"
+msgstr ""
+
 #: views/form.php:32
 msgid "None"
 msgstr "Nenhum"
+
+#: announcement.i18n.php:8
+msgid ""
+"Plays back one of the system recordings (optionally allowing the user to "
+"skip it) and then goes to another destination."
+msgstr ""
 
 #: views/form.php:45
 msgid "Recording"
@@ -150,11 +168,11 @@ msgstr "Gravando"
 msgid "Repeat"
 msgstr "Repetir"
 
-#: Announcement.class.php:59
+#: Announcement.class.php:64
 msgid "Reset"
 msgstr ""
 
-#: views/form.php:180 views/grid.php:22
+#: views/form.php:180
 msgid "Return to IVR"
 msgstr "Retornar para URA"
 
@@ -168,7 +186,7 @@ msgid ""
 "answered the channel, that 1 second delay may not be desired."
 msgstr ""
 
-#: Announcement.class.php:64
+#: Announcement.class.php:69
 msgid "Submit"
 msgstr ""
 
@@ -220,12 +238,6 @@ msgstr ""
 #: install.php:104 install.php:143
 msgid "ok"
 msgstr "ok"
-
-#~ msgid "Announcements"
-#~ msgstr "Anuncios"
-
-#~ msgid "Applications"
-#~ msgstr "Aplicações"
 
 #~ msgid "Add Announcement"
 #~ msgstr "Adicionar Anuncio"

@@ -11,14 +11,20 @@ var CdrC = UCPMC.extend({
 			var container = $("#dashboard-content");
 			$.pjax.click(event, { container: container });
 		});
-		$(".clickable").click(function(e) {
-			var text = $(this).text();
-			if (UCP.validMethod("Contactmanager", "showActionDialog")) {
-				UCP.Modules.Contactmanager.showActionDialog("number", text, "phone");
-			}
-		});
 		$('#cdr-grid').on("post-body.bs.table", function () {
 			$this.bindPlayers();
+			$("#cdr-grid .clickable").click(function(e) {
+				var text = $(this).text();
+				if (UCP.validMethod("Contactmanager", "showActionDialog")) {
+					UCP.Modules.Contactmanager.showActionDialog("number", text, "phone");
+				}
+			});
+		});
+		$("#cdr-grid").bootstrapTable('refreshOptions', {
+			exportOptions: {
+				fileName:"Call_History_"+extension,
+				ignoreColumn: ['playback','controls']
+			}
 		});
 	},
 	hide: function(event) {
@@ -57,7 +63,7 @@ var CdrC = UCPMC.extend({
 				'<div class="jp-gui jp-interface">'+
 					'<div class="jp-controls">'+
 						'<i class="fa fa-play jp-play"></i>'+
-						'<i class="fa fa-repeat jp-repeat"></i>'+
+						'<i class="fa fa-undo jp-restart"></i>'+
 					'</div>'+
 					'<div class="jp-progress">'+
 						'<div class="jp-seek-bar progress">'+
@@ -126,6 +132,14 @@ var CdrC = UCPMC.extend({
 									}
 								}
 							});
+						}
+					});
+					var $this = this;
+					$(container).find(".jp-restart").click(function() {
+						if($($this).data("jPlayer").status.paused) {
+							$($this).jPlayer("pause",0);
+						} else {
+							$($this).jPlayer("play",0);
 						}
 					});
 				},

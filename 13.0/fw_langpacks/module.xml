@@ -3,11 +3,12 @@
 	<modtype>framework</modtype>
 	<repo>extended</repo>
 	<name>Localization Updates</name>
-	<version>12.0.7</version>
+	<version>12.0.7.1</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<changelog>
+		*12.0.7.1* Ringfree branch
 		*12.0.1* Full Spanish Translations
 		*2.11.2* 3/9/2014
 		*2.11.1.1* Include license file
@@ -21,8 +22,8 @@
 		This module provides a facility to install new and updated localization translations. Localization i18n translations are still kept with each module. This provides an easy ability to bring all components up-to-date without the need to publish dozens of modules for every minor change. The localization updates used will be the latest available for all modules regardless of the current version you are running.
 	</description>
 	<category>Admin</category>
-	<location>release/13.0/fw_langpacks-12.0.7.tgz</location>
-	<md5sum>da8d79d196782f291c5161870a3fece2</md5sum>
+	<location>release/13.0/fw_langpacks-12.0.7.1.tgz</location>
+	<md5sum></md5sum>
 	<supported>
 		<version>12.0</version>
 	</supported>

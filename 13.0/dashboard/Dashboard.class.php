@@ -65,23 +65,14 @@ class Dashboard extends FreePBX_Helpers implements BMO {
 	}
 
 	public function doDialplanHook(&$ext, $engine, $priority) {
-		// We're not actually doing any dialplan modifications. This
-		// is just a handy place to discover modules that have requested hooks
-		// into the status page.
-		if (!class_exists('DashboardHooks')) {
-			include 'classes/DashboardHooks.class.php';
-		}
-		$allhooks = DashboardHooks::genHooks($this->getConfig('visualorder'));
-		$this->setConfig('allhooks', $allhooks);
-
-		// Also, while we're here, we should check that our cronjob is
+		// While we're here, we should check that our cronjob is
 		// still there.
 
 		$file = \FreePBX::Config()->get('AMPWEBROOT')."/admin/modules/dashboard/".$this->sched;
 		$cmd = "[ -x $file ] && $file";
 
 		// Ensure we instantiate cron with the correct user
-		$c = \FreePBX::Cron(\FreePBX::Config()->get('AMPASTERISKWEBUSER'));
+		$c = \FreePBX::create()->Cron(\FreePBX::Config()->get('AMPASTERISKWEBUSER'));
 		$c->addLine("* * * * * $cmd");
 	}
 
@@ -128,7 +119,8 @@ class Dashboard extends FreePBX_Helpers implements BMO {
 			break;
 			case "gethooks":
 				if (!$this->getConfig('allhooks')) {
-					$this->doDialplanHook(null, null, null); // Avoid warnings.
+					$e = null;
+					$this->doDialplanHook($e, null, null); // Avoid warnings.
 				}
 				$config = $this->getConfig('allhooks');
 				$order = $this->getConfig('visualorder');

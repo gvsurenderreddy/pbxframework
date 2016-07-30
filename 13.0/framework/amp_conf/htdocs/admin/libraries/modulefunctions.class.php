@@ -26,8 +26,10 @@ class module_functions {
 	public $notFound = false;
 	public $downloadedRawname = "";
 	//Max Execution Time Limit
-	private $maxTimeLimit = 250;
+	private $maxTimeLimit = 750;
 	private $onlineModules = null;
+
+	private $modXMLCache = array();
 
 	public static function create() {
 		static $obj;
@@ -73,6 +75,10 @@ class module_functions {
 		$result = sql("SELECT * FROM module_xml WHERE id = 'beta'",'getRow',DB_FETCHMODE_ASSOC);
 		if(!empty($result['data'])) {
 			$beta = json_decode($result['data'],true);
+		}
+		$result = sql("SELECT * FROM module_xml WHERE id = 'edge'",'getRow',DB_FETCHMODE_ASSOC);
+		if(!empty($result['data'])) {
+			$edge = json_decode($result['data'],true);
 		}
 		$result = sql("SELECT * FROM module_xml WHERE id = 'security'",'getRow',DB_FETCHMODE_ASSOC);
 		if(!empty($result['data'])) {
@@ -139,11 +145,21 @@ class module_functions {
 				$data4sql = $db->escapeSimple(json_encode($modules));
 				sql("REPLACE INTO module_xml (id,time,data) VALUES('modules',".time().",'".$data4sql."')");
 			}
+			if(!empty($allxml['xml']['edge'])) {
+				$edge = $allxml['xml']['edge'];
+				// update the db with the new xml
+				$data4sql = $db->escapeSimple(json_encode($edge));
+				sql("REPLACE INTO module_xml (id,time,data) VALUES('edge',".time().",'".$data4sql."')");
+			} else {
+				sql("REPLACE INTO module_xml (id,time,data) VALUES('edge',".time().",'')");
+			}
 			if(!empty($allxml['xml']['beta'])) {
 				$beta = $allxml['xml']['beta'];
 				// update the db with the new xml
 				$data4sql = $db->escapeSimple(json_encode($beta));
 				sql("REPLACE INTO module_xml (id,time,data) VALUES('beta',".time().",'".$data4sql."')");
+			} else {
+				sql("REPLACE INTO module_xml (id,time,data) VALUES('beta',".time().",'')");
 			}
 			if(!empty($allxml['xml']['security'])) {
 				$security = $allxml['xml']['security'];
@@ -181,6 +197,9 @@ class module_functions {
 			if ($module != false) {
 				foreach ($modules as $mod) {
 					if ($module == $mod['rawname']) {
+						if(!empty($edge[$module]) && (isset($amp_conf['MODULEADMINEDGE']) && $amp_conf['MODULEADMINEDGE']) && version_compare_freepbx($mod['version'],$edge[$module]['version'],'<')) {
+							$mod = $edge[$module];
+						}
 						$releases = !empty($previous[$module]['releases']['module']) ? $previous[$module]['releases']['module'] : array();
 						$mod['previous'] = isset($releases['rawname']) ? array($releases) : $releases;
 						if(!empty($beta[$module])) {
@@ -206,6 +225,9 @@ class module_functions {
 			} else {
 				$final = array();
 				foreach ($modules as $mod) {
+					if(!empty($edge[$mod['rawname']]) && (isset($amp_conf['MODULEADMINEDGE']) && $amp_conf['MODULEADMINEDGE']) && version_compare_freepbx($mod['version'],$edge[$mod['rawname']]['version'],'<')) {
+						$mod = $edge[$mod['rawname']];
+					}
 					$final[$mod['rawname']] = $mod;
 					if (isset($exposures[$mod['rawname']])) {
 						$final[$mod['rawname']]['vulnerabilities'] = $exposures[$mod['rawname']];
@@ -370,6 +392,7 @@ class module_functions {
 		$modules_local = $this->getinfo(false, $installed_status);
 
 		$modules_upgradable = array();
+		$modules_local = is_array($modules_local) ? $modules_local : array();
 		foreach (array_keys($modules_local) as $name) {
 			if (isset($new_modules[$name])) {
 				if (version_compare_freepbx($modules_local[$name]['version'], $new_modules[$name]['version']) < 0) {
@@ -597,7 +620,7 @@ class module_functions {
 
 		if ($module) {
 			// get info on only one module
-			$xml = $this->_readxml($module);
+			$xml = $this->_readxml($module, !($forceload));
 			if (!is_null($xml)) {
 				$modules[$module] = $xml;
 				// if status is anything else, it will be updated below when we read the db
@@ -613,6 +636,7 @@ class module_functions {
 			$modulelist = modulelist::create($db);
 			if ($forceload) {
 				$modulelist->invalidate();
+				$this->modXMLCache = array();
 			}
 			if (!$modulelist->is_loaded()) {
 				// initialize list with "builtin" module
@@ -630,7 +654,7 @@ class module_functions {
 
 				// read the xml for each
 				foreach ($module_list as $file) {
-					$xml = $this->_readxml($file);
+					$xml = $this->_readxml($file, !($forceload));
 					if (!is_null($xml)) {
 						$modules[$file] = $xml;
 						// if status is anything else, it will be updated below when we read the db
@@ -716,6 +740,7 @@ class module_functions {
 				// make a one element array so we can use in_array below
 				$status = array($status);
 			}
+			$modules = is_array($modules) ? $modules : array();
 			foreach (array_keys($modules) as $name) {
 				if (!in_array($modules[$name]['status'], $status)) {
 					// not found in the $status array, remove it
@@ -747,7 +772,7 @@ class module_functions {
 					$this->getinfo(false,false,false);
 					$m = $this->getinfo($module);
 					if(!empty($m[$module])) {
-						if((!empty($m['dbversion']) && version_compare_freepbx($m['dbversion'],$version,'<')) || version_compare_freepbx($m['version'],$version,'<')) {
+						if((!empty($m[$module]['dbversion']) && version_compare_freepbx($m[$module]['dbversion'],$version,'<')) || version_compare_freepbx($m[$module]['version'],$version,'<')) {
 							out(sprintf(_("Downloading Missing Dependency of: %s %s"),$module,$version));
 							if (is_array($errors = $this->download($module,$force,$callback))) {
 								out(_("The following error(s) occured:"));
@@ -767,6 +792,8 @@ class module_functions {
 									out(sprintf(_("Installed Missing Dependency of: %s %s"),$module,$version));
 								}
 							}
+						} elseif(version_compare_freepbx($m[$module]['version'],$version,'>=')) {
+							out(sprintf(_("Found local Dependency of: %s %s"),$module,$m[$module]['version']));
 						}
 						if(!$this->resolveDependencies($module,$callback)) {
 							return false;
@@ -1124,6 +1151,7 @@ class module_functions {
 
 		$depends = array();
 
+		$modules = is_array($modules) ? $modules : array();
 		foreach (array_keys($modules) as $name) {
 			if (!empty($modules[$name]['depends']) && is_array($modules[$name]['depends'])) {
 				foreach ($modules[$name]['depends'] as $type => $requirements) {
@@ -1424,6 +1452,7 @@ class module_functions {
 			$p = (!empty($urls['query'])) ? "--post-data '".$urls['query']."'" : "";
 			FreePBX::Curl()->setEnvVariables();
 			exec("wget --tries=1 --timeout=600 $p -O $filename $url 2> /dev/null", $filedata, $retcode);
+			usleep(5000); //wait for file to be placed
 			if ($retcode != 0) {
 				return array(sprintf(_("Error opening %s for reading"), $url));
 			} else {
@@ -1466,7 +1495,13 @@ class module_functions {
 				}
 				try {
 					if(!FreePBX::GPG()->verifyFile($filename)) {
+						if(!FreePBX::GPG()->refreshKeys() || !FreePBX::GPG()->trustFreePBX()) {
 							return array(sprintf(_('File Integrity failed for %s - aborting (GPG Verify File check failed)'), $filename));
+						} else {
+							if(!FreePBX::GPG()->verifyFile($filename)) {
+								return array(sprintf(_('File Integrity failed for %s - aborting (GPG Verify File check failed)'), $filename));
+							}
+						}
 					}
 				}catch(\Exception $e) {
 					return array(sprintf(_('File Integrity failed for %s - aborting (Cause: %s)'), $filename, $e->getMessage()));
@@ -1791,7 +1826,12 @@ class module_functions {
 			return array(sprintf(_("Error creating module directory: %s"), $amp_conf['AMPWEBROOT']."/admin/modules/".$modulename));
 		}
 
-		exec("cp -R ".$archivepath."/* ".$amp_conf['AMPWEBROOT']."/admin/modules/".$modulename."/", $output, $exitcode);
+		$installBinary = fpbx_which("install");
+		exec(sprintf("%s -d -o %s -g %s %s %s",$installBinary, $amp_conf['AMPASTERISKWEBUSER'],$amp_conf['AMPASTERISKWEBGROUP'],$archivepath."/*",$amp_conf['AMPWEBROOT']."/admin/modules/".$modulename."/"),$output,$exitcode);
+		if ($exitcode != 0) {
+			$output = '';
+			exec("cp -R ".$archivepath."/* ".$amp_conf['AMPWEBROOT']."/admin/modules/".$modulename."/", $output, $exitcode);
+		}
 		if ($exitcode != 0) {
 			exec("rm -Rf ".escapeshellarg($amp_conf['AMPWEBROOT'].'/admin/modules/_cache/'.$time.'/'));
 			if ($exitcode != 0) {
@@ -1830,8 +1870,6 @@ class module_functions {
 
 		set_time_limit($this->maxTimeLimit);
 
-		$modules = $this->getinfo($modulename);
-
 		// make sure we have a directory, to begin with
 		$dir = $amp_conf['AMPWEBROOT'].'/admin/modules/'.$modulename;
 		if (!is_dir($dir)) {
@@ -1840,6 +1878,7 @@ class module_functions {
 		}
 
 		// read the module.xml file
+		$this->modXMLCache[$modulename] = null;
 		$modules = $this->getinfo($modulename);
 		if (!isset($modules[$modulename])) {
 			return array(_("Could not read module.xml"));
@@ -1929,6 +1968,7 @@ class module_functions {
 		// module is now installed & enabled, invalidate the modulelist class since it is now stale
 		$modulelist = modulelist::create($db);
 		$modulelist->invalidate();
+		$this->modXMLCache = array();
 
 		// edit the notification table to list any remaining upgrades available or clear
 		// it if none are left. It requres a copy of the most recent module_xml to compare
@@ -2116,9 +2156,10 @@ class module_functions {
 		}
 		$modulelist = modulelist::create($db);
 		$modulelist->invalidate();
+		$this->modXMLCache = array();
 	}
 
-	function _readxml($modulename) {
+	function _readxml($modulename, $cached = true) {
 		global $amp_conf;
 		switch ($modulename) {
 			case 'builtin': // special handling
@@ -2132,6 +2173,9 @@ class module_functions {
 		}
 
 		if (file_exists($xmlfile)) {
+			if(isset($this->modXMLCache[$modulename]) && $cached) {
+				return $this->modXMLCache[$modulename];
+			}
 			ini_set('user_agent','Wget/1.10.2 (Red Hat modified)');
 			$data = file_get_contents($xmlfile);
 			try {
@@ -2248,7 +2292,8 @@ class module_functions {
 						}
 					}
 				}
-				return $xmlarray['module'];
+				$this->modXMLCache[$modulename] = $xmlarray['module'];
+				return $this->modXMLCache[$modulename];
 			}
 		}
 		return null;
@@ -2845,7 +2890,7 @@ class module_functions {
 			$options['distrover'] = $distro_info['pbx_version'];
 			$options['pbxver'] = getversion();
 			if (function_exists('core_users_list')) {
-				$options['ucount'] = count(core_users_list());
+				$options['ucount'] = count(core_users_list(true));
 			}
 
 			// Other modules may need to add 'get' paramters to the call to the repo. Check and add them
@@ -2961,6 +3006,7 @@ class module_functions {
 		$fwconsole = FreePBX::Config()->get('AMPSBIN')."/fwconsole "._("altered");
 		if(!$cached && $online) {
 			FreePBX::GPG()->refreshKeys();
+			FreePBX::GPG()->trustFreePBX();
 		}
 		foreach($res as $mod) {
 			// Ignore ARI for the moment.

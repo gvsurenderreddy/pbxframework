@@ -168,7 +168,7 @@ EOF;
 		}
 		//Creating signing request ${base}.csr
 		$this->out(sprintf(_("Creating signing request for %s"),$base));
-		$out = $this->runOpenSSL("req -batch -new -config " . $location . "/".$cabase.".cfg -key " . $location . "/" . $base . ".key -out " . $location . "/" . $base . ".csr");
+		$out = $this->runOpenSSL("req -batch -new -sha256 -config " . $location . "/".$cabase.".cfg -key " . $location . "/" . $base . ".key -out " . $location . "/" . $base . ".csr");
 		if($out['exitcode'] > 0) {
 			throw new \Exception(sprintf(_("Error Generating Signing Request: %s"),$out['stderr']));
 		}
@@ -179,9 +179,9 @@ EOF;
 				throw new \Exception(_("Invalid password supplied - less than 8 chars"));
 			}
 			// Generate a key
-			$out = $this->runOpenSSL("x509 -req -days 3650 -in " . $location . "/" . $base . ".csr -CA " . $location . "/".$cabase.".crt -CAkey " . $location . "/".$cabase.".key -set_serial 01 -out " . $location . "/" . $base . ".crt -passin stdin", $passphrase);
+			$out = $this->runOpenSSL("x509 -req -sha256 -days 3650 -in " . $location . "/" . $base . ".csr -CA " . $location . "/".$cabase.".crt -CAkey " . $location . "/".$cabase.".key -set_serial 01 -out " . $location . "/" . $base . ".crt -passin stdin", $passphrase);
 		} else {
-			$out = $this->runOpenSSL("x509 -req -days 3650 -in " . $location . "/" . $base . ".csr -CA " . $location . "/".$cabase.".crt -CAkey " . $location . "/".$cabase.".key -set_serial 01 -out " . $location . "/" . $base . ".crt");
+			$out = $this->runOpenSSL("x509 -req -sha256 -days 3650 -in " . $location . "/" . $base . ".csr -CA " . $location . "/".$cabase.".crt -CAkey " . $location . "/".$cabase.".key -set_serial 01 -out " . $location . "/" . $base . ".crt");
 		}
 		if($out['exitcode'] > 0) {
 			throw new \Exception(sprintf(_("Error Generating Certificate: %s"),$out['stderr']));
@@ -196,14 +196,15 @@ EOF;
 
 
 	/**
-	 * Create a Certificate Signing Request.
-	 *
-	 * @param array Variables for the CSR. Must have at least 'OU' and 'CN'
-	 * @return string Returns the CSR
+	 * Create Certificate Signing Request
+	 * @param  string $name   The basename of the CSR (File System)
+	 * @param  array $params Variables for the CSR. Must have at least 'OU' and 'CN'
+	 * @param  bool $regen  Whether to regenerate the CSR if it already exists
+	 * @return bool
 	 */
 	public function createCSR($name = false, $params, $regen = false) {
 
-		$this->validateName($name);
+		$name = $this->validateName($name);
 
 		if (!$name) {
 			throw new \Exception(_("Must have a name for the CSR"));
@@ -228,7 +229,7 @@ EOF;
 			throw new \Exception(_("Not an array"));
 		}
 
-		if (!isset($params['O']) || !isset($params['CN'])) {
+		if (empty($params['O']) || empty($params['CN'])) {
 			throw new \Exception(_("Missing O or CN. Can't create"));
 		}
 
@@ -237,7 +238,7 @@ EOF;
 
 		// Load defaults if they're not provided.
 		foreach ($defaults as $k => $v) {
-			if (!isset($params[$k])) {
+			if (empty($params[$k])) {
 				$params[$k] = $v;
 			}
 		}
@@ -259,7 +260,7 @@ default_md = sha256
 		$keyfile = "$keyloc/$name.key";
 		$csrconfig = "$csr-config";
 		file_put_contents($csrconfig, $config);
-		$out = $this->runOpenSSL("req -batch -new -key $keyfile -out $csr -config $csrconfig");
+		$out = $this->runOpenSSL("req -batch -new -sha256 -key $keyfile -out $csr -config $csrconfig");
 		if($out['exitcode'] != 0) {
 			throw new \Exception(sprintf(_("Can't create CSR, no idea why. $s"),json_encode($out)));
 		}
@@ -278,11 +279,11 @@ default_md = sha256
 	 * @return bool true/false if the key was created.
 	 */
 
-	public function generateKey($name = false, $password = false, $bits = 2048) {
+	public function generateKey($name, $password = false, $bits = 2048) {
 
-		$this->validateName($name);
+		$name = $this->validateName($name);
 
-		if (!$name) {
+		if (empty($name)) {
 			throw new \Exception(_("Can't generate unnamed key"));
 		}
 		$keyloc = $this->getKeysLocation();
@@ -325,10 +326,10 @@ default_md = sha256
 	 * @param string Password (if any) of the CA
 	 * @param int Serial number (default = 0001)
 	 */
-	public function selfSignCert($name = false, $caname = "ca", $password = false, $serial = "0001") {
+	public function selfSignCert($name, $caname = "ca", $password = false, $serial = "0001") {
 		$life = 3560; // Live for 10 years
 
-		$this->validateName($name);
+		$name = $this->validateName($name);
 
 		if (!$name) {
 			throw new \Exception(_("Can't sign unnamed key"));
@@ -385,10 +386,16 @@ default_md = sha256
 		// We need to ensure that our environment variables are sane.
 		// Luckily, we know just the right things to say...
 		if (!isset($this->opensslenv)) {
-			$this->opensslenv['PATH'] = "/bin:/usr/bin";
+			$this->opensslenv['PATH'] = "/bin:/usr/bin:/usr/local/bin";
 			$this->opensslenv['USER'] = $webuser;
 			$this->opensslenv['HOME'] = $keyloc;
-			$this->opensslenv['SHELL'] = "/bin/bash";
+			if (file_exists('/bin/bash')) {
+				$this->opensslenv['SHELL'] = "/bin/bash";
+			} elseif (file_exists('/usr/local/bin/bash')) {
+				$this->opensslenv['SHELL'] = "/usr/local/bin/bash";
+			} else {
+				$this->opensslenv['SHELL'] = "/bin/sh";
+			}
 		}
 
 		$cmd = $this->openssl. " $params";
@@ -407,6 +414,7 @@ default_md = sha256
 		// Wait $timeout seconds for it to finish.
 		$tmp = null;
 		$r = array($pipes[3]);
+		$otimeout = ini_get('max_execution_time');
 		set_time_limit($this->timeout); //more pis. <3 all the pis for taking so long
 		if (!stream_select($r , $tmp, $tmp, $this->timeout)) {
 			throw new \RuntimeException(sprintf(_("OpenSSL took too long to run the command '%s'"),$cmd));
@@ -419,7 +427,7 @@ default_md = sha256
 		$retarr['stderr'] = stream_get_contents($pipes[2]);
 		$exitcode = proc_close($proc);
 		$retarr['exitcode'] = $exitcode;
-
+		set_time_limit($otimeout); //reset
 		return $retarr;
 	}
 
@@ -430,67 +438,6 @@ default_md = sha256
 	public function getAllCertificates() {
 		$keyloc = $this->getKeysLocation();
 		return $this->getFileList($keyloc);
-	}
-
-	/**
-	* Return a list of all Certificates from the key folder
-	* @return array
-	*/
-	public function getAllAuthorityFiles() {
-		$keyloc = $this->getKeysLocation();
-		$cas = array();
-		$files = $this->getFileList($keyloc);
-		foreach($files as $file) {
-			if(preg_match('/ca\.crt/',$file) || preg_match('/ca\d\.crt/',$file)) {
-				if(in_array('ca.key',$files)) {
-					$cas[] = $file;
-					$cas[] = 'ca.key';
-				}
-			}
-		}
-		return $cas;
-	}
-
-	public function removeCert($base) {
-		$location = $this->getKeysLocation();
-		foreach($this->getAllCertificates() as $file) {
-			if(preg_match('/^'.$base.'/',$file)) {
-				if(!unlink($location . "/" . $file)) {
-					throw new \Exception(sprintf(_('Unable to remove %s'),$file));
-				}
-			}
-		}
-	}
-
-	/**
-	 * Remove all Certificate Authorities
-	 */
-	public function removeCA() {
-		$location = $this->getKeysLocation();
-		foreach($this->getAllAuthorityFiles() as $file) {
-			if(!unlink($location . "/" . $file)) {
-				throw new \Exception(sprintf(_('Unable to remove %s'),$file));
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Remove all Configuration Files
-	 */
-	public function removeConfig() {
-		$location = $this->getKeysLocation();
-		if(file_exists($location . "/ca.cfg")) {
-			if(!unlink($location . "/ca.cfg")) {
-				throw new \Exception(_('Unable to remove ca.cfg'));
-			}
-		}
-		if(file_exists($location . "/tmp.cfg")) {
-			if(!unlink($location . "/tmp.cfg")) {
-				throw new \Exception(_('Unable to remove tmp.cfg'));
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -525,7 +472,7 @@ default_md = sha256
 
 		// We need to ensure that we can actually read the Key files.
 		$keyloc = \FreePBX::Freepbx_conf()->get('CERTKEYLOC');
-		$keyloc = !empty($keyloc) ? $keyloc : FreePBX::Freepbx_conf()->get('ASTETCDIR') . "/keys";
+		$keyloc = !empty($keyloc) ? $keyloc : \FreePBX::Freepbx_conf()->get('ASTETCDIR') . "/keys";
 		if (!file_exists($keyloc)) {
 			if(!mkdir($keyloc)) {
 				throw new \Exception(sprintf(_("Could Not Create the Asterisk Keys Folder: %s"),$keyloc));
@@ -541,15 +488,17 @@ default_md = sha256
 		}
 	}
 
-	// Note: Passed by ref. Don't return.
-	private function validateName(&$name) {
+	private function validateName($name) {
 		// Remove any nasty characters
 		$name = str_replace( array('/', "'", '"', '\\', '&', ';', " "), "", $name);
+		return $name;
 	}
 
 	private function out($message,$level=1) {
 		if($level < $this->debug) {
 			echo $message . "\n";
+		} elseif(function_exists("dbug")) {
+			dbug($message);
 		}
 	}
 
@@ -557,7 +506,7 @@ default_md = sha256
 	 * Get list of files in a directory
 	 * @param string $dir The directory to get the file list of/from
 	 */
-	private function getFileList($dir) {
+	public function getFileList($dir) {
 		// When we require PHP5.4, use RecursiveDirectoryIterator.
 		// Until then..
 
@@ -619,10 +568,10 @@ default_md = sha256
 
 		// What are the permissions of the keys directory?
 		$stat = stat($dir);
-		if ($uid != $stat['uid'] || $gid != $stat['gid']) {
+		if ($uid != $stat['uid']) {
 			// Permissions are wrong on the keys directory. Hopefully, I'm root, so I can fix them.
 			if (posix_geteuid() !== 0) {
-				throw new \Exception(sprintf(_("Permissions error on directory %s - please re-run as root to automatically repair"),$dir));
+				throw new \Exception(sprintf(_("Permissions error on directory %s (is %s:%s, should be %s:%s)- please run 'fwconsole chown' as root to repair"),$dir, $stat['uid'], $stat['gid'], $uid, $gid));
 			}
 			// We're root. Yay.
 			chown($dir, $uid);
@@ -639,7 +588,7 @@ default_md = sha256
 				continue;
 			}
 			$stat = stat($file);
-			if ($uid != $stat['uid'] || $gid != $stat['gid']) {
+			if ($uid != $stat['uid']) {
 				// Permissions are wrong on the keys directory. Hopefully, I'm root, so I can fix them.
 				if (posix_geteuid() !== 0) {
 					throw new \Exception(sprintf(_("Permissions error on file %s - please re-run as root to automatically repair"),$file));
@@ -666,12 +615,80 @@ default_md = sha256
 			// Hostname is valid
 			return trim($output[0]);
 		}
-		// It errored for some reason. 
+		// It errored for some reason.
 		// Just return whatever 'hostname' thinks it is, without FQDN.
 		exec("hostname", $raw, $ret);
 		if ($ret !== 0 || empty($raw[0])) {
 			throw new \Exception("Can not determine hostname. Critical error");
 		}
 		return trim($raw[0]);
+	}
+
+	//Old functions for backwards compatibility with old certman
+	/**
+	 * DEPRECIATED FUNCTION
+	 * @return [type] [description]
+	 */
+	public function getAllAuthorityFiles() {
+		$keyloc = $this->getKeysLocation();
+		$cas = array();
+		$files = $this->getFileList($keyloc);
+		foreach($files as $file) {
+			if(preg_match('/ca\.crt/',$file) || preg_match('/ca\d\.crt/',$file)) {
+				if(in_array('ca.key',$files)) {
+					$cas[] = $file;
+					$cas[] = 'ca.key';
+				}
+			}
+		}
+		return $cas;
+	}
+
+	/**
+	 * DEPRECIATED FUNCTION
+	 * @return [type] [description]
+	 */
+	public function removeCert($base) {
+		$location = $this->getKeysLocation();
+		foreach($this->getAllCertificates() as $file) {
+			if(preg_match('/^'.$base.'/',$file)) {
+				if(!unlink($location . "/" . $file)) {
+					throw new \Exception(sprintf(_('Unable to remove %s'),$file));
+				}
+			}
+		}
+	}
+
+	/**
+	 * DEPRECIATED FUNCTION
+	 * @return [type] [description]
+	 */
+	public function removeCA() {
+		$location = $this->getKeysLocation();
+		foreach($this->getAllAuthorityFiles() as $file) {
+			if(!unlink($location . "/" . $file)) {
+				throw new \Exception(sprintf(_('Unable to remove %s'),$file));
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * DEPRECIATED FUNCTION
+	 * @return [type] [description]
+	 */
+	public function removeConfig() {
+		$location = $this->getKeysLocation();
+		if(file_exists($location . "/ca.cfg")) {
+			if(!unlink($location . "/ca.cfg")) {
+				throw new \Exception(_('Unable to remove ca.cfg'));
+			}
+		}
+		if(file_exists($location . "/tmp.cfg")) {
+			if(!unlink($location . "/tmp.cfg")) {
+				throw new \Exception(_('Unable to remove tmp.cfg'));
+			}
+		}
+		return true;
 	}
 }
