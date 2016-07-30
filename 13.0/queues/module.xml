@@ -2,14 +2,14 @@
 	<rawname>queues</rawname>
 	<repo>standard</repo>
 	<name>Queues</name>
-	<version>13.0.27.2</version>
+	<version>13.0.27.3</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv2+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-2.0.txt</licenselink>
 	<category>Applications</category>
 	<description>Creates a queue where calls are placed on hold and answered on a first-in, first-out basis. Many options are available, including ring strategy for agents, caller announcements, max wait times, etc.</description>
 	<changelog>
-		*13.0.27.2* [repo] fix string replacement bug on module name by seeding a value other than "old"
+		*13.0.27.3* [repo] fix string replacement bug on module name by seeding a value other than "old"
 		*13.0.27.1* Ringfree branch
 		*13.0.27* More checks for recording file before we force our own
 		*13.0.26* FREEPBX-11871 Queue call recordings not accessible in UCP with Asterisk 13

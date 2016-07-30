@@ -2,7 +2,7 @@
   <rawname>music</rawname>
   <repo>standard</repo>
   <name>Music on Hold</name>
-  <version>13.0.21.1</version>
+  <version>13.0.21.2</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,7 @@
   <category>Settings</category>
   <description>Uploading and management of sound files (wav, mp3) to be used for on-hold music.</description>
 	<changelog>
+		*13.0.21.2* [repo] fix string replacement bug on module name by seeding a value other than "old"
 		*13.0.21.1* Ringfree branch 
 		*13.0.21* Put the right version in
 		*13.0.20* FREEPBX-12656 Hang on upgrade of Music on Hold module
@@ -47,8 +48,8 @@
   <depends>
     <module>framework ge 13.0.121</module>
   </depends>
-  <location>release/13.0/music-13.0.21.1.tgz</location>
-  <md5sum>old</md5sum>
+  <location>release/13.0/music-13.0.21.2.tgz</location>
+  <md5sum>98fdhfdasdfqw354trgehs</md5sum>
   <supported>
     <version>13.0</version>
   </supported>
