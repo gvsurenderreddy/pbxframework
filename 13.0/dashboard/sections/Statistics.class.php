@@ -14,7 +14,8 @@ class Statistics {
 
 		return array(
 			array(
-				"title" => "$brand ". _("Statistics"),
+//				"title" => "$brand ". _("PBX Statistics"),
+				"title" => _("PBX Statistics"),
 				"group" => _("Statistics"),
 				"width" => "550px",
 				"order" => isset($order['statistics']) ? $order['statistics'] : '300',
