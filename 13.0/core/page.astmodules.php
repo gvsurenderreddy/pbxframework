@@ -48,7 +48,7 @@ HERE;
 <div class="container-fluid">
 	<h1><?php echo _("Asterisk Modules")?></h1>
 	<div class="well well-info">
-		<?php echo _("Note that this is for ASTERISK modules, not FreePBX Modules.")?>
+		<?php echo _("Note that this is for Asterisk softswitch modules, not Ringfree PBX Modules.")?>
 		<br/>
 		<?php echo _("It is unlikely you'll need to change anything here.")?>
 		<br/>
