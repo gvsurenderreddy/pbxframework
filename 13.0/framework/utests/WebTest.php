@@ -26,8 +26,8 @@ class WebTest extends PHPUnit_Framework_TestCase {
 		$crawler = new Crawler($response->getBody(true));
 		$this->assertGreaterThan(
 			0,
-			$crawler->filter('html:contains("FreePBX Administration")')->count(),
-			"The Login Page Seems Incorrect. Missing FreePBX Administration"
+			$crawler->filter('html:contains("Ringfree PBX Administration")')->count(),
+			"The Login Page Seems Incorrect. Missing Ringfree PBX Administration"
 		);
 
 		$this->assertGreaterThan(

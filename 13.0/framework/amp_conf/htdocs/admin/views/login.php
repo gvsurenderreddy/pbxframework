@@ -19,7 +19,7 @@
 	<div class="login_item_title">
 		<a href="#" class="login_item" id="login_admin" style="background-image: url(assets/images/sys-admin.png);"/>&nbsp;</a>
 		<span class="login_item_text" style="display: block;width: 160px;text-align: center;">
-			<?php echo _('FreePBX Administration')?>
+			<?php echo _('Ringfree PBX Administration')?>
 		</span>
 	</div>
 	<div class="login_item_title">
@@ -36,12 +36,6 @@
 			</span>
 		</div>
 	<?php } ?>
-	<div class="login_item_title">
-		<a href="http://www.schmoozecom.com/oss.php" class="login_item" id="login_support" style="background-image: url(assets/images/support.png);"/>&nbsp;</a>
-		<span class="login_item_text" style="display: block;width: 160px;text-align: center;">
-			<?php echo _('Get Support') ?>
-		</span>
-	</div>
 	<br/>
 	<br/>
 	<br/>
