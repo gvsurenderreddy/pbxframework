@@ -89,7 +89,7 @@ try {
 			if(file_exists($ifile)) {
 				include $ifile;
 				$classname = substr($class ,0,-10);
-				$class = 'Ringfree PBX\\Console\\Command\\' . $classname;
+				$class = 'FreePBX\\Console\\Command\\' . $classname;
 				$reflector = new ReflectionClass($class);
 				$props = $reflector->getDefaultProperties();
 				if(isset($props['requireroot']) && $props['requireroot']){
@@ -125,7 +125,7 @@ try {
 					}
 					include $ifile;
 					$classname = substr($class ,0,-10);
-					$class = 'Ringfree PBX\\Console\\Command\\' . $classname;
+					$class = 'FreePBX\\Console\\Command\\' . $classname;
 					if(!class_exists($class)) {
 						continue;
 					}
