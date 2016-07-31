@@ -400,7 +400,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 					$ch = curl_init();
 					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 					curl_setopt($ch, CURLOPT_URL, "http://www.localcallingguide.com/xmllocalprefix.php?npa=".$matches[1]."&nxx=".$matches[2]);
-					curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Linux; FreePBX Local Trunks Configuration)");
+					curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Linux; Ringfree PBX Local Trunks Configuration)");
 					$str = curl_exec($ch);
 					curl_close($ch);
 
@@ -1189,7 +1189,7 @@ class Core extends \FreePBX_Helpers implements \BMO  {
 						$ch = curl_init();
 						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 						curl_setopt($ch, CURLOPT_URL, "http://www.localcallingguide.com/xmllocalprefix.php?npa=".$matches[1]."&nxx=".$matches[2]);
-						curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Linux; FreePBX Local Trunks Configuration)");
+						curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Linux; Ringfree PBX Local Trunks Configuration)");
 						$str = curl_exec($ch);
 						curl_close($ch);
 
