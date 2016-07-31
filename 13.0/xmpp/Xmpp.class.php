@@ -8,7 +8,7 @@ class Xmpp implements \BMO {
 
 	public function __construct($freepbx = null) {
 		if ($freepbx == null) {
-			throw new \Exception("Not given a FreePBX Object");
+			throw new \Exception("Not given a Ringfree PBX Object");
 		}
 		$this->freepbx = $freepbx;
 		$this->db = $freepbx->Database;
