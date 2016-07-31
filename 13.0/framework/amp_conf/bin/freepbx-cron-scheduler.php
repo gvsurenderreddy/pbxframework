@@ -38,7 +38,10 @@ function cron_scheduler_send_message($to,$from,$subject,$message){
 	$em->message($message);
 	return $em->send();
 }
-$brand = $amp_conf['DASHBOARD_FREEPBX_BRAND']?$amp_conf['DASHBOARD_FREEPBX_BRAND']:'FreePBX';
+// RINGFREE - Adjust branding (Open)
+//$brand = $amp_conf['DASHBOARD_FREEPBX_BRAND']?$amp_conf['DASHBOARD_FREEPBX_BRAND']:'FreePBX';
+$brand = "Ringfree PBX"
+// RINGFREE - Adjust branding (Close)
 $email = $cm->get_email();
 if ($email) {
 	$text = "";

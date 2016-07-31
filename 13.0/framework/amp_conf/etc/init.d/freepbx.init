@@ -3,7 +3,7 @@
 # freepbx Controls freepbx components on start/stop
 # TODO: Update the priorities... we live at 99 in rc.local
 #
-# chkconfig: 345 98 98  
+# chkconfig: 345 98 98
 # description: Controls FreePBX fwconsole commands durring init.
 
 # Source function library.
@@ -12,15 +12,15 @@ FWCONSOLE=/var/lib/asterisk/bin/fwconsole
 LOCKFILE=/var/lock/subsys/freepbx
 
 start() {
-        echo -n "Starting FreePBX Components: "
+        echo -n "Starting Ringfree PBX Components: "
         $FWCONSOLE start
         RETVAL=$?
         [ $RETVAL -eq 0 ] && touch $LOCKFILE
-        return $RETVAL 
+        return $RETVAL
 }
 
 stop() {
-        echo -n "Shutting down FreePBX Components: "
+        echo -n "Shutting down Ringfree PBX Components: "
         $FWCONSOLE stop
         RETVAL=$?
         [ $RETVAL -eq 0 ] && rm -f $LOCKFILE

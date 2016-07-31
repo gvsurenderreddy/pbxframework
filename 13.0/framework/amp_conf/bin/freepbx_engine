@@ -27,7 +27,7 @@ move_freepbxconf() {
 		echo moving /etc/asterisk/freepbx.conf to /etc/freepbx.conf
 		mv /etc/asterisk/freepbx.conf /etc/
 	  	if [ "$?" -ne "0" ]; then
-			echo "unable to move, FreePBX will function fine but you will"
+			echo "unable to move, Ringfree PBX will function fine but you will"
 			echo "get this error until the file can be successfully moved"
 		else
 			FREEPBX_CONF="/etc/freepbx.conf"

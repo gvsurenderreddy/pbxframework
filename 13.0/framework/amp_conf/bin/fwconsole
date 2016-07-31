@@ -75,7 +75,7 @@ use FreePBX\Console\Application as App;
 
 try {
 	$amodules = FreePBX::Modules()->getActiveModules();
-	$fbc = new App\FWApplication('FW Console - FreePBX Utility', getVersion());
+	$fbc = new App\FWApplication('FW Console - Ringfree PBX Utility', getVersion());
 	/*
 	* Framework is not like the others so we load up framework classes first.
 	*/
@@ -89,7 +89,7 @@ try {
 			if(file_exists($ifile)) {
 				include $ifile;
 				$classname = substr($class ,0,-10);
-				$class = 'FreePBX\\Console\\Command\\' . $classname;
+				$class = 'Ringfree PBX\\Console\\Command\\' . $classname;
 				$reflector = new ReflectionClass($class);
 				$props = $reflector->getDefaultProperties();
 				if(isset($props['requireroot']) && $props['requireroot']){
@@ -125,7 +125,7 @@ try {
 					}
 					include $ifile;
 					$classname = substr($class ,0,-10);
-					$class = 'FreePBX\\Console\\Command\\' . $classname;
+					$class = 'Ringfree PBX\\Console\\Command\\' . $classname;
 					if(!class_exists($class)) {
 						continue;
 					}
