@@ -1336,7 +1336,7 @@ class Installer {
 	);
 
 	$settings[$category]['BRAND_TITLE'] = array(
-	'value' => 'FreePBX Administration',
+	'value' => 'Ringfree PBX Administration',
 	'options' => '',
 	'name' => 'Page Title',
 	'description' => 'HTML title of all pages',
@@ -1768,10 +1768,10 @@ class Installer {
 	);
 
 	$settings[$category]['DASHBOARD_FREEPBX_BRAND'] = array(
-	'value' => 'FreePBX',
+	'value' => 'Ringfree PBX',
 	'options' => '',
-	'name' => 'FreePBX Brand',
-	'description' => 'The FreePBX Brand Name',
+	'name' => 'Ringfree PBX Brand',
+	'description' => 'The Ringfree PBX Brand Name',
 	'readonly' => 1,
 	'emptyok' => 1,
 	'hidden' => 1,
