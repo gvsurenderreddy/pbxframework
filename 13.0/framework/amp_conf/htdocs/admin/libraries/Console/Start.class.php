@@ -19,7 +19,7 @@ class Start extends Command {
 
 	protected function configure(){
 		$this->setName('start')
-			->setDescription(_('Start Asterisk and run other needed FreePBX commands'))
+			->setDescription(_('Start Asterisk and run other needed Ringfree PBX commands'))
 			->addArgument('args', InputArgument::IS_ARRAY, _('Module names'))
 			->addOption('pre', null, InputOption::VALUE_NONE, _('Only run pre-start hooks'))
 			->addOption('post', null, InputOption::VALUE_NONE, _('Only run post-start hooks'))

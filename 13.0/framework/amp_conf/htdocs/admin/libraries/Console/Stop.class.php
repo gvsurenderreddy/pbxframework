@@ -14,7 +14,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 class Stop extends Command {
 	protected function configure(){
 		$this->setName('stop')
-			->setDescription(_('Stop Asterisk and run other needed FreePBX commands'))
+			->setDescription(_('Stop Asterisk and run other needed Ringfree PBX commands'))
 			->addOption('pre', null, InputOption::VALUE_NONE, _('Only run pre-stop hooks'))
 			->addOption('post', null, InputOption::VALUE_NONE, _('Only run post-stop hooks'))
 			->addOption('immediate', 'i', InputOption::VALUE_NONE, _('Shutdown NOW rather than convieniently'))
@@ -100,7 +100,7 @@ class Stop extends Command {
 		// Now we're ready to go.
 		$brand = \FreePBX::Config()->get("DASHBOARD_FREEPBX_BRAND");
 
-		$output->writeln(sprintf(_('Running %s shutdown...'),$brand));
+		$output->writeln(sprintf(_('Running Ringfree shutdown...')));
 		$output->writeln('');
 
 		if ($runpre) {
