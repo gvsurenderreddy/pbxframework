@@ -3,13 +3,14 @@
 	<modtype>framework</modtype>
 	<repo>standard</repo>
 	<name>Ringfree PBX Framework</name>
-	<version>13.0.163.1</version>
+	<version>13.0.163.2</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv2+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.163.2* Upstream branding removed
 		*13.0.163.1* Ringfree branch
 		*13.0.163* Stored XSS - Douglas Goddard
 		*13.0.162* Public property not private
@@ -349,7 +350,7 @@
 		<version>13.0</version>
 	</supported>
 	<category>Admin</category>
-  <location>release/13.0/framework-13.0.163.1.tgz</location>
+  <location>release/13.0/framework-13.0.163.2.tgz</location>
   <md5sum>old</md5sum>
   <sha1></sha1>
 </module>
