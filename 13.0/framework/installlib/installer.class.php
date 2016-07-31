@@ -1917,7 +1917,7 @@ class Installer {
 	$category = 'Internal Use';
 
 	$settings[$category]['SIPUSERAGENT'] = array(
-	'value' => 'FPBX',
+	'value' => 'RingfreePBX',
 	'options' => '',
 	'name' => 'SIP User Agent',
 	'description' => 'User Agent prefix',
