@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This file is part of FreePBX.
+# This file is part of Ringfree PBX.
 
 ROOT_UID=0	 # root uid is 0
 E_NOTROOT=67	 # Non-root exit error
@@ -88,7 +88,7 @@ case "$1" in
 		kill_amp
 	;;
 	*)
-		echo "-------------FreePBX Control Script-----------------------------------------------"
+		echo "-------------Ringfree PBX Control Script------------------------------------------"
 		echo
 		echo "Usage:       amportal start|stop|restart|start_fop|stop_fop|restart_fop|kill|chown"
 		echo
