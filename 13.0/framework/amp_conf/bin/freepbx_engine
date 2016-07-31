@@ -138,8 +138,8 @@ elif [ -e "/etc/amportal.conf" ]; then
 	write_freepbxconf
 else
 	echo
-	echo "FreePBX config file not found!"
-	echo "Have you installed FreePBX?"
+	echo "Ringfree PBX config file not found!"
+	echo "Have you installed Ringfree PBX?"
 	exit
 fi
 
