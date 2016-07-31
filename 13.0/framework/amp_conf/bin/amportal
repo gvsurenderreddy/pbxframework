@@ -43,26 +43,26 @@ if [[ -e $FREEPBX_CONF && -w "/etc/amportal.conf" && -z "$FORCE_AMPORTAL_CONF" ]
 		}
 		'`
 	elif [ -e "/var/lib/asterisk/bin/gen_amp_conf.php" ]; then
-		echo "Fetching FreePBX settings with gen_amp_conf.php..."
+		echo "Fetching Ringfree PBX settings with gen_amp_conf.php..."
 		`/var/lib/asterisk/bin/gen_amp_conf.php`
 	elif [ -e "/usr/local/freepbx/bin/gen_amp_conf.php" ]; then
-		echo "Fetching FreePBX settings with gen_amp_conf.php..."
+		echo "Fetching Ringfree PBX settings with gen_amp_conf.php..."
 		`/usr/local/freepbx/bin/gen_amp_conf.php`
 	elif [ -e "/etc/amportal.conf" ]; then # Check if file exists.
 		echo "Fetching settings from amportal.conf file..."
 		. /etc/amportal.conf
 	else
 		echo
-		echo "FreePBX settings could not be fetched and no backup config file found!"
-		echo "Have you installed FreePBX?"
+		echo "Ringfree PBX settings could not be fetched and no backup config file found!"
+		echo "Have you installed Ringfree PBX?"
 		exit
 	fi
 elif [ -e "/etc/amportal.conf" ]; then # Check if file exists.
 	. /etc/amportal.conf
 else
 	echo
-	echo "FreePBX config file not found!"
-	echo "Have you installed FreePBX?"
+	echo "Ringfree PBX config file not found!"
+	echo "Have you installed Ringfree PBX?"
 	exit
 fi
 

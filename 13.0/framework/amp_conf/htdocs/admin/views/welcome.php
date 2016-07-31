@@ -47,9 +47,9 @@ print "  <li> <a href='config.php?display=modules&type=tool&extdisplay=online'>"
 print "</ul>";
 echo "</p>";
 printf( dgettext( "welcome page",
-"There is also a community based <a href='%s' target='_new'>FreePBX Web Forum</a> where you can post
-questions and search for answers for any problems you may be having."),
-"http://community.freepbx.org"  );
+"There is also the <a href='%s' target='_new'>Ringfree Learning Center</a> support portal where you can search
+for answers to any problems you may be having."),
+"http://learn.ringfree.com"  );
 echo "</p>\n";
 
-print "<p>" . sprintf(_("We hope you enjoy using %s"),$amp_conf['DASHBOARD_FREEPBX_BRAND']) . "</p>\n";
+print "<p>" . sprintf(_("We hope you enjoy using Ringfree PBX</p>\n";
