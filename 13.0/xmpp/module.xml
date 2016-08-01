@@ -2,7 +2,7 @@
 	<rawname>xmpp</rawname>
 	<repo>standard</repo>
 	<name>XMPP</name>
-	<version>13.0.14.2</version>
+	<version>13.0.14.3</version>
 	<publisher>Ringfree</publisher>
 	<license>AGPLv3</license>
 	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
@@ -17,6 +17,7 @@
 		<module>userman ge 13</module>
 	</depends>
 	<changelog>
+		*13.0.14.3* Altered header and help rollover text
 		*13.0.14.2* Upstream branding removed
 		*13.0.14.1* Ringfree branch
 		*13.0.14* Call Userman the BMO way

@@ -1,6 +1,6 @@
 <?php
 if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
-$heading = _("XMPP/Jabber Settings");
+$heading = _("XMPP");
 ?>
 <div class="container-fluid">
 	<h1><?php echo $heading?></h1>
@@ -30,7 +30,7 @@ $heading = _("XMPP/Jabber Settings");
 							</div>
 							<div class="row">
 								<div class="col-md-12">
-									<span id="domain-help" class="help-block fpbx-help-block"><?php echo _("Domain XMPP will serve")?></span>
+									<span id="domain-help" class="help-block fpbx-help-block"><?php echo _("Ringfree PBX domain XMPP will serve")?></span>
 								</div>
 							</div>
 						</div>
