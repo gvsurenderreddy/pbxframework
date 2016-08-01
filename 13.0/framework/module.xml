@@ -3,13 +3,14 @@
 	<modtype>framework</modtype>
 	<repo>standard</repo>
 	<name>Ringfree PBX Framework</name>
-	<version>13.0.163.7</version>
+	<version>13.0.163.8</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv2+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.163.8* Email useragent modified, default body font open_sans disabled
 		*13.0.163.7* ASCII art modified
 		*13.0.163.6* Remove track status in module admin
 		*13.0.163.5* Remove unused features in Module Admin
