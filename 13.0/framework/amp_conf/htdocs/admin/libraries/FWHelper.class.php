@@ -19,12 +19,12 @@ class FWHelpCommand extends HelpCommand {
 		$this->command = $command;
 	}
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$output->writeln(" _____    ________  _____  ______   __");
-		$output->writeln("|  __ \  |  ______||  __ \|  _ \ \ / /");
-	  $output->writeln("| |__) | | |____   | |__) | |_) \ V /");
-		$output->writeln("|  _  /  |  ____|  |  ___/|  _ < > <");
-		$output->writeln("| | \ \  | |       | |    | |_) / . \\");
-		$output->writeln("|_|  \_\ |_|       |_|    |____/_/ \_\\");
+		$output->writeln(" _____   ______ _____   ____  __   __");
+		$output->writeln("|  __ \ |  ____|  __ \ |  _  \\ \ / /");
+		$output->writeln("| |__) || |___ | |__) || |_) | \ V /");
+		$output->writeln("|  _  / |  ___||  ___/ |  _ <   > <");
+		$output->writeln("| | \ \ | |    | |     | |_) | / . \\");
+		$output->writeln("|_|  \_\|_|    |_|     |____/ /_/ \_\\");		
 
 		if (null === $this->command) {
 			$this->command = $this->getApplication()->find($input->getArgument('command_name'));

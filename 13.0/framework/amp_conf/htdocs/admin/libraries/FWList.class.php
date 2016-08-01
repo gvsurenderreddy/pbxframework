@@ -45,12 +45,12 @@ EOF
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$output->writeln(" ______             _____  ______   __");
-		$output->writeln("|  ____|           |  __ \|  _ \ \ / /");
-		$output->writeln("| |__ _ __ ___  ___| |__) | |_) \ V /");
-		$output->writeln("|  __| '__/ _ \/ _ \  ___/|  _ < > <");
-		$output->writeln("| |  | | |  __/  __/ |    | |_) / . \\");
-		$output->writeln("|_|  |_|  \___|\___|_|    |____/_/ \_\\");
+		$output->writeln(" _____   ______ _____   ____  __   __");
+		$output->writeln("|  __ \ |  ____|  __ \ |  _  \\ \ / /");
+		$output->writeln("| |__) || |___ | |__) || |_) | \ V /");
+		$output->writeln("|  _  / |  ___||  ___/ |  _ <   > <");
+		$output->writeln("| | \ \ | |    | |     | |_) | / . \\");
+		$output->writeln("|_|  \_\|_|    |_|     |____/ /_/ \_\\");		
 
 		if ($input->getOption('xml')) {
 			$input->setOption('format', 'xml');
