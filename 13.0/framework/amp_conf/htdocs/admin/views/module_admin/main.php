@@ -371,26 +371,7 @@ if($online) { ?>
 										<span><?php echo $module['changelog']?></span>
 									</div>
 									<?php } ?>
-									<?php if(!empty($module['previous'])) {?>
-										<div class="tabbertab" title="<?php echo _("Previous")?>">
-											<h5><?php echo _('Previous Releases')?></h5>
-											<table class="rollbacklist alt_table">
-												<?php foreach($module['previous'] as $release) {?>
-													<tr>
-														<td>
-															<strong><?php echo $release['version']?></strong>
-														</td>
-														<td>
-															<?php echo !empty($release['pretty_change']) ? $release['pretty_change'] : _('No Description')?>
-														</td>
-														<td>
-															<a href="config.php?display=modules&amp;action=confirm&amp;online=1&amp;moduleaction[<?php echo prep_id($module['name'])?>]=rollback&amp;version=<?php echo $release['version']?>" class="btn">Rollback</a>
-														</td>
-													</tr>
-												<?php } ?>
-											</table>
-										</div>
-									<?php } ?>
+
 									<?php if (isset($module['extra'])) {
 										echo $module['extra'];
 									} ?>
