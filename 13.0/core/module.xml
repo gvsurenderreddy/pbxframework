@@ -3,13 +3,14 @@
 	<repo>standard</repo>
 	<category>Applications</category>
 	<name>Core</name>
-	<version>13.0.102.5</version>
+	<version>13.0.102.6</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.102.6* Remove Administrators from Admin menu
 		*13.0.102.5* Remove Asterisk Modules from Admin menu
 		*13.0.102.4* Remove DAHDI Channel DIDs from Connectivity menu
 		*13.0.102.3* Curl useragent modified for trunk configs
@@ -210,7 +211,6 @@
 		<routing category="Connectivity">Outbound Routes</routing>
 		<trunks needsenginedb="yes" category="Connectivity">Trunks</trunks>
 		<advancedsettings category="Settings">Advanced Settings</advancedsettings>
-		<ampusers category="Admin">Administrators</ampusers>
 	</menuitems>
 	<popovers>
 		<extensions>
