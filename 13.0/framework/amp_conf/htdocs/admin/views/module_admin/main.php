@@ -48,7 +48,7 @@ if($online) { ?>
 					<span class="modulepublisher"><?php echo _("Publisher")?></span>
 					<span class="modulelicense"><?php echo _("License")?></span>
 					<span class="modulestatus"><?php echo _("Status")?></span>
-					<span class="moduletrack"><?php echo _("Track")?></span>
+					<!--<span class="moduletrack"><?php echo _("Track")?></span>-->
 					<span class="clear">&nbsp;</span>
 				</div>
 				<table class="table modulelist table-striped" width="100%">
@@ -59,7 +59,7 @@ if($online) { ?>
 							<i id="arrow_<?php echo prep_id($module['name'])?>" class="fa fa-chevron-right"></i>
 							<span class="modulename"><?php echo $module['pretty_name']?></span>
 							<span class="moduleversion"><?php echo $module['dbversion']?></span>
-							<span class="moduletrack <?php echo strtolower($module['track'])?>"><?php echo ucfirst($module['track'])?></span>
+							<!--<span class="moduletrack <?php echo strtolower($module['track'])?>"><?php echo ucfirst($module['track'])?></span>-->
 							<span class="modulepublisher"><?php echo $module['publisher']?></span>
 							<span class="modulelicense"><?php echo (!empty($module['licenselink'])) ? '<a href="'.$module['licenselink'].'" target="_moduleLicenseLink">'.$module['license'].'</a>' : $module['license']?></span>
 							<span class="modulestatus">
