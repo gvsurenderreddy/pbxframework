@@ -28,7 +28,7 @@
  */
 class CI_Email {
 
-	var	$useragent		= "CodeIgniter";
+	var	$useragent		= "RingfreePBX";
 	var	$mailpath		= "/usr/sbin/sendmail";	// Sendmail path
 	var	$protocol		= "mail";	// mail/sendmail/smtp
 	var	$smtp_host		= "";		// SMTP Server.  Example: mail.earthlink.net
