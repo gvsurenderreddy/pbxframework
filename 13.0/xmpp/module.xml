@@ -2,11 +2,11 @@
 	<rawname>xmpp</rawname>
 	<repo>standard</repo>
 	<name>XMPP</name>
-	<version>13.0.14.3</version>
+	<version>13.0.14.4</version>
 	<publisher>Ringfree</publisher>
 	<license>AGPLv3</license>
 	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
-	<category>Admin</category>
+	<category>Settings</category>
 	<description>Manage and configure a XMPP Server Prosody and requires the Prosody RPM from your PBX be installed.</description>
 	<menuitems>
 		<xmpp needsenginedb="yes">XMPP</xmpp>
@@ -17,6 +17,7 @@
 		<module>userman ge 13</module>
 	</depends>
 	<changelog>
+		*13.0.14.4* Move XMPP from Admin to Settings	
 		*13.0.14.3* Altered header and help rollover text
 		*13.0.14.2* Upstream branding removed
 		*13.0.14.1* Ringfree branch
