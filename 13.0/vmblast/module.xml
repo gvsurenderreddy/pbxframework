@@ -1,8 +1,8 @@
 <module>
 	<rawname>vmblast</rawname>
-	<repo>standard</repo>
+	<repo>unsupported</repo>
 	<name>Voicemail Blasting</name>
-	<version>13.0.8.1</version>
+	<version>13.0.8.2</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -11,6 +11,7 @@
 		Creates a group of extensions that calls a group of voicemail boxes and allows you to leave a message for them all at once.
 	</description>
 	<changelog>
+		*13.0.8.2* Change from standard to unsupported in module repo
 		*13.0.8.1* Ringfree branch
 		*13.0.8* FREEPBX-11854 Add clicktoedit to password
 		*13.0.7* FREEPBX-11269
