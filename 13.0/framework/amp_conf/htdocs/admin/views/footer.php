@@ -43,9 +43,11 @@ if (!$covert && !empty($action_bar)) {
 	$html .= '</div>';
 }
 
-$html .= '<div id="footer_content" class="row">';
-$html .= $footer_content;
-$html .= '</div>'; //footer_content
+// RINGFREE - Stop footer_content from loading so that the action-bar is consistently shown (Open)
+//$html .= '<div id="footer_content" class="row">';
+//$html .= $footer_content;
+//$html .= '</div>'; //footer_content
+// RINGFREE - Stop footer_content from loading so that the action-bar is consistently shown (Close)
 $html .= '</div>'; //footer
 //add javascript
 
