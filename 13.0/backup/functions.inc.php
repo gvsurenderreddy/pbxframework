@@ -33,7 +33,7 @@ function backup__($var) {
 			// This is for things like AMPDBHOST which are defined in /etc/freepbx.conf
 			$replace = $amp_conf[$ampvar];
 		} else {
-			throw new \Exception("Was asked for FreePBX Setting '$var', but it doesn't exist. Can't continue.");
+			throw new \Exception("Was asked for Ringfree PBX Setting '$var', but it doesn't exist. Can't continue.");
 		}
 	} else {
 		$replace = \FreePBX::Config()->get($ampvar);
