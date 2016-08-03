@@ -1964,7 +1964,7 @@ $(document).on('click','.clickable', function(e){
 var resizeMode = 'desktop';
 //Menu autoresize to height of browser viewport
 $(window).resize(function() {
-	if($(window).width() < 992) {
+	if($(window).width() < 826) {
 		$(".freepbx-navbar .dropdown-menu").css("max-height","");
 		if(resizeMode != 'mobile') {
 			$('table[data-toggle=table]').each(function() {
@@ -1974,7 +1974,7 @@ $(window).resize(function() {
 			});
 		}
 		resizeMode = 'mobile';
-	} else if($(window).width() > 991) {
+	} else if($(window).width() > 825) {
 		$(".freepbx-navbar .dropdown-menu").css("max-height",$(window).height()-50);
 		if(resizeMode != 'desktop') {
 			$('table[data-toggle=table]').each(function() {
