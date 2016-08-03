@@ -1,8 +1,8 @@
 <module>
 	<rawname>fax</rawname>
-	<repo>standard</repo>
+	<repo>unsupported</repo>
 	<name>Fax Configuration</name>
-	<version>13.0.32.1</version>
+	<version>13.0.32.2</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -12,6 +12,7 @@
 	</menuitems>
 	<description>Adds configurations, options and GUI for inbound faxing</description>
 	<changelog>
+		*13.0.32.2* Change from standard to unsupported in module repo
 		*13.0.32.1* Ringfree branch
 		*13.0.32* FREEPBX-12599 Legacy Email box cant see title
 		*13.0.31* FREEPBX-5927 Playtones when trying to detect a fax
