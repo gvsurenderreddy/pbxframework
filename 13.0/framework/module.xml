@@ -3,13 +3,14 @@
 	<modtype>framework</modtype>
 	<repo>standard</repo>
 	<name>Ringfree PBX Framework</name>
-	<version>13.0.163.11</version>
+	<version>13.0.163.12</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv2+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
 	<candisable>no</candisable>
 	<canuninstall>no</canuninstall>
 	<changelog>
+		*13.0.163.12* Bugfix - Stop footer_content from loading so that the action-bar is consistently shown
 		*13.0.163.11* Adjust footer to remove unneeded content
 		*13.0.163.10* Menu opacity added (testing)
 		*13.0.163.9* Module admin previous rollback disabled
