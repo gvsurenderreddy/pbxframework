@@ -2,7 +2,7 @@
 	<rawname>asterisk-cli</rawname>
 	<repo>extended</repo>
 	<name>Asterisk CLI</name>
-	<version>13.0.4.2</version>
+	<version>13.0.4.3</version>
 	<publisher>Ringfree</publisher>
 	<license>GPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
@@ -17,6 +17,7 @@
 	<location>release/13.0/asterisk-cli-13.0.4.1.tgz</location>
 	<md5sum>old</md5sum>
 	<changelog>
+		*13.0.4.3* Fix header html
 		*13.0.4.2* css style change on terminal output
 		*13.0.4.1* Ringfree branch
 		*13.0.4* FREEPBX-12606 Absolute paths used in some modules.
