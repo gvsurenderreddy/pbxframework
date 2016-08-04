@@ -1,9 +1,7 @@
 .output pre {
-	font-family:Courier;
-	font-weight: bold;
-	color: #00BA00;
-	background: #000000;
-	border: 3px solid #CCCCCC;
-	padding: 10px;
-
+	font-size: 9px;
+	color: #009800;
+	background: #ffffff;
+	border: 3px solid #ffffff;
+	padding: 4px;
 }
