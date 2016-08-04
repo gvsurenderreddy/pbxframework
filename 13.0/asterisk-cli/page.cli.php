@@ -12,7 +12,7 @@ if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
 				<div class="display no-border">
 					<div class="container-fluid">
 						<div class="section-title" data-for="asteriskcli">
-							<h3><?php echo _("Asterisk CLI") ?></h3>
+							<h1><?php echo _("Asterisk CLI") ?></h1>
 						</div>
 						<div class="row">
 							<div class="section" data-id="asteriskcli">
