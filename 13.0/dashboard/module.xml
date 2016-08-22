@@ -2,7 +2,7 @@
 	<rawname>dashboard</rawname>
 	<repo>standard</repo>
 	<name>System Dashboard</name>
-	<version>13.0.24.3</version>
+	<version>13.0.24.4</version>
 	<publisher>Ringfree</publisher>
 	<license>AGPLv3+</license>
 	<licenselink>http://www.gnu.org/licenses/agpl-3.0.txt</licenselink>
@@ -20,6 +20,7 @@
 		<module>core ge 12.0.1beta11</module>
 	</depends>
 	<changelog>
+		*13.0.24.4* Remove YCCTIAS notification under Overview
 		*13.0.24.3* Removing upstream branding
 		*13.0.24.1* Ringfree branch
 		*13.0.24* Fix colors that made no sense in notifications dashboard

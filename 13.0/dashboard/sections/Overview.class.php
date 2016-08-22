@@ -28,7 +28,7 @@ class Overview {
 		$brand = \FreePBX::Config()->get("DASHBOARD_FREEPBX_BRAND");
 
 		if (\FreePBX::Config()->get("FREEPBX_SYSTEM_IDENT")) {
-			$idline = sprintf(_("<strong>'%s'</strong><br><i>(You can change this name in Advanced Settings)</i>"), \FreePBX::Config()->get("FREEPBX_SYSTEM_IDENT"));
+			$idline = sprintf(_("<strong>'%s'</strong><br>"), \FreePBX::Config()->get("FREEPBX_SYSTEM_IDENT"));
 		} else {
 			$idline = "";
 		}
